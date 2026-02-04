@@ -1,41 +1,22 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import styles from "./landing.module.css";
-import { useRouter } from "next/navigation";
 import {
-  X,
   Sparkles,
   Calendar,
   Users,
-  CreditCard,
   TrendingUp,
   Package,
   MessageCircle,
   Briefcase,
   Heart,
-  Link as LinkIcon,
   CheckCircle2,
   Clock,
   DollarSign,
 } from "lucide-react";
 
 export default function LandingPage() {
-  const router = useRouter();
-  const [showLogin, setShowLogin] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (username === "admin" && password === "admin") {
-      router.push("/dashboard");
-    } else {
-      setError("Credenciais inválidas. Tente novamente.");
-    }
-  };
-
   useEffect(() => {
     const handleScrollLink = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -79,14 +60,6 @@ export default function LandingPage() {
               <a href="#">Contato</a>
             </li>
           </ul>
-          <div className={styles.navCta}>
-            <button
-              className={`${styles.btn} ${styles.btnOutline}`}
-              onClick={() => setShowLogin(true)}
-            >
-              Área do Cliente
-            </button>
-          </div>
         </div>
       </nav>
 
@@ -109,11 +82,17 @@ export default function LandingPage() {
             </p>
             <div className={styles.heroCtaRow}>
               <div className={styles.heroCta}>
-                <a href="#" className={`${styles.btn} ${styles.btnPrimary}`}>
-                  Experimentar Gratuitamente
+                <a
+                  href="/login"
+                  className={`${styles.btn} ${styles.btnPrimary}`}
+                >
+                  Acessar Minha Conta
                 </a>
-                <a href="#" className={`${styles.btn} ${styles.btnOutline}`}>
-                  Ver Demonstração
+                <a
+                  href="#recursos"
+                  className={`${styles.btn} ${styles.btnOutline}`}
+                >
+                  Saiba Mais
                 </a>
               </div>
               <div className={styles.heroStatsCarousel}>
@@ -407,6 +386,7 @@ export default function LandingPage() {
                     verticalAlign: "top",
                     marginTop: "10px",
                     display: "inline-block",
+                    fontFamily: "var(--font-playfair), serif",
                   }}
                 >
                   R$
@@ -484,12 +464,9 @@ export default function LandingPage() {
             <br />
             começa aqui
           </h2>
-          <p>
-            Experimente a plataforma preferida dos melhores salões do Brasil.
-            Não precisa de cartão de crédito.
-          </p>
-          <a href="#" className={`${styles.btn} ${styles.btnWhite}`}>
-            Criar Conta Gratuita
+          <p>Entre em contato com nossa equipe para cadastrar seu salão.</p>
+          <a href="/login" className={`${styles.btn} ${styles.btnWhite}`}>
+            Acessar Plataforma
           </a>
         </div>
       </section>
@@ -576,87 +553,6 @@ export default function LandingPage() {
           </p>
         </div>
       </footer>
-
-      {/* Login Modal */}
-      {showLogin && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
-          <div className="w-[90%] max-w-md bg-white rounded-2xl p-8 shadow-2xl animate-in zoom-in-95 relative">
-            <button
-              onClick={() => setShowLogin(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
-            >
-              <X size={24} />
-            </button>
-            <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-[#FFF5F7] rounded-full flex items-center justify-center text-[#FF6B9D]">
-                <Sparkles size={32} />
-              </div>
-            </div>
-            <h2 className="text-2xl font-bold text-[#1A0B2E] mb-2 font-serif text-center">
-              Área do Cliente
-            </h2>
-            <p className="text-gray-500 mb-6 text-center">
-              Faça login para gerenciar seu negócio.
-            </p>
-
-            {error && (
-              <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-sm font-medium">
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleLogin} className="flex flex-col gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  E-mail ou Usuário
-                </label>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B9D]/20 focus:border-[#FF6B9D] transition-all text-gray-800"
-                  placeholder="admin"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Senha
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B9D]/20 focus:border-[#FF6B9D] transition-all text-gray-800"
-                  placeholder="••••••••"
-                />
-              </div>
-              <div className="flex justify-end">
-                <a
-                  href="#"
-                  className="text-sm text-[#FF6B9D] hover:underline font-medium"
-                >
-                  Esqueceu a senha?
-                </a>
-              </div>
-              <button
-                type="submit"
-                className="w-full bg-[#FF6B9D] text-white font-bold py-3.5 rounded-xl hover:bg-[#C73866] hover:shadow-lg hover:-translate-y-0.5 transition-all mt-2"
-              >
-                Entrar
-              </button>
-            </form>
-            <p className="text-center mt-6 text-sm text-gray-500">
-              Ainda não é cliente?{" "}
-              <a
-                href="#"
-                className="text-[#FF6B9D] font-semibold hover:underline"
-              >
-                Criar conta grátis
-              </a>
-            </p>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

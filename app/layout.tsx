@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Outfit, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { SalonDataProvider } from "@/contexts/SalonDataContext";
+import { SuppressHydrationWarning } from "./suppress-hydration-warning";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -30,8 +31,28 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className={`${outfit.variable} ${playfair.variable} antialiased`}>
+    <html lang="pt-BR" suppressHydrationWarning>
+      <body 
+        className={`${outfit.variable} ${playfair.variable} antialiased`}
+        suppressHydrationWarning
+      >
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  if (typeof document !== 'undefined' && document.body) {
+                    const body = document.body;
+                    if (body.hasAttribute('cz-shortcut-listen')) {
+                      body.removeAttribute('cz-shortcut-listen');
+                    }
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+        <SuppressHydrationWarning />
         <SalonDataProvider>
           {children}
         </SalonDataProvider>
