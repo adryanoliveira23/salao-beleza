@@ -367,7 +367,9 @@ export default function LandingPage() {
                 <li>Suporte Premium</li>
               </ul>
               <a
-                href="/login"
+                href="https://pay.cakto.com.br/4j8q5du_754033"
+                target="_blank"
+                rel="noopener noreferrer"
                 className={`${styles.btn} ${styles.btnPrimary}`}
                 style={{
                   width: "100%",
@@ -451,7 +453,13 @@ export default function LandingPage() {
                 <a href="#">Tutoriais</a>
               </li>
               <li>
-                <a href="#">Contato</a>
+                <a
+                  href="https://wa.me/556699762785?text=Olá,preciso%20de%20ajuda%20com%20a%20Agendly%20Glow"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Contato (WhatsApp)
+                </a>
               </li>
               <li>
                 <a href="#">Status</a>
@@ -479,6 +487,17 @@ export default function LandingPage() {
           </p>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href="https://wa.me/556699762785?text=Olá,preciso%20de%20ajuda%20com%20a%20Agendly%20Glow"
+        target="_blank"
+        rel="noopener noreferrer"
+        className={styles.whatsappFloat}
+        title="Fale conosco no WhatsApp"
+      >
+        <MessageCircle size={32} />
+      </a>
     </div>
   );
 }
