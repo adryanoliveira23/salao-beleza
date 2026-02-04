@@ -400,6 +400,7 @@ export function SalonDataProvider({ children }: { children: React.ReactNode }) {
 
   const value: SalonDataContextType = {
     ...data,
+    realizedRevenueByDate: data.realizedRevenueByDate || {},
     addClient,
     updateClient,
     deleteClient,
