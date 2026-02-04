@@ -93,13 +93,22 @@ export default function AdminDashboard() {
                 </p>
               </div>
             </div>
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors font-medium"
-            >
-              <LogOut size={18} />
-              Sair
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => router.push("/dashboard")}
+                className="flex items-center gap-2 px-4 py-2 bg-[#FF6B9D]/10 hover:bg-[#FF6B9D]/20 text-[#FF6B9D] rounded-xl transition-all font-medium border border-[#FF6B9D]/20"
+              >
+                <Users size={18} />
+                Área do Cliente
+              </button>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors font-medium border border-red-100"
+              >
+                <LogOut size={18} />
+                Sair
+              </button>
+            </div>
           </div>
         </div>
       </div>

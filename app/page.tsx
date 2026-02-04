@@ -57,7 +57,9 @@ export default function LandingPage() {
               <a href="#depoimentos">Cases de Sucesso</a>
             </li>
             <li>
-              <a href="#">Contato</a>
+              <a href="/login" className={styles.btnNav}>
+                Área do Cliente
+              </a>
             </li>
           </ul>
         </div>
@@ -86,13 +88,7 @@ export default function LandingPage() {
                   href="/login"
                   className={`${styles.btn} ${styles.btnPrimary}`}
                 >
-                  Acessar Minha Conta
-                </a>
-                <a
-                  href="#recursos"
-                  className={`${styles.btn} ${styles.btnOutline}`}
-                >
-                  Saiba Mais
+                  Área do Cliente
                 </a>
               </div>
               <div className={styles.heroStatsCarousel}>
@@ -337,8 +333,13 @@ export default function LandingPage() {
             </h2>
             <p>Transparência total. Sem taxas de setup ou fidelidade.</p>
           </div>
-          <div className={styles.pricingGrid}>
-            <div className={styles.pricingCard}>
+          <div className="flex justify-center">
+            <div
+              className={`${styles.pricingCard} ${styles.featured} max-w-sm w-full`}
+            >
+              <span className={styles.popularBadge}>
+                O Melhor Custo-Benefício
+              </span>
               <h3>Essencial</h3>
               <div className={styles.price}>
                 <span
@@ -351,60 +352,22 @@ export default function LandingPage() {
                 >
                   R$
                 </span>
-                49,90
+                48,79
                 <span>/mês</span>
               </div>
               <span className={styles.period}>
-                Para profissionais autônomos
+                O plano completo para o seu sucesso
               </span>
               <ul className={styles.pricingFeatures}>
-                <li>Agenda Online</li>
-                <li>Gestão de Clientes</li>
-                <li>1 Usuário</li>
-                <li>App Mobile</li>
-                <li>Suporte por Email</li>
+                <li>Agenda Online Inteligente</li>
+                <li>Gestão Completa de Clientes</li>
+                <li>Financeiro e Comissões</li>
+                <li>Lembretes via WhatsApp</li>
+                <li>Relatórios de Performance</li>
+                <li>Suporte Premium</li>
               </ul>
               <a
-                href="#"
-                className={`${styles.btn} ${styles.btnOutline}`}
-                style={{
-                  width: "100%",
-                  textAlign: "center",
-                  marginTop: "2rem",
-                }}
-              >
-                Começar Teste
-              </a>
-            </div>
-            <div className={`${styles.pricingCard} ${styles.featured}`}>
-              <span className={styles.popularBadge}>Recomendado</span>
-              <h3>Profissional</h3>
-              <div className={styles.price}>
-                <span
-                  style={{
-                    fontSize: "1.5rem",
-                    verticalAlign: "top",
-                    marginTop: "10px",
-                    display: "inline-block",
-                    fontFamily: "var(--font-playfair), serif",
-                  }}
-                >
-                  R$
-                </span>
-                97,40
-                <span>/mês</span>
-              </div>
-              <span className={styles.period}>Para salões em crescimento</span>
-              <ul className={styles.pricingFeatures}>
-                <li>Tudo do Essencial</li>
-                <li>Até 5 Profissionais</li>
-                <li>Financeiro Completo</li>
-                <li>Comissões Automáticas</li>
-                <li>Lembretes WhatsApp</li>
-                <li>Suporte Prioritário</li>
-              </ul>
-              <a
-                href="#"
+                href="/login"
                 className={`${styles.btn} ${styles.btnPrimary}`}
                 style={{
                   width: "100%",
@@ -412,44 +375,7 @@ export default function LandingPage() {
                   marginTop: "2rem",
                 }}
               >
-                Assinar Agora
-              </a>
-            </div>
-            <div className={styles.pricingCard}>
-              <h3>Enterprise</h3>
-              <div className={styles.price}>
-                <span
-                  style={{
-                    fontSize: "1.5rem",
-                    verticalAlign: "top",
-                    marginTop: "10px",
-                    display: "inline-block",
-                  }}
-                >
-                  R$
-                </span>
-                198,75
-                <span>/mês</span>
-              </div>
-              <span className={styles.period}>Para grandes redes e spas</span>
-              <ul className={styles.pricingFeatures}>
-                <li>Usuários Ilimitados</li>
-                <li>Múltiplas Unidades</li>
-                <li>Gerente de Conta</li>
-                <li>API Aberta</li>
-                <li>Treinamento de Equipe</li>
-                <li>Personalização White-label</li>
-              </ul>
-              <a
-                href="#"
-                className={`${styles.btn} ${styles.btnOutline}`}
-                style={{
-                  width: "100%",
-                  textAlign: "center",
-                  marginTop: "2rem",
-                }}
-              >
-                Falar com Consultor
+                Começar Agora
               </a>
             </div>
           </div>
@@ -466,7 +392,7 @@ export default function LandingPage() {
           </h2>
           <p>Entre em contato com nossa equipe para cadastrar seu salão.</p>
           <a href="/login" className={`${styles.btn} ${styles.btnWhite}`}>
-            Acessar Plataforma
+            Área do Cliente
           </a>
         </div>
       </section>
