@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useState } from "react";
 import { Plus, Edit2, Trash2, X } from "lucide-react";
 import { Header } from "@/components/Header";

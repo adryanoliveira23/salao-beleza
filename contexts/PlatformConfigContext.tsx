@@ -21,7 +21,7 @@ import {
 // The lint said 'PLATFORM_CONFIG_KEY' is unused.
 const ADMIN_ACCESS_KEY = "Adiel&Adryan2026@!";
 
-export type PlanType = "essencial" | "profissional" | "enterprise";
+export type PlanType = "essencial";
 
 export interface PlanInfo {
   name: string;
@@ -33,18 +33,8 @@ export interface PlanInfo {
 export const PLANS: Record<PlanType, PlanInfo> = {
   essencial: {
     name: "Essencial",
-    price: 49.9,
+    price: 48.79,
     description: "Para profissionais autônomos",
-  },
-  profissional: {
-    name: "Profissional",
-    price: 97.4,
-    description: "Para salões em crescimento",
-  },
-  enterprise: {
-    name: "Enterprise",
-    price: 198.75,
-    description: "Para grandes redes e spas",
   },
 };
 
@@ -70,8 +60,6 @@ export interface PlatformConfig {
   defaultPlan: PlanType;
   planPrices: {
     essencial: number;
-    profissional: number;
-    enterprise: number;
   };
 }
 
@@ -84,9 +72,7 @@ const defaultConfig: PlatformConfig = {
   allowNewSignups: true,
   defaultPlan: "essencial",
   planPrices: {
-    essencial: 49.9,
-    profissional: 97.4,
-    enterprise: 198.75,
+    essencial: 48.79,
   },
 };
 

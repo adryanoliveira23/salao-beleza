@@ -1,39 +1,55 @@
 -- Create a table for public profiles (linked to auth.users)
-create table public.profiles (
+CREATE TABLE IF NOT EXISTS public.profiles (
   id uuid not null references auth.users on delete cascade,
   email text,
   name text,
-  plan text check (plan in ('essencial', 'profissional', 'enterprise')),
-  status text check (status in ('active', 'inactive', 'suspended')),
+  plan text,
+  status text,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null,
   
   primary key (id)
 );
 
+-- Ensure existing data is compatible with the new constraints
+UPDATE public.profiles SET plan = 'essencial' WHERE plan NOT IN ('essencial') OR plan IS NULL;
+UPDATE public.profiles SET status = 'active' WHERE status NOT IN ('active', 'inactive', 'suspended') OR status IS NULL;
+
+-- Update constraints (dropping if they exist to avoid errors)
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_plan_check;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_plan_check CHECK (plan IN ('essencial'));
+
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_status_check;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_status_check CHECK (status IN ('active', 'inactive', 'suspended'));
+
 -- Enable RLS on profiles
-alter table public.profiles enable row level security;
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- Policies for profiles
--- Public read access (or authenticated only, depending on needs)
-create policy "Users can view their own profile" on public.profiles
-  for select using (auth.uid() = id);
+-- Public read access
+DROP POLICY IF EXISTS "Users can view their own profile" ON public.profiles;
+CREATE POLICY "Users can view their own profile" ON public.profiles
+  FOR SELECT USING (auth.uid() = id);
 
--- Admin read access (Assuming we use a Service Role for admin panel, but if we want direct support access, we might need more)
-create policy "Service role can view all profiles" on public.profiles
-  for select using (true); -- Requires service_role key to bypass RLS effectively or specific role check
+-- Service role access
+DROP POLICY IF EXISTS "Service role can view all profiles" ON public.profiles;
+CREATE POLICY "Service role can view all profiles" ON public.profiles
+  FOR SELECT USING (true);
 
-create policy "Service role can insert profiles" on public.profiles
-  for insert with check (true);
+DROP POLICY IF EXISTS "Service role can insert profiles" ON public.profiles;
+CREATE POLICY "Service role can insert profiles" ON public.profiles
+  FOR INSERT WITH CHECK (true);
 
-create policy "Service role can update profiles" on public.profiles
-  for update using (true);
+DROP POLICY IF EXISTS "Service role can update profiles" ON public.profiles;
+CREATE POLICY "Service role can update profiles" ON public.profiles
+  FOR UPDATE USING (true);
 
-create policy "Service role can delete profiles" on public.profiles
-  for delete using (true);
+DROP POLICY IF EXISTS "Service role can delete profiles" ON public.profiles;
+CREATE POLICY "Service role can delete profiles" ON public.profiles
+  FOR DELETE USING (true);
 
 
 -- Platform Config Table
-create table public.platform_config (
+CREATE TABLE IF NOT EXISTS public.platform_config (
   id int primary key default 1, -- Singleton row
   config jsonb not null,
   updated_at timestamp with time zone default timezone('utc'::text, now()) not null,
@@ -41,19 +57,20 @@ create table public.platform_config (
 );
 
 -- Enable RLS
-alter table public.platform_config enable row level security;
+ALTER TABLE public.platform_config ENABLE ROW LEVEL SECURITY;
 
--- Policy: Anyone can read platform config (or just auth users)
-create policy "Public view config" on public.platform_config
-  for select using (true);
+-- Policies for platform_config
+DROP POLICY IF EXISTS "Public view config" ON public.platform_config;
+CREATE POLICY "Public view config" ON public.platform_config
+  FOR SELECT USING (true);
 
--- Policy: Only service role can update
-create policy "Service role update config" on public.platform_config
-  for all using (true); -- In reality, you'd restrict this to admin role if you had one in Auth
+DROP POLICY IF EXISTS "Service role update config" ON public.platform_config;
+CREATE POLICY "Service role update config" ON public.platform_config
+  FOR ALL USING (true);
 
 -- Insert default config if not exists
-insert into public.platform_config (id, config)
-values (1, '{
+INSERT INTO public.platform_config (id, config)
+VALUES (1, '{
   "revenueRate": 10,
   "minRevenueRate": 5,
   "maxRevenueRate": 30,
@@ -62,9 +79,7 @@ values (1, '{
   "allowNewSignups": true,
   "defaultPlan": "essencial",
   "planPrices": {
-    "essencial": 49.90,
-    "profissional": 97.40,
-    "enterprise": 198.75
+    "essencial": 48.79
   }
 }'::jsonb)
-on conflict (id) do nothing;
+ON CONFLICT (id) DO UPDATE SET config = EXCLUDED.config;

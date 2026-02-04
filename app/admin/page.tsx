@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
@@ -18,12 +20,9 @@ import {
   Shield,
   TrendingUp,
   CreditCard,
-  AlertCircle,
   CheckCircle2,
-  XCircle,
   Edit,
   Trash2,
-  Save,
   X,
 } from "lucide-react";
 
@@ -31,10 +30,6 @@ function getPlanBadgeClass(plan: PlanType) {
   switch (plan) {
     case "essencial":
       return "bg-blue-100 text-blue-700";
-    case "profissional":
-      return "bg-gradient-to-r from-[#FF6B9D] to-[#C77DFF] text-white";
-    case "enterprise":
-      return "bg-purple-100 text-purple-700";
     default:
       return "bg-gray-100 text-gray-700";
   }
@@ -64,8 +59,6 @@ export default function AdminDashboard() {
     totalUsers: users.length,
     activeUsers: users.filter((u) => u.status === "active").length,
     essencialUsers: users.filter((u) => u.plan === "essencial").length,
-    profissionalUsers: users.filter((u) => u.plan === "profissional").length,
-    enterpriseUsers: users.filter((u) => u.plan === "enterprise").length,
     inactiveUsers: users.filter((u) => u.status === "inactive").length,
     totalRevenue: users.reduce((sum, u) => {
       return sum + (config.planPrices[u.plan] || 0);
@@ -196,10 +189,10 @@ export default function AdminDashboard() {
             </div>
 
             {/* Plan Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#FF6B9D]">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B9D] to-[#C77DFF] rounded-lg flex items-center justify-center">
                     <CreditCard size={20} className="text-white" />
                   </div>
                   <div>
@@ -219,62 +212,6 @@ export default function AdminDashboard() {
                   <p className="text-sm text-green-600 font-semibold mt-2">
                     R${" "}
                     {config.planPrices.essencial.toFixed(2).replace(".", ",")}
-                    /mês
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#FF6B9D]">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B9D] to-[#C77DFF] rounded-lg flex items-center justify-center">
-                    <CreditCard size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-[#2d1b2e]">
-                      {PLANS.profissional.name}
-                    </h3>
-                    <p className="text-xs text-[#2d1b2e]/70">
-                      {PLANS.profissional.description}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-2xl font-bold text-[#2d1b2e]">
-                    {stats.profissionalUsers}
-                  </p>
-                  <p className="text-sm text-[#2d1b2e]/70">usuários</p>
-                  <p className="text-sm text-green-600 font-semibold mt-2">
-                    R${" "}
-                    {config.planPrices.profissional
-                      .toFixed(2)
-                      .replace(".", ",")}
-                    /mês
-                  </p>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <CreditCard size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-[#2d1b2e]">
-                      {PLANS.enterprise.name}
-                    </h3>
-                    <p className="text-xs text-[#2d1b2e]/70">
-                      {PLANS.enterprise.description}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-2xl font-bold text-[#2d1b2e]">
-                    {stats.enterpriseUsers}
-                  </p>
-                  <p className="text-sm text-[#2d1b2e]/70">usuários</p>
-                  <p className="text-sm text-green-600 font-semibold mt-2">
-                    R${" "}
-                    {config.planPrices.enterprise.toFixed(2).replace(".", ",")}
                     /mês
                   </p>
                 </div>
@@ -604,10 +541,6 @@ export default function AdminDashboard() {
                     className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
                   >
                     <option value="essencial">{PLANS.essencial.name}</option>
-                    <option value="profissional">
-                      {PLANS.profissional.name}
-                    </option>
-                    <option value="enterprise">{PLANS.enterprise.name}</option>
                   </select>
                 </div>
 
@@ -631,48 +564,6 @@ export default function AdminDashboard() {
                           planPrices: {
                             ...config.planPrices,
                             essencial: parseFloat(e.target.value) || 0,
-                          },
-                        })
-                      }
-                      className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-                      {PLANS.profissional.name} (R$/mês)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={config.planPrices.profissional}
-                      onChange={(e) =>
-                        updateConfig({
-                          planPrices: {
-                            ...config.planPrices,
-                            profissional: parseFloat(e.target.value) || 0,
-                          },
-                        })
-                      }
-                      className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-                      {PLANS.enterprise.name} (R$/mês)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      value={config.planPrices.enterprise}
-                      onChange={(e) =>
-                        updateConfig({
-                          planPrices: {
-                            ...config.planPrices,
-                            enterprise: parseFloat(e.target.value) || 0,
                           },
                         })
                       }
@@ -726,7 +617,7 @@ export default function AdminDashboard() {
               </button>
               <button
                 onClick={() => {
-                  deleteUser(showDeleteConfirm);
+                  if (showDeleteConfirm) deleteUser(showDeleteConfirm);
                   setShowDeleteConfirm(null);
                 }}
                 className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors font-medium"
@@ -820,14 +711,6 @@ function UserModal({
               <option value="essencial">
                 {PLANS.essencial.name} - R${" "}
                 {PLANS.essencial.price.toFixed(2).replace(".", ",")}/mês
-              </option>
-              <option value="profissional">
-                {PLANS.profissional.name} - R${" "}
-                {PLANS.profissional.price.toFixed(2).replace(".", ",")}/mês
-              </option>
-              <option value="enterprise">
-                {PLANS.enterprise.name} - R${" "}
-                {PLANS.enterprise.price.toFixed(2).replace(".", ",")}/mês
               </option>
             </select>
           </div>
