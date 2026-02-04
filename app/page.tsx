@@ -1,65 +1,662 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect } from "react";
+import styles from "./landing.module.css";
+import { useRouter } from "next/navigation";
+import {
+  X,
+  Sparkles,
+  Calendar,
+  Users,
+  CreditCard,
+  TrendingUp,
+  Package,
+  MessageCircle,
+  Briefcase,
+  Heart,
+  Link as LinkIcon,
+  CheckCircle2,
+  Clock,
+  DollarSign,
+} from "lucide-react";
+
+export default function LandingPage() {
+  const router = useRouter();
+  const [showLogin, setShowLogin] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (username === "admin" && password === "admin") {
+      router.push("/dashboard");
+    } else {
+      setError("Credenciais inválidas. Tente novamente.");
+    }
+  };
+
+  useEffect(() => {
+    const handleScrollLink = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "A" &&
+        target.getAttribute("href")?.startsWith("#")
+      ) {
+        e.preventDefault();
+        const id = target.getAttribute("href")?.substring(1);
+        const element = document.getElementById(id || "");
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth" });
+        }
+      }
+    };
+
+    document.addEventListener("click", handleScrollLink);
+    return () => document.removeEventListener("click", handleScrollLink);
+  }, []);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className={styles.landingPage}>
+      {/* Navigation */}
+      <nav className={styles.nav}>
+        <div className={styles.navContainer}>
+          <div className={styles.logo}>
+            <Sparkles size={24} />
+            Agendly Glow
+          </div>
+          <ul className={styles.navLinks}>
+            <li>
+              <a href="#recursos">Soluções</a>
+            </li>
+            <li>
+              <a href="#precos">Planos</a>
+            </li>
+            <li>
+              <a href="#depoimentos">Cases de Sucesso</a>
+            </li>
+            <li>
+              <a href="#">Contato</a>
+            </li>
+          </ul>
+          <div className={styles.navCta}>
+            <button
+              className={`${styles.btn} ${styles.btnOutline}`}
+              onClick={() => setShowLogin(true)}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+              Área do Cliente
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Hero Section */}
+      <section className={styles.hero}>
+        <div className={styles.heroContainer}>
+          <div className={styles.heroContent}>
+            <span className={styles.heroBadge}>
+              ✨ Software nº 1 para Salões de Beleza e Spas
+            </span>
+            <h1>
+              Eleve o nível do seu
+              <br />
+              <span className={styles.gradientText}>salão de beleza</span>
+            </h1>
+            <p>
+              Gestão inteligente que une agendamento, financeiro e marketing em
+              uma experiência premium. Deixe a tecnologia cuidar da rotina
+              enquanto você cuida da beleza dos seus clientes.
+            </p>
+            <div className={styles.heroCtaRow}>
+              <div className={styles.heroCta}>
+                <a href="#" className={`${styles.btn} ${styles.btnPrimary}`}>
+                  Experimentar Gratuitamente
+                </a>
+                <a href="#" className={`${styles.btn} ${styles.btnOutline}`}>
+                  Ver Demonstração
+                </a>
+              </div>
+              <div className={styles.heroStatsCarousel}>
+                <div className={styles.heroStatsTrack}>
+                  <div className={styles.statItem}>
+                    <span className={styles.statValue}>+8.5k</span>
+                    <span className={styles.statLabel}>Salões Parceiros</span>
+                  </div>
+                  <div className={styles.statItem}>
+                    <span className={styles.statValue}>99%</span>
+                    <span className={styles.statLabel}>Aprovação</span>
+                  </div>
+                  <div className={styles.statItem}>
+                    <span className={styles.statValue}>+1.2M</span>
+                    <span className={styles.statLabel}>Agendamentos/mês</span>
+                  </div>
+                  {/* Duplicados para loop infinito */}
+                  <div className={styles.statItem}>
+                    <span className={styles.statValue}>+8.5k</span>
+                    <span className={styles.statLabel}>Salões Parceiros</span>
+                  </div>
+                  <div className={styles.statItem}>
+                    <span className={styles.statValue}>99%</span>
+                    <span className={styles.statLabel}>Aprovação</span>
+                  </div>
+                  <div className={styles.statItem}>
+                    <span className={styles.statValue}>+1.2M</span>
+                    <span className={styles.statLabel}>Agendamentos/mês</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className={styles.heroVisual}>
+            <div className={styles.dashboardMock}>
+              <div className={styles.dashHeader}>
+                <div className={styles.dashTitle}>Visão Geral do Negócio</div>
+                <div className={styles.dashTime}>Atualizado em tempo real</div>
+              </div>
+              <div className={styles.metricsGrid}>
+                <div className={styles.metricBox}>
+                  <div className={styles.metricLabel}>Faturamento Diário</div>
+                  <div className={styles.metricValue}>R$ 2.845,90</div>
+                  <div className={styles.metricTrend}>↗ +28% meta diária</div>
+                </div>
+                <div className={styles.metricBox}>
+                  <div className={styles.metricLabel}>Agendamentos</div>
+                  <div className={styles.metricValue}>23</div>
+                  <div className={styles.metricTrend}>↗ 8 para confirmar</div>
+                </div>
+                <div className={styles.metricBox}>
+                  <div className={styles.metricLabel}>Ticket Médio</div>
+                  <div className={styles.metricValue}>R$ 185,50</div>
+                  <div className={styles.metricTrend}>↗ +12% este mês</div>
+                </div>
+                <div className={styles.metricBox}>
+                  <div className={styles.metricLabel}>Retenção</div>
+                  <div className={styles.metricValue}>85%</div>
+                  <div className={styles.metricTrend}>↗ Clientes fiéis</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Transformation Section */}
+      <section className={styles.transformation}>
+        <div className={styles.transformationContainer}>
+          <h2>Tecnologia que impulsiona beleza</h2>
+          <p>
+            Elimine as planilhas e o papel. Centralize toda a operação do seu
+            salão em uma plataforma elegante, intuitiva e pensada para o seu
+            crescimento.
+          </p>
+          <div className={styles.transformationGrid}>
+            <div className={styles.transformCard}>
+              <span className={styles.transformIcon}>
+                <Clock size={40} className="text-[#FF6B9D]" />
+              </span>
+              <h3>Otimização de Tempo</h3>
+              <p>
+                Automatize confirmações e reduza o tempo gasto no WhatsApp em
+                até 40%. Sua recepção focada no atendimento presencial.
+              </p>
+            </div>
+            <div className={styles.transformCard}>
+              <span className={styles.transformIcon}>
+                <DollarSign size={40} className="text-[#FF6B9D]" />
+              </span>
+              <h3>Maximização de Lucro</h3>
+              <p>
+                Ferramentas de upselling e controle financeiro preciso que
+                identificam oportunidades de receita e reduzem desperdícios.
+              </p>
+            </div>
+            <div className={styles.transformCard}>
+              <span className={styles.transformIcon}>
+                <CheckCircle2 size={40} className="text-[#FF6B9D]" />
+              </span>
+              <h3>Redução de No-Show</h3>
+              <p>
+                Lembretes automáticos inteligentes reduzem as faltas em até 80%,
+                mantendo sua agenda sempre produtiva.
+              </p>
+            </div>
+            <div className={styles.transformCard}>
+              <span className={styles.transformIcon}>
+                <Heart size={40} className="text-[#FF6B9D]" />
+              </span>
+              <h3>Fidelização Premium</h3>
+              <p>
+                Programa de fidelidade integrado que encanta clientes e aumenta
+                a recorrência dos seus serviços.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className={styles.features} id="recursos">
+        <div className={styles.featuresContainer}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionBadge}>Recursos Profissionais</span>
+            <h2>
+              Gestão completa para
+              <br />
+              negócios de beleza
+            </h2>
+            <p>
+              Do agendamento ao pós-venda, cada ferramenta foi desenhada para a
+              realidade de salões, esmalterias, barbearias e spas.
+            </p>
+          </div>
+          <div className={styles.featuresGrid}>
+            {[
+              {
+                icon: <Calendar size={32} />,
+                title: "Agenda Inteligente",
+                desc: "Gestão multi-profissional com visualização intuitiva, bloqueios, recorrências e lista de espera.",
+              },
+              {
+                icon: <Users size={32} />,
+                title: "Gestão de Clientes (CRM)",
+                desc: "Histórico completo de atendimentos, galeria de fotos antes/depois, preferências e anamnese.",
+              },
+              {
+                icon: <TrendingUp size={32} />,
+                title: "Financeiro Completo",
+                desc: "Fluxo de caixa, DRE, conciliação bancária, split de pagamentos e cálculo automático de comissões.",
+              },
+              {
+                icon: <Briefcase size={32} />,
+                title: "Gestão de Equipe",
+                desc: "Controle de escalas, permissões personalizadas, metas individuais e relatórios de performance.",
+              },
+              {
+                icon: <Package size={32} />,
+                title: "Controle de Estoque",
+                desc: "Gestão de produtos de revenda e consumo interno, com alertas de reposição e ficha técnica.",
+              },
+              {
+                icon: <MessageCircle size={32} />,
+                title: "Marketing Automatizado",
+                desc: "Campanhas de aniversário, recuperação de inativos e promoções via WhatsApp e E-mail.",
+              },
+            ].map((feature, i) => (
+              <div key={i} className={styles.featureCard}>
+                <div className={styles.featureIcon}>{feature.icon}</div>
+                <h3>{feature.title}</h3>
+                <p>{feature.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className={styles.testimonials} id="depoimentos">
+        <div className={styles.testimonialsContainer}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionBadge}>Quem usa, ama</span>
+            <h2>Histórias de Sucesso</h2>
+            <p>
+              Junte-se a milhares de empreendedoras que transformaram seus
+              negócios
+            </p>
+          </div>
+          <div className={styles.testimonialsGrid}>
+            {[
+              {
+                text: "A Agendly Glow profissionalizou completamente meu salão. O controle financeiro me deu a clareza que eu precisava para expandir para a segunda unidade.",
+                author: "Mariana Costa",
+                salon: "CEO, Salão Bella Vista",
+                initials: "MC",
+              },
+              {
+                text: "Meus clientes amam a facilidade de agendar online e receber os lembretes. Minha equipe está mais feliz com a transparência das comissões.",
+                author: "Patricia Silva",
+                salon: "Proprietária, Studio P&S",
+                initials: "PS",
+              },
+              {
+                text: "O suporte é incrível e a plataforma não para de evoluir. O módulo de marketing pagou o sistema no primeiro mês trazendo clientes sumidos de volta.",
+                author: "Juliana Almeida",
+                salon: "Diretora, Glamour Hair Spa",
+                initials: "JA",
+              },
+            ].map((testimonial, i) => (
+              <div key={i} className={styles.testimonialCard}>
+                <div className={styles.stars}>★★★★★</div>
+                <p className={styles.testimonialText}>
+                  &quot;{testimonial.text}&quot;
+                </p>
+                <div className={styles.testimonialAuthor}>
+                  <div className={styles.authorAvatar}>
+                    {testimonial.initials}
+                  </div>
+                  <div className={styles.authorInfo}>
+                    <h4>{testimonial.author}</h4>
+                    <p>{testimonial.salon}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing */}
+      <section className={styles.pricing} id="precos">
+        <div className={styles.pricingContainer}>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionBadge}>
+              Investimento Inteligente
+            </span>
+            <h2>
+              Planos que crescem
+              <br />
+              com você
+            </h2>
+            <p>Transparência total. Sem taxas de setup ou fidelidade.</p>
+          </div>
+          <div className={styles.pricingGrid}>
+            <div className={styles.pricingCard}>
+              <h3>Essencial</h3>
+              <div className={styles.price}>
+                <span
+                  style={{
+                    fontSize: "1.5rem",
+                    verticalAlign: "top",
+                    marginTop: "10px",
+                    display: "inline-block",
+                  }}
+                >
+                  R$
+                </span>
+                49,90
+                <span>/mês</span>
+              </div>
+              <span className={styles.period}>
+                Para profissionais autônomos
+              </span>
+              <ul className={styles.pricingFeatures}>
+                <li>Agenda Online</li>
+                <li>Gestão de Clientes</li>
+                <li>1 Usuário</li>
+                <li>App Mobile</li>
+                <li>Suporte por Email</li>
+              </ul>
+              <a
+                href="#"
+                className={`${styles.btn} ${styles.btnOutline}`}
+                style={{
+                  width: "100%",
+                  textAlign: "center",
+                  marginTop: "2rem",
+                }}
+              >
+                Começar Teste
+              </a>
+            </div>
+            <div className={`${styles.pricingCard} ${styles.featured}`}>
+              <span className={styles.popularBadge}>Recomendado</span>
+              <h3>Profissional</h3>
+              <div className={styles.price}>
+                <span
+                  style={{
+                    fontSize: "1.5rem",
+                    verticalAlign: "top",
+                    marginTop: "10px",
+                    display: "inline-block",
+                  }}
+                >
+                  R$
+                </span>
+                97,40
+                <span>/mês</span>
+              </div>
+              <span className={styles.period}>Para salões em crescimento</span>
+              <ul className={styles.pricingFeatures}>
+                <li>Tudo do Essencial</li>
+                <li>Até 5 Profissionais</li>
+                <li>Financeiro Completo</li>
+                <li>Comissões Automáticas</li>
+                <li>Lembretes WhatsApp</li>
+                <li>Suporte Prioritário</li>
+              </ul>
+              <a
+                href="#"
+                className={`${styles.btn} ${styles.btnPrimary}`}
+                style={{
+                  width: "100%",
+                  textAlign: "center",
+                  marginTop: "2rem",
+                }}
+              >
+                Assinar Agora
+              </a>
+            </div>
+            <div className={styles.pricingCard}>
+              <h3>Enterprise</h3>
+              <div className={styles.price}>
+                <span
+                  style={{
+                    fontSize: "1.5rem",
+                    verticalAlign: "top",
+                    marginTop: "10px",
+                    display: "inline-block",
+                  }}
+                >
+                  R$
+                </span>
+                198,75
+                <span>/mês</span>
+              </div>
+              <span className={styles.period}>Para grandes redes e spas</span>
+              <ul className={styles.pricingFeatures}>
+                <li>Usuários Ilimitados</li>
+                <li>Múltiplas Unidades</li>
+                <li>Gerente de Conta</li>
+                <li>API Aberta</li>
+                <li>Treinamento de Equipe</li>
+                <li>Personalização White-label</li>
+              </ul>
+              <a
+                href="#"
+                className={`${styles.btn} ${styles.btnOutline}`}
+                style={{
+                  width: "100%",
+                  textAlign: "center",
+                  marginTop: "2rem",
+                }}
+              >
+                Falar com Consultor
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Final */}
+      <section className={styles.ctaFinal}>
+        <div className={styles.ctaContainer}>
+          <h2>
+            Sua história de sucesso
+            <br />
+            começa aqui
+          </h2>
+          <p>
+            Experimente a plataforma preferida dos melhores salões do Brasil.
+            Não precisa de cartão de crédito.
+          </p>
+          <a href="#" className={`${styles.btn} ${styles.btnWhite}`}>
+            Criar Conta Gratuita
+          </a>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className={styles.footer}>
+        <div className={styles.footerContainer}>
+          <div className={styles.footerBrand}>
+            <h3>Agendly Glow</h3>
+            <p>
+              Tecnologia e beleza caminhando juntas. Desenvolvemos soluções que
+              empoderam empreendedores e transformam a gestão de salões.
+            </p>
+          </div>
+          <div className={styles.footerLinks}>
+            <h4>Plataforma</h4>
+            <ul>
+              <li>
+                <a href="#">Funcionalidades</a>
+              </li>
+              <li>
+                <a href="#">Para Salões</a>
+              </li>
+              <li>
+                <a href="#">Para Barbearias</a>
+              </li>
+              <li>
+                <a href="#">Para Spas</a>
+              </li>
+            </ul>
+          </div>
+          <div className={styles.footerLinks}>
+            <h4>Empresa</h4>
+            <ul>
+              <li>
+                <a href="#">Sobre Nós</a>
+              </li>
+              <li>
+                <a href="#">Carreiras</a>
+              </li>
+              <li>
+                <a href="#">Blog</a>
+              </li>
+              <li>
+                <a href="#">Imprensa</a>
+              </li>
+            </ul>
+          </div>
+          <div className={styles.footerLinks}>
+            <h4>Suporte</h4>
+            <ul>
+              <li>
+                <a href="#">Central de Ajuda</a>
+              </li>
+              <li>
+                <a href="#">Tutoriais</a>
+              </li>
+              <li>
+                <a href="#">Contato</a>
+              </li>
+              <li>
+                <a href="#">Status</a>
+              </li>
+            </ul>
+          </div>
+          <div className={styles.footerLinks}>
+            <h4>Legal</h4>
+            <ul>
+              <li>
+                <a href="#">Termos de Uso</a>
+              </li>
+              <li>
+                <a href="#">Privacidade</a>
+              </li>
+              <li>
+                <a href="#">Compliance</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <div className={styles.footerBottom}>
+          <p>
+            © 2026 Agendly Glow Tecnologia Ltda. Todos os direitos reservados.
           </p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+      </footer>
+
+      {/* Login Modal */}
+      {showLogin && (
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in">
+          <div className="w-[90%] max-w-md bg-white rounded-2xl p-8 shadow-2xl animate-in zoom-in-95 relative">
+            <button
+              onClick={() => setShowLogin(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            >
+              <X size={24} />
+            </button>
+            <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-[#FFF5F7] rounded-full flex items-center justify-center text-[#FF6B9D]">
+                <Sparkles size={32} />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold text-[#1A0B2E] mb-2 font-serif text-center">
+              Área do Cliente
+            </h2>
+            <p className="text-gray-500 mb-6 text-center">
+              Faça login para gerenciar seu negócio.
+            </p>
+
+            {error && (
+              <div className="bg-red-50 text-red-500 p-3 rounded-lg mb-4 text-sm font-medium">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleLogin} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  E-mail ou Usuário
+                </label>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B9D]/20 focus:border-[#FF6B9D] transition-all text-gray-800"
+                  placeholder="admin"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Senha
+                </label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#FF6B9D]/20 focus:border-[#FF6B9D] transition-all text-gray-800"
+                  placeholder="••••••••"
+                />
+              </div>
+              <div className="flex justify-end">
+                <a
+                  href="#"
+                  className="text-sm text-[#FF6B9D] hover:underline font-medium"
+                >
+                  Esqueceu a senha?
+                </a>
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-[#FF6B9D] text-white font-bold py-3.5 rounded-xl hover:bg-[#C73866] hover:shadow-lg hover:-translate-y-0.5 transition-all mt-2"
+              >
+                Entrar
+              </button>
+            </form>
+            <p className="text-center mt-6 text-sm text-gray-500">
+              Ainda não é cliente?{" "}
+              <a
+                href="#"
+                className="text-[#FF6B9D] font-semibold hover:underline"
+              >
+                Criar conta grátis
+              </a>
+            </p>
+          </div>
         </div>
-      </main>
+      )}
     </div>
   );
 }
