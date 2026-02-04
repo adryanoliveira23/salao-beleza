@@ -43,19 +43,17 @@ function getPlanBadgeClass(plan: PlanType) {
 export default function AdminDashboard() {
   const { logout } = useAdminAuth();
   const router = useRouter();
-  const {
-    config,
-    users,
-    updateConfig,
-    addUser,
-    updateUser,
-    deleteUser,
-  } = usePlatformConfig();
+  const { config, users, updateConfig, addUser, updateUser, deleteUser } =
+    usePlatformConfig();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "settings">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "settings">(
+    "overview",
+  );
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<PlatformUser | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
+    null,
+  );
 
   const handleLogout = () => {
     logout();
@@ -146,8 +144,12 @@ export default function AdminDashboard() {
                     <Users size={24} className="text-white" />
                   </div>
                 </div>
-                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">Total de Usuários</h3>
-                <p className="text-3xl font-bold text-[#2d1b2e]">{stats.totalUsers}</p>
+                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
+                  Total de Usuários
+                </h3>
+                <p className="text-3xl font-bold text-[#2d1b2e]">
+                  {stats.totalUsers}
+                </p>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6">
@@ -156,8 +158,12 @@ export default function AdminDashboard() {
                     <CheckCircle2 size={24} className="text-white" />
                   </div>
                 </div>
-                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">Usuários Ativos</h3>
-                <p className="text-3xl font-bold text-[#2d1b2e]">{stats.activeUsers}</p>
+                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
+                  Usuários Ativos
+                </h3>
+                <p className="text-3xl font-bold text-[#2d1b2e]">
+                  {stats.activeUsers}
+                </p>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6">
@@ -166,7 +172,9 @@ export default function AdminDashboard() {
                     <CreditCard size={24} className="text-white" />
                   </div>
                 </div>
-                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">Receita Mensal</h3>
+                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
+                  Receita Mensal
+                </h3>
                 <p className="text-2xl font-bold text-[#2d1b2e]">
                   R$ {stats.monthlyRevenue.toFixed(2).replace(".", ",")}
                 </p>
@@ -178,8 +186,12 @@ export default function AdminDashboard() {
                     <DollarSign size={24} className="text-white" />
                   </div>
                 </div>
-                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">Taxa de Receita</h3>
-                <p className="text-3xl font-bold text-[#2d1b2e]">{config.revenueRate}%</p>
+                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
+                  Taxa de Receita
+                </h3>
+                <p className="text-3xl font-bold text-[#2d1b2e]">
+                  {config.revenueRate}%
+                </p>
               </div>
             </div>
 
@@ -191,15 +203,23 @@ export default function AdminDashboard() {
                     <CreditCard size={20} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[#2d1b2e]">{PLANS.essencial.name}</h3>
-                    <p className="text-xs text-[#2d1b2e]/70">{PLANS.essencial.description}</p>
+                    <h3 className="font-semibold text-[#2d1b2e]">
+                      {PLANS.essencial.name}
+                    </h3>
+                    <p className="text-xs text-[#2d1b2e]/70">
+                      {PLANS.essencial.description}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-2xl font-bold text-[#2d1b2e]">{stats.essencialUsers}</p>
+                  <p className="text-2xl font-bold text-[#2d1b2e]">
+                    {stats.essencialUsers}
+                  </p>
                   <p className="text-sm text-[#2d1b2e]/70">usuários</p>
                   <p className="text-sm text-green-600 font-semibold mt-2">
-                    R$ {config.planPrices.essencial.toFixed(2).replace(".", ",")}/mês
+                    R${" "}
+                    {config.planPrices.essencial.toFixed(2).replace(".", ",")}
+                    /mês
                   </p>
                 </div>
               </div>
@@ -210,15 +230,25 @@ export default function AdminDashboard() {
                     <CreditCard size={20} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[#2d1b2e]">{PLANS.profissional.name}</h3>
-                    <p className="text-xs text-[#2d1b2e]/70">{PLANS.profissional.description}</p>
+                    <h3 className="font-semibold text-[#2d1b2e]">
+                      {PLANS.profissional.name}
+                    </h3>
+                    <p className="text-xs text-[#2d1b2e]/70">
+                      {PLANS.profissional.description}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-2xl font-bold text-[#2d1b2e]">{stats.profissionalUsers}</p>
+                  <p className="text-2xl font-bold text-[#2d1b2e]">
+                    {stats.profissionalUsers}
+                  </p>
                   <p className="text-sm text-[#2d1b2e]/70">usuários</p>
                   <p className="text-sm text-green-600 font-semibold mt-2">
-                    R$ {config.planPrices.profissional.toFixed(2).replace(".", ",")}/mês
+                    R${" "}
+                    {config.planPrices.profissional
+                      .toFixed(2)
+                      .replace(".", ",")}
+                    /mês
                   </p>
                 </div>
               </div>
@@ -229,15 +259,23 @@ export default function AdminDashboard() {
                     <CreditCard size={20} className="text-white" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-[#2d1b2e]">{PLANS.enterprise.name}</h3>
-                    <p className="text-xs text-[#2d1b2e]/70">{PLANS.enterprise.description}</p>
+                    <h3 className="font-semibold text-[#2d1b2e]">
+                      {PLANS.enterprise.name}
+                    </h3>
+                    <p className="text-xs text-[#2d1b2e]/70">
+                      {PLANS.enterprise.description}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-2xl font-bold text-[#2d1b2e]">{stats.enterpriseUsers}</p>
+                  <p className="text-2xl font-bold text-[#2d1b2e]">
+                    {stats.enterpriseUsers}
+                  </p>
                   <p className="text-sm text-[#2d1b2e]/70">usuários</p>
                   <p className="text-sm text-green-600 font-semibold mt-2">
-                    R$ {config.planPrices.enterprise.toFixed(2).replace(".", ",")}/mês
+                    R${" "}
+                    {config.planPrices.enterprise.toFixed(2).replace(".", ",")}
+                    /mês
                   </p>
                 </div>
               </div>
@@ -246,7 +284,9 @@ export default function AdminDashboard() {
             {/* Recent Users */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-[#2d1b2e]">Usuários Recentes</h2>
+                <h2 className="text-xl font-bold text-[#2d1b2e]">
+                  Usuários Recentes
+                </h2>
                 <button
                   onClick={() => {
                     setEditingUser(null);
@@ -259,41 +299,48 @@ export default function AdminDashboard() {
                 </button>
               </div>
               <div className="space-y-3">
-                {users.slice(-5).reverse().map((user) => (
-                  <div
-                    key={user.id}
-                    className="p-4 bg-[#ffeef8] rounded-lg border border-[#FF6B9D]/20 flex items-center justify-between"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-[#2d1b2e]">{user.name}</span>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeClass(
-                            user.plan
-                          )}`}
-                        >
-                          {PLANS[user.plan].name}
-                        </span>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${
-                            user.status === "active"
-                              ? "bg-green-100 text-green-700"
+                {users
+                  .slice(-5)
+                  .reverse()
+                  .map((user) => (
+                    <div
+                      key={user.id}
+                      className="p-4 bg-[#ffeef8] rounded-lg border border-[#FF6B9D]/20 flex items-center justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-[#2d1b2e]">
+                            {user.name}
+                          </span>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeClass(
+                              user.plan,
+                            )}`}
+                          >
+                            {PLANS[user.plan].name}
+                          </span>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              user.status === "active"
+                                ? "bg-green-100 text-green-700"
+                                : user.status === "inactive"
+                                  ? "bg-gray-100 text-gray-700"
+                                  : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {user.status === "active"
+                              ? "Ativo"
                               : user.status === "inactive"
-                              ? "bg-gray-100 text-gray-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {user.status === "active"
-                            ? "Ativo"
-                            : user.status === "inactive"
-                            ? "Inativo"
-                            : "Suspenso"}
-                        </span>
+                                ? "Inativo"
+                                : "Suspenso"}
+                          </span>
+                        </div>
+                        <p className="text-sm text-[#2d1b2e]/70">
+                          {user.email}
+                        </p>
                       </div>
-                      <p className="text-sm text-[#2d1b2e]/70">{user.email}</p>
                     </div>
-                  </div>
-                ))}
+                  ))}
                 {users.length === 0 && (
                   <p className="text-center text-[#2d1b2e]/50 py-8">
                     Nenhum usuário cadastrado
@@ -309,7 +356,9 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-[#2d1b2e]">Gestão de Usuários</h2>
+                <h2 className="text-xl font-bold text-[#2d1b2e]">
+                  Gestão de Usuários
+                </h2>
                 <button
                   onClick={() => {
                     setEditingUser(null);
@@ -353,15 +402,19 @@ export default function AdminDashboard() {
                         className="border-b border-[#2d1b2e]/5 hover:bg-[#ffeef8] transition-colors"
                       >
                         <td className="py-3 px-4">
-                          <span className="font-medium text-[#2d1b2e]">{user.name}</span>
+                          <span className="font-medium text-[#2d1b2e]">
+                            {user.name}
+                          </span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="text-[#2d1b2e]/70">{user.email}</span>
+                          <span className="text-[#2d1b2e]/70">
+                            {user.email}
+                          </span>
                         </td>
                         <td className="py-3 px-4">
                           <span
                             className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeClass(
-                              user.plan
+                              user.plan,
                             )}`}
                           >
                             {PLANS[user.plan].name}
@@ -373,20 +426,22 @@ export default function AdminDashboard() {
                               user.status === "active"
                                 ? "bg-green-100 text-green-700"
                                 : user.status === "inactive"
-                                ? "bg-gray-100 text-gray-700"
-                                : "bg-red-100 text-red-700"
+                                  ? "bg-gray-100 text-gray-700"
+                                  : "bg-red-100 text-red-700"
                             }`}
                           >
                             {user.status === "active"
                               ? "Ativo"
                               : user.status === "inactive"
-                              ? "Inativo"
-                              : "Suspenso"}
+                                ? "Inativo"
+                                : "Suspenso"}
                           </span>
                         </td>
                         <td className="py-3 px-4">
                           <span className="text-sm text-[#2d1b2e]/70">
-                            {new Date(user.createdAt).toLocaleDateString("pt-BR")}
+                            {new Date(user.createdAt).toLocaleDateString(
+                              "pt-BR",
+                            )}
                           </span>
                         </td>
                         <td className="py-3 px-4">
@@ -414,7 +469,10 @@ export default function AdminDashboard() {
                     ))}
                     {users.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="py-12 text-center text-[#2d1b2e]/50">
+                        <td
+                          colSpan={6}
+                          className="py-12 text-center text-[#2d1b2e]/50"
+                        >
                           Nenhum usuário cadastrado
                         </td>
                       </tr>
@@ -447,12 +505,15 @@ export default function AdminDashboard() {
                       max={config.maxRevenueRate}
                       value={config.revenueRate}
                       onChange={(e) =>
-                        updateConfig({ revenueRate: parseFloat(e.target.value) || 0 })
+                        updateConfig({
+                          revenueRate: parseFloat(e.target.value) || 0,
+                        })
                       }
                       className="flex-1 px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
                     />
                     <span className="text-[#2d1b2e]/70">
-                      Min: {config.minRevenueRate}% | Max: {config.maxRevenueRate}%
+                      Min: {config.minRevenueRate}% | Max:{" "}
+                      {config.maxRevenueRate}%
                     </span>
                   </div>
                   <p className="text-sm text-[#2d1b2e]/50 mt-2">
@@ -471,7 +532,9 @@ export default function AdminDashboard() {
                     step="0.01"
                     value={config.platformFee}
                     onChange={(e) =>
-                      updateConfig({ platformFee: parseFloat(e.target.value) || 0 })
+                      updateConfig({
+                        platformFee: parseFloat(e.target.value) || 0,
+                      })
                     }
                     className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
                   />
@@ -483,7 +546,9 @@ export default function AdminDashboard() {
                 {/* Modo Manutenção */}
                 <div className="flex items-center justify-between p-4 bg-[#ffeef8] rounded-xl border border-[#FF6B9D]/20">
                   <div>
-                    <h3 className="font-semibold text-[#2d1b2e] mb-1">Modo Manutenção</h3>
+                    <h3 className="font-semibold text-[#2d1b2e] mb-1">
+                      Modo Manutenção
+                    </h3>
                     <p className="text-sm text-[#2d1b2e]/70">
                       Bloqueia o acesso de todos os usuários à plataforma
                     </p>
@@ -492,7 +557,9 @@ export default function AdminDashboard() {
                     <input
                       type="checkbox"
                       checked={config.maintenanceMode}
-                      onChange={(e) => updateConfig({ maintenanceMode: e.target.checked })}
+                      onChange={(e) =>
+                        updateConfig({ maintenanceMode: e.target.checked })
+                      }
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FF6B9D]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF6B9D]"></div>
@@ -513,7 +580,9 @@ export default function AdminDashboard() {
                     <input
                       type="checkbox"
                       checked={config.allowNewSignups}
-                      onChange={(e) => updateConfig({ allowNewSignups: e.target.checked })}
+                      onChange={(e) =>
+                        updateConfig({ allowNewSignups: e.target.checked })
+                      }
                       className="sr-only peer"
                     />
                     <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FF6B9D]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF6B9D]"></div>
@@ -535,15 +604,19 @@ export default function AdminDashboard() {
                     className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
                   >
                     <option value="essencial">{PLANS.essencial.name}</option>
-                    <option value="profissional">{PLANS.profissional.name}</option>
+                    <option value="profissional">
+                      {PLANS.profissional.name}
+                    </option>
                     <option value="enterprise">{PLANS.enterprise.name}</option>
                   </select>
                 </div>
 
                 {/* Preços dos Planos */}
                 <div className="space-y-4 pt-4 border-t border-[#2d1b2e]/10">
-                  <h3 className="text-lg font-bold text-[#2d1b2e] mb-4">Preços dos Planos</h3>
-                  
+                  <h3 className="text-lg font-bold text-[#2d1b2e] mb-4">
+                    Preços dos Planos
+                  </h3>
+
                   <div>
                     <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
                       {PLANS.essencial.name} (R$/mês)
@@ -637,9 +710,12 @@ export default function AdminDashboard() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-[#2d1b2e] mb-2">Confirmar Exclusão</h3>
+            <h3 className="text-xl font-bold text-[#2d1b2e] mb-2">
+              Confirmar Exclusão
+            </h3>
             <p className="text-[#2d1b2e]/70 mb-6">
-              Tem certeza que deseja excluir este usuário? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este usuário? Esta ação não pode
+              ser desfeita.
             </p>
             <div className="flex gap-3">
               <button
@@ -678,10 +754,10 @@ function UserModal({
   const [email, setEmail] = useState(user?.email || "");
   const [plan, setPlan] = useState<PlanType>(user?.plan || "essencial");
   const [status, setStatus] = useState<"active" | "inactive" | "suspended">(
-    user?.status || "active"
+    user?.status || "active",
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) {
       alert("Por favor, preencha todos os campos obrigatórios");
@@ -733,20 +809,33 @@ function UserModal({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">Plano</label>
+            <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
+              Plano
+            </label>
             <select
               value={plan}
               onChange={(e) => setPlan(e.target.value as PlanType)}
               className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
             >
-              <option value="essencial">{PLANS.essencial.name} - R$ {PLANS.essencial.price.toFixed(2).replace(".", ",")}/mês</option>
-              <option value="profissional">{PLANS.profissional.name} - R$ {PLANS.profissional.price.toFixed(2).replace(".", ",")}/mês</option>
-              <option value="enterprise">{PLANS.enterprise.name} - R$ {PLANS.enterprise.price.toFixed(2).replace(".", ",")}/mês</option>
+              <option value="essencial">
+                {PLANS.essencial.name} - R${" "}
+                {PLANS.essencial.price.toFixed(2).replace(".", ",")}/mês
+              </option>
+              <option value="profissional">
+                {PLANS.profissional.name} - R${" "}
+                {PLANS.profissional.price.toFixed(2).replace(".", ",")}/mês
+              </option>
+              <option value="enterprise">
+                {PLANS.enterprise.name} - R${" "}
+                {PLANS.enterprise.price.toFixed(2).replace(".", ",")}/mês
+              </option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">Status</label>
+            <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
+              Status
+            </label>
             <select
               value={status}
               onChange={(e) =>

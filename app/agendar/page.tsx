@@ -1,7 +1,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useSalonData, saveAppointmentToStorage } from "@/contexts/SalonDataContext";
+import {
+  useSalonData,
+  saveAppointmentToStorage,
+} from "@/contexts/SalonDataContext";
 
 const SLOT_START = 8;
 const SLOT_END = 18;
@@ -40,7 +43,8 @@ function formatPhone(value: string): string {
 }
 
 export default function AgendarPage() {
-  const { services, professionals, appointments, refreshFromStorage } = useSalonData();
+  const { services, professionals, appointments, refreshFromStorage } =
+    useSalonData();
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
@@ -65,24 +69,32 @@ export default function AgendarPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
 
-
   const filteredServices = useMemo(() => {
     if (!selectedCategory) return services;
     return services.filter((s) => {
       const cat = (s.category || "").toLowerCase();
       const sel = selectedCategory.toLowerCase();
-      return cat === sel || ((sel === "unhas" || sel === "unha") && (cat === "unhas" || cat === "unha"));
+      return (
+        cat === sel ||
+        ((sel === "unhas" || sel === "unha") &&
+          (cat === "unhas" || cat === "unha"))
+      );
     });
   }, [services, selectedCategory]);
 
   useEffect(() => {
-    if (form.serviceId && !filteredServices.some((s) => s.id === form.serviceId)) {
+    if (
+      form.serviceId &&
+      !filteredServices.some((s) => s.id === form.serviceId)
+    ) {
       setForm((f) => ({ ...f, serviceId: "" }));
     }
   }, [filteredServices, form.serviceId]);
 
   const selectedService = services.find((s) => s.id === form.serviceId);
-  const selectedProfessional = professionals.find((p) => p.id === form.professionalId);
+  const selectedProfessional = professionals.find(
+    (p) => p.id === form.professionalId,
+  );
 
   const occupiedSlots = useMemo(() => {
     const occupied = new Set<string>();
@@ -140,7 +152,7 @@ export default function AgendarPage() {
     return `${weekday}, ${dayMonth}`;
   }, [selectedDateObj, isToday, isTomorrow]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
@@ -171,8 +183,7 @@ export default function AgendarPage() {
     }
 
     const professionalId = form.professionalId || "a-definir";
-    const professionalName =
-      selectedProfessional?.name || "A definir";
+    const professionalName = selectedProfessional?.name || "A definir";
 
     if (professionals.length > 0 && !form.professionalId) {
       setError("Selecione o profissional.");
@@ -310,9 +321,7 @@ export default function AgendarPage() {
               required
               min={minDateStr}
               value={form.date}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, date: e.target.value }))
-              }
+              onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
               className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
             />
             {dateLabel && (
@@ -338,8 +347,7 @@ export default function AgendarPage() {
                     disabled={isOccupied}
                     title={isOccupied ? "Horário indisponível" : undefined}
                     onClick={() =>
-                      !isOccupied &&
-                      setForm((f) => ({ ...f, time: slot }))
+                      !isOccupied && setForm((f) => ({ ...f, time: slot }))
                     }
                     className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
                       isOccupied
@@ -400,7 +408,8 @@ export default function AgendarPage() {
               </div>
             ) : filteredServices.length === 0 ? (
               <p className="text-[#999] text-sm py-2">
-                Nenhum serviço nesta categoria. Selecione outra ou &quot;Todos&quot;.
+                Nenhum serviço nesta categoria. Selecione outra ou
+                &quot;Todos&quot;.
               </p>
             ) : (
               <div className="relative">
@@ -409,7 +418,11 @@ export default function AgendarPage() {
                   onClick={() => setServiceDropdownOpen((o) => !o)}
                   className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm text-left focus:outline-none focus:border-[#FF6B9D] bg-white flex items-center justify-between"
                 >
-                  <span className={form.serviceId ? "text-[#2d1b2e]" : "text-[#999]"}>
+                  <span
+                    className={
+                      form.serviceId ? "text-[#2d1b2e]" : "text-[#999]"
+                    }
+                  >
                     {form.serviceId
                       ? `${filteredServices.find((s) => s.id === form.serviceId)?.name} (${filteredServices.find((s) => s.id === form.serviceId)?.duration} min)`
                       : "Selecione o serviço"}
@@ -433,7 +446,9 @@ export default function AgendarPage() {
                             setServiceDropdownOpen(false);
                           }}
                           className={`w-full p-3 text-left text-sm hover:bg-[#fff0f5] transition-colors first:rounded-t-xl last:rounded-b-xl ${
-                            form.serviceId === s.id ? "bg-[#fff0f5] text-[#FF6B9D] font-medium" : "text-[#2d1b2e]"
+                            form.serviceId === s.id
+                              ? "bg-[#fff0f5] text-[#FF6B9D] font-medium"
+                              : "text-[#2d1b2e]"
                           }`}
                         >
                           {s.name} ({s.duration} min)
@@ -448,9 +463,7 @@ export default function AgendarPage() {
 
           {/* Bloco 4 – Contatos */}
           <div className="space-y-4 border-t border-[#f0f0f0] pt-5">
-            <h3 className="font-semibold text-[#2d1b2e] text-sm">
-              Seus dados
-            </h3>
+            <h3 className="font-semibold text-[#2d1b2e] text-sm">Seus dados</h3>
 
             <div>
               <label className="block font-semibold text-[#2d1b2e] text-sm mb-1">
@@ -477,7 +490,10 @@ export default function AgendarPage() {
                 required
                 value={form.clientPhone}
                 onChange={(e) =>
-                  setForm((f) => ({ ...f, clientPhone: formatPhone(e.target.value) }))
+                  setForm((f) => ({
+                    ...f,
+                    clientPhone: formatPhone(e.target.value),
+                  }))
                 }
                 className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
                 placeholder="(00) 00000-0000"

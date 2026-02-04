@@ -99,7 +99,8 @@ export default function Services() {
               Nenhum serviço cadastrado.
             </p>
             <p className="text-[#999] text-sm">
-              Clique em &quot;Novo Serviço&quot; para adicionar. Os serviços aparecerão automaticamente no link de agendamento.
+              Clique em &quot;Novo Serviço&quot; para adicionar. Os serviços
+              aparecerão automaticamente no link de agendamento.
             </p>
           </div>
         )}
@@ -107,7 +108,9 @@ export default function Services() {
 
       {showModal && (
         <ServiceModal
-          service={editingId ? services.find((s) => s.id === editingId) : undefined}
+          service={
+            editingId ? services.find((s) => s.id === editingId) : undefined
+          }
           onClose={() => {
             setShowModal(false);
             setEditingId(null);
@@ -146,7 +149,7 @@ function ServiceModal({
   const [price, setPrice] = useState(service?.price ?? 0);
   const [category, setCategory] = useState(service?.category ?? "Cabelo");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSave({ name, duration, price, category });
   };

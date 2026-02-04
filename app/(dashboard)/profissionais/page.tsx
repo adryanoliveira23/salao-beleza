@@ -72,14 +72,13 @@ export default function Professionals() {
         </div>
         {professionals.length === 0 && (
           <p className="text-[#666] text-center py-12">
-            Nenhum profissional cadastrado. Adicione para começar a receber agendamentos!
+            Nenhum profissional cadastrado. Adicione para começar a receber
+            agendamentos!
           </p>
         )}
       </div>
 
-      {showModal && (
-        <ProfessionalModal onClose={() => setShowModal(false)} />
-      )}
+      {showModal && <ProfessionalModal onClose={() => setShowModal(false)} />}
     </>
   );
 }
@@ -90,7 +89,7 @@ function ProfessionalModal({ onClose }: { onClose: () => void }) {
   const [specialty, setSpecialty] = useState("Cabeleireira");
   const [commission, setCommission] = useState(40);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     addProfessional({ name, specialty, commission });
     onClose();

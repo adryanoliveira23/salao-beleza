@@ -16,8 +16,15 @@ import { useSalonData } from "@/contexts/SalonDataContext";
 export default function Agenda() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showModal, setShowModal] = useState(false);
-  const { appointments, professionals, clients, services, addAppointment, deleteAppointment, refreshFromStorage } =
-    useSalonData();
+  const {
+    appointments,
+    professionals,
+    clients,
+    services,
+    addAppointment,
+    deleteAppointment,
+    refreshFromStorage,
+  } = useSalonData();
 
   useEffect(() => {
     refreshFromStorage();
@@ -30,7 +37,7 @@ export default function Agenda() {
 
   const appointmentsForDate = useMemo(
     () => appointments.filter((apt) => apt.date === selectedDateStr),
-    [appointments, selectedDateStr]
+    [appointments, selectedDateStr],
   );
 
   const changeDate = (days: number) => {
@@ -90,31 +97,40 @@ export default function Agenda() {
                     style={{
                       gridTemplateColumns: `80px ${
                         professionals.length > 0
-                          ? professionals.map(() => "1fr").join(" ") + (appointmentsForDate.some((a) => a.professionalId === "a-definir") ? " 1fr" : "")
-                          : appointmentsForDate.some((a) => a.professionalId === "a-definir")
+                          ? professionals.map(() => "1fr").join(" ") +
+                            (appointmentsForDate.some(
+                              (a) => a.professionalId === "a-definir",
+                            )
+                              ? " 1fr"
+                              : "")
+                          : appointmentsForDate.some(
+                                (a) => a.professionalId === "a-definir",
+                              )
                             ? "1fr"
                             : "1fr"
                       }`,
                     }}
                   >
                     <div className="p-5 border-r border-[#f0f0f0]"></div>
-                    {professionals.length > 0 ? (
-                      professionals.map((prof) => (
-                        <div
-                          key={prof.id}
-                          className="p-5 text-center border-r border-[#f0f0f0] border-t-4"
-                          style={{ borderTopColor: prof.color }}
-                        >
-                          <div className="font-bold text-[#2d1b2e] mb-1">
-                            {prof.name}
+                    {professionals.length > 0
+                      ? professionals.map((prof) => (
+                          <div
+                            key={prof.id}
+                            className="p-5 text-center border-r border-[#f0f0f0] border-t-4"
+                            style={{ borderTopColor: prof.color }}
+                          >
+                            <div className="font-bold text-[#2d1b2e] mb-1">
+                              {prof.name}
+                            </div>
+                            <div className="text-[13px] text-[#666]">
+                              {prof.specialty}
+                            </div>
                           </div>
-                          <div className="text-[13px] text-[#666]">
-                            {prof.specialty}
-                          </div>
-                        </div>
-                      ))
-                    ) : null}
-                    {appointmentsForDate.some((a) => a.professionalId === "a-definir") && (
+                        ))
+                      : null}
+                    {appointmentsForDate.some(
+                      (a) => a.professionalId === "a-definir",
+                    ) && (
                       <div className="p-5 text-center border-r border-[#f0f0f0] border-t-4 border-t-[#FF6B9D]">
                         <div className="font-bold text-[#2d1b2e] mb-1">
                           A definir
@@ -129,8 +145,11 @@ export default function Agenda() {
                   <div className="max-h-[600px] overflow-y-auto custom-scrollbar">
                     {[...Array(12)].map((_, idx) => {
                       const hour = idx + 8;
-                      const cols = professionals.length > 0 ? professionals : [];
-                      const hasADefinir = appointmentsForDate.some((a) => a.professionalId === "a-definir");
+                      const cols =
+                        professionals.length > 0 ? professionals : [];
+                      const hasADefinir = appointmentsForDate.some(
+                        (a) => a.professionalId === "a-definir",
+                      );
                       return (
                         <div
                           key={idx}
@@ -151,7 +170,7 @@ export default function Agenda() {
                                 .filter(
                                   (apt) =>
                                     apt.professionalId === prof.id &&
-                                    apt.time.startsWith(`${hour}:`)
+                                    apt.time.startsWith(`${hour}:`),
                                 )
                                 .map((apt) => (
                                   <div
@@ -192,40 +211,40 @@ export default function Agenda() {
                           {hasADefinir && (
                             <div className="p-2 relative border-r border-[#f5f5f5]">
                               {appointmentsForDate
-.filter(
-                                    (apt) =>
-                                      apt.professionalId === "a-definir" &&
-                                      apt.time.startsWith(`${hour}:`)
-                                  )
-                                  .map((apt) => (
-                                    <div
-                                      key={apt.id}
-                                      className="p-3 rounded-lg border-l-4 cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all duration-300 absolute w-[calc(100%-16px)] z-10 bg-[#FF6B9D]/20 border-l-[#FF6B9D] group flex flex-col justify-between"
-                                    >
-                                      <div>
-                                        <div className="font-bold text-sm mb-1">
-                                          {apt.clientName}
-                                        </div>
-                                        <div className="text-xs text-[#666] mb-1">
-                                          {apt.serviceName}
-                                        </div>
-                                        <div className="text-[11px] text-[#999]">
-                                          {apt.time} - {apt.duration}min
-                                        </div>
+                                .filter(
+                                  (apt) =>
+                                    apt.professionalId === "a-definir" &&
+                                    apt.time.startsWith(`${hour}:`),
+                                )
+                                .map((apt) => (
+                                  <div
+                                    key={apt.id}
+                                    className="p-3 rounded-lg border-l-4 cursor-pointer hover:scale-[1.02] hover:shadow-md transition-all duration-300 absolute w-[calc(100%-16px)] z-10 bg-[#FF6B9D]/20 border-l-[#FF6B9D] group flex flex-col justify-between"
+                                  >
+                                    <div>
+                                      <div className="font-bold text-sm mb-1">
+                                        {apt.clientName}
                                       </div>
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          deleteAppointment(apt.id);
-                                        }}
-                                        className="mt-1 self-end p-1 rounded hover:bg-red-100 text-[#dc2626] transition-all"
-                                        title="Excluir agendamento"
-                                      >
-                                        <Trash2 size={14} />
-                                      </button>
+                                      <div className="text-xs text-[#666] mb-1">
+                                        {apt.serviceName}
+                                      </div>
+                                      <div className="text-[11px] text-[#999]">
+                                        {apt.time} - {apt.duration}min
+                                      </div>
                                     </div>
-                                  ))}
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteAppointment(apt.id);
+                                      }}
+                                      className="mt-1 self-end p-1 rounded hover:bg-red-100 text-[#dc2626] transition-all"
+                                      title="Excluir agendamento"
+                                    >
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                ))}
                             </div>
                           )}
                         </div>
@@ -237,8 +256,8 @@ export default function Agenda() {
                 <div className="flex flex-col items-center justify-center py-20 text-[#666]">
                   <Calendar size={48} className="mb-4 opacity-30" />
                   <p className="text-center">
-                    Adicione profissionais e serviços nas respectivas páginas para
-                    começar a usar a agenda.
+                    Adicione profissionais e serviços nas respectivas páginas
+                    para começar a usar a agenda.
                   </p>
                 </div>
               )}
@@ -299,13 +318,22 @@ function AgendaModal({
 
   const selectedClient = clients.find((c) => c.id === clientId);
   const selectedService = services.find((s) => s.id === serviceId);
-  const selectedProfessional = professionals.find((p) => p.id === professionalId);
+  const selectedProfessional = professionals.find(
+    (p) => p.id === professionalId,
+  );
 
-  const canSubmit = clients.length > 0 && services.length > 0 && professionals.length > 0;
+  const canSubmit =
+    clients.length > 0 && services.length > 0 && professionals.length > 0;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!canSubmit || !selectedClient || !selectedService || !selectedProfessional) return;
+    if (
+      !canSubmit ||
+      !selectedClient ||
+      !selectedService ||
+      !selectedProfessional
+    )
+      return;
     onSave({
       clientName: selectedClient.name,
       clientPhone: selectedClient.phone,
@@ -343,7 +371,8 @@ function AgendaModal({
         <form onSubmit={handleSubmit} className="flex flex-col flex-1">
           {!canSubmit && (
             <div className="mx-7 mt-4 p-4 bg-[#fef3c7] text-[#92400e] rounded-xl text-sm">
-              Adicione clientes, serviços e profissionais nas respectivas páginas para criar agendamentos.
+              Adicione clientes, serviços e profissionais nas respectivas
+              páginas para criar agendamentos.
             </div>
           )}
           <div className="p-7 overflow-y-auto grid grid-cols-2 gap-5">

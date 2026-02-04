@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
     }
   }, [isAuthenticated, router]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
@@ -31,7 +31,7 @@ export default function AdminLoginPage() {
     }
 
     const success = login(accessKey);
-    
+
     if (success) {
       router.push("/admin");
     } else {

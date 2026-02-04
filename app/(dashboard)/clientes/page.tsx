@@ -16,7 +16,7 @@ export default function Clients() {
     (c) =>
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.email.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search)
+      c.phone.includes(search),
   );
 
   const formatPhoneForWhatsApp = (phone: string) => {
@@ -144,14 +144,18 @@ export default function Clients() {
         </div>
         {filteredClients.length === 0 && (
           <p className="text-[#666] text-center py-12">
-            {search ? "Nenhum cliente encontrado." : "Nenhum cliente cadastrado. Adicione o primeiro!"}
+            {search
+              ? "Nenhum cliente encontrado."
+              : "Nenhum cliente cadastrado. Adicione o primeiro!"}
           </p>
         )}
       </div>
 
       {showModal && (
         <ClientModal
-          client={editingId ? clients.find((c) => c.id === editingId) : undefined}
+          client={
+            editingId ? clients.find((c) => c.id === editingId) : undefined
+          }
           onClose={() => {
             setShowModal(false);
             setEditingId(null);
@@ -181,7 +185,8 @@ export default function Clients() {
               Excluir cliente
             </h3>
             <p className="text-[#666] mb-6">
-              Tem certeza que deseja excluir este cliente? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este cliente? Esta ação não pode
+              ser desfeita.
             </p>
             <div className="flex gap-3 justify-end">
               <button
@@ -228,7 +233,7 @@ function ClientModal({
     setEmail(client?.email ?? "");
   }, [client]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onSave({ name, phone, email });
   };
@@ -252,7 +257,9 @@ function ClientModal({
         </div>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
-            <label className="block font-semibold text-sm text-[#2d1b2e] mb-1">Nome</label>
+            <label className="block font-semibold text-sm text-[#2d1b2e] mb-1">
+              Nome
+            </label>
             <input
               type="text"
               required
@@ -263,7 +270,9 @@ function ClientModal({
             />
           </div>
           <div>
-            <label className="block font-semibold text-sm text-[#2d1b2e] mb-1">Telefone</label>
+            <label className="block font-semibold text-sm text-[#2d1b2e] mb-1">
+              Telefone
+            </label>
             <input
               type="tel"
               required
@@ -274,7 +283,9 @@ function ClientModal({
             />
           </div>
           <div>
-            <label className="block font-semibold text-sm text-[#2d1b2e] mb-1">E-mail</label>
+            <label className="block font-semibold text-sm text-[#2d1b2e] mb-1">
+              E-mail
+            </label>
             <input
               type="email"
               required
