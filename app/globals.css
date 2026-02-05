@@ -8,7 +8,9 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-outfit), var(--font-geist-sans);
+  --font-serif: var(--font-playfair);
+  --font-montserrat: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
 }
 

@@ -51,9 +51,13 @@ export default function ChoosePlanPage() {
             </p>
 
             <div className="text-5xl font-bold text-[#FF6B9D] mb-6 flex items-baseline gap-2">
-              <span className="text-2xl">R$</span>
+              <span className="text-2xl font-sans font-medium text-[#FF6B9D]/80">
+                R$
+              </span>
               48,79
-              <span className="text-base font-normal text-gray-400">/mês</span>
+              <span className="text-base font-normal font-sans text-gray-400 ml-1">
+                /mês
+              </span>
             </div>
 
             <ul className="space-y-4 mb-8">

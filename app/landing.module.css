@@ -738,25 +738,33 @@
 }
 
 .pricingCard h3 {
+  font-family: var(--font-montserrat), sans-serif !important;
+  font-weight: 500 !important;
   font-size: 1.75rem;
+  margin-bottom: 1.5rem;
   color: var(--text-main);
-  margin-bottom: 1rem;
-  font-family: var(--font-playfair), serif;
+  letter-spacing: -0.02em;
 }
 
 .price {
-  font-size: 3.5rem;
-  font-weight: 700;
+  font-size: 4rem;
+  font-weight: 800;
   color: var(--primary);
   margin-bottom: 0.5rem;
-  font-family: var(--font-playfair);
+  font-family: var(--font-montserrat), sans-serif;
+  letter-spacing: -0.05em;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.25rem;
 }
 
 .price span {
-  font-size: 1.25rem;
+  font-size: 1rem;
   color: var(--text-muted);
-  font-weight: 400;
-  font-family: var(--font-playfair), serif;
+  font-weight: 500;
+  font-family: var(--font-outfit), sans-serif;
+  letter-spacing: normal;
 }
 
 .pricingFeatures {

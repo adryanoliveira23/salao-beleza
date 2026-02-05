@@ -1,17 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, Playfair_Display } from "next/font/google";
+import { Outfit, Playfair_Display, Montserrat } from "next/font/google";
 import "./globals.css";
 import { SalonDataProvider } from "@/contexts/SalonDataContext";
 import { SuppressHydrationWarning } from "./suppress-hydration-warning";
 
-const outfit = Outfit({
+const fontOutfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
 });
 
-const playfair = Playfair_Display({
+const fontPlayfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
+});
+
+const fontMontserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["latin"],
+  weight: ["400", "700", "800", "900"],
 });
 
 export const metadata: Metadata = {
@@ -32,8 +38,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body 
-        className={`${outfit.variable} ${playfair.variable} antialiased`}
+      <body
+        className={`${fontOutfit.variable} ${fontPlayfair.variable} ${fontMontserrat.variable} antialiased`}
         suppressHydrationWarning
       >
         <script
@@ -53,9 +59,7 @@ export default function RootLayout({
           }}
         />
         <SuppressHydrationWarning />
-        <SalonDataProvider>
-          {children}
-        </SalonDataProvider>
+        <SalonDataProvider>{children}</SalonDataProvider>
       </body>
     </html>
   );

@@ -352,18 +352,9 @@ export default function LandingPage() {
               <span className={styles.popularBadge}>
                 O Melhor Custo-Benefício
               </span>
-              <h3>Essencial</h3>
+              <h3>Agendly Glow</h3>
               <div className={styles.price}>
-                <span
-                  style={{
-                    fontSize: "1.5rem",
-                    verticalAlign: "top",
-                    marginTop: "10px",
-                    display: "inline-block",
-                  }}
-                >
-                  R$
-                </span>
+                <span>R$</span>
                 35,90
                 <span>/mês</span>
               </div>
