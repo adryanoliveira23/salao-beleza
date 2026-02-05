@@ -42,6 +42,7 @@ export interface PlatformUser {
   id: string;
   email: string;
   name: string;
+  salonName?: string;
   plan: PlanType;
   status: "active" | "inactive" | "suspended";
   createdAt: string;
@@ -81,7 +82,9 @@ interface PlatformConfigContextType {
   users: PlatformUser[];
   updateConfig: (updates: Partial<PlatformConfig>) => void;
   addUser: (
-    user: Omit<PlatformUser, "id" | "createdAt" | "lastLogin">,
+    user: Omit<PlatformUser, "id" | "createdAt" | "lastLogin"> & {
+      password?: string;
+    },
   ) => Promise<void>;
   updateUser: (id: string, updates: Partial<PlatformUser>) => Promise<void>;
   deleteUser: (id: string) => Promise<void>;
@@ -116,6 +119,7 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
             id: string;
             email: string;
             name: string;
+            salon_name?: string;
             plan: PlanType;
             status: PlatformUser["status"];
             created_at: string;
@@ -124,6 +128,7 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
             id: u.id,
             email: u.email,
             name: u.name,
+            salonName: u.salon_name, // Map if it exists in DB, otherwise it might be in metadata
             plan: u.plan,
             status: u.status,
             createdAt: u.created_at,
@@ -155,7 +160,9 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
   };
 
   const addUser = async (
-    userData: Omit<PlatformUser, "id" | "createdAt" | "lastLogin">,
+    userData: Omit<PlatformUser, "id" | "createdAt" | "lastLogin"> & {
+      password?: string;
+    },
   ) => {
     try {
       const result = await createPlatformUser(ADMIN_ACCESS_KEY, userData);
@@ -171,7 +178,7 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
 
       if (result.tempPassword) {
         alert(
-          `Usuário criado!\nEmail: ${userData.email}\nSenha Temporária: ${result.tempPassword}`,
+          `Usuário criado!\nEmail: ${userData.email}\nSenha: ${result.tempPassword}`,
         );
       }
     } catch (e) {

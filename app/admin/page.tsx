@@ -648,10 +648,15 @@ function UserModal({
 }: {
   user: PlatformUser | null;
   onClose: () => void;
-  onSave: (data: Omit<PlatformUser, "id" | "createdAt">) => void;
+  onSave: (
+    data: Omit<PlatformUser, "id" | "createdAt"> & { password?: string },
+  ) => void;
 }) {
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
+  const [salonName, setSalonName] = useState(user?.salonName || "");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [plan, setPlan] = useState<PlanType>(user?.plan || "essencial");
   const [status, setStatus] = useState<"active" | "inactive" | "suspended">(
     user?.status || "active",
@@ -663,12 +668,12 @@ function UserModal({
       alert("Por favor, preencha todos os campos obrigatórios");
       return;
     }
-    onSave({ name, email, plan, status });
+    onSave({ name, email, salonName, password, plan, status });
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full">
+      <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-bold text-[#2d1b2e]">
             {user ? "Editar Usuário" : "Novo Usuário"}
@@ -691,6 +696,7 @@ function UserModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
+              placeholder="Nome do profissional"
               required
             />
           </div>
@@ -704,9 +710,53 @@ function UserModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
+              placeholder="seu@email.com"
               required
             />
           </div>
+
+          {!user && (
+            <>
+              <div>
+                <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
+                  Nome do Salão
+                </label>
+                <input
+                  type="text"
+                  value={salonName}
+                  onChange={(e) => setSalonName(e.target.value)}
+                  className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
+                  placeholder="Ex: Studio Glow"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
+                  Senha
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
+                    placeholder="Mínimo 6 caracteres"
+                    minLength={6}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#FF6B9D]"
+                  >
+                    {showPassword ? <X size={16} /> : <Users size={16} />}
+                  </button>
+                </div>
+                <p className="text-xs text-[#2d1b2e]/50 mt-1">
+                  Se vazio, uma senha aleatória será gerada.
+                </p>
+              </div>
+            </>
+          )}
 
           <div>
             <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">

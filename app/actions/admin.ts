@@ -32,24 +32,26 @@ export async function getAdminData(accessKey: string) {
 
 export async function createPlatformUser(
   accessKey: string,
-  userData: Omit<PlatformUser, "id" | "createdAt" | "lastLogin">,
+  userData: Omit<PlatformUser, "id" | "createdAt" | "lastLogin"> & {
+    password?: string;
+  },
 ) {
   authorize(accessKey);
 
   // 1. Create Auth User
-  // Generate a temporary password or use a provided one.
-  // For this flow, we'll set a default password and expect the user to change it,
-  // or (better) we should ask for a password in the UI.
-  // Since the current UI doesn't ask for password, let's generate one or set a default.
-  // DEFAULT: "Mudar123!" (User should change this)
-  const tempPassword = "Mudar123!";
+  // Use provided password or generate a random one.
+  const password =
+    userData.password || Math.random().toString(36).substring(2, 10);
 
   const { data: authData, error: authError } =
     await supabaseAdmin.auth.admin.createUser({
       email: userData.email,
-      password: tempPassword,
+      password: password,
       email_confirm: true,
-      user_metadata: { name: userData.name },
+      user_metadata: {
+        name: userData.name,
+        salonName: userData.salonName,
+      },
     });
 
   if (authError)
@@ -70,8 +72,6 @@ export async function createPlatformUser(
   });
 
   if (profileError) {
-    // Rollback auth user if profile creation fails?
-    // Ideally yes, but for now just throw.
     await supabaseAdmin.auth.admin.deleteUser(userId);
     throw new Error("Erro ao criar perfil: " + profileError.message);
   }
@@ -79,7 +79,7 @@ export async function createPlatformUser(
   return {
     id: userId,
     createdAt,
-    tempPassword, // Return this so Admin can see it? Or just communicate it.
+    tempPassword: password, // Return the password used (generated or provided)
   };
 }
 
