@@ -2,6 +2,7 @@
 
 import React, { useEffect } from "react";
 import styles from "./landing.module.css";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
   Calendar,
@@ -57,11 +58,22 @@ export default function LandingPage() {
               <a href="#depoimentos">Cases de Sucesso</a>
             </li>
             <li>
-              <a href="/login" className={styles.btnNav}>
+              <a
+                href="/login"
+                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnNavCompact}`}
+              >
                 Área do Cliente
               </a>
             </li>
           </ul>
+          <div className={styles.navCtaMobileOnly}>
+            <a
+              href="/login"
+              className={`${styles.btn} ${styles.btnPrimary} ${styles.btnNavCompact}`}
+            >
+              Área do Cliente
+            </a>
+          </div>
         </div>
       </nav>
 
@@ -85,10 +97,10 @@ export default function LandingPage() {
             <div className={styles.heroCtaRow}>
               <div className={styles.heroCta}>
                 <a
-                  href="/login"
+                  href="#precos"
                   className={`${styles.btn} ${styles.btnPrimary}`}
                 >
-                  Área do Cliente
+                  Quero esse sistema
                 </a>
               </div>
               <div className={styles.heroStatsCarousel}>
@@ -352,7 +364,7 @@ export default function LandingPage() {
                 >
                   R$
                 </span>
-                48,79
+                35,90
                 <span>/mês</span>
               </div>
               <span className={styles.period}>
@@ -367,9 +379,7 @@ export default function LandingPage() {
                 <li>Suporte Premium</li>
               </ul>
               <a
-                href="https://pay.cakto.com.br/4j8q5du_754033"
-                target="_blank"
-                rel="noopener noreferrer"
+                href="/register"
                 className={`${styles.btn} ${styles.btnPrimary}`}
                 style={{
                   width: "100%",
@@ -488,16 +498,125 @@ export default function LandingPage() {
         </div>
       </footer>
 
-      {/* Floating WhatsApp Button */}
-      <a
-        href="https://wa.me/556699762785?text=Olá,preciso%20de%20ajuda%20com%20a%20Agendly%20Glow"
-        target="_blank"
-        rel="noopener noreferrer"
+      <WhatsAppWidget />
+    </div>
+  );
+}
+
+function WhatsAppWidget() {
+  const router = useRouter();
+  const [isOpen, setIsOpen] = React.useState(false);
+  const [step, setStep] = React.useState(0);
+  const [isTyping, setIsTyping] = React.useState(false);
+
+  const script = [
+    {
+      question:
+        "Olá! Notei que você está interessado em profissionalizar seu salão. Posso te fazer uma pergunta rápida?",
+      options: [
+        { text: "Claro, pode falar!", next: 1 },
+        { text: "Agora não, obrigado.", action: "close" },
+      ],
+    },
+    {
+      question:
+        "Você ainda usa papel ou planilhas para controlar seus agendamentos?",
+      options: [
+        { text: "Sim, ainda uso papel/planilha", next: 2 },
+        { text: "Já uso outro sistema", next: 2 },
+      ],
+    },
+    {
+      question:
+        "Sabia que nossos parceiros reduzem faltas em 80% e aumentam o lucro já no primeiro mês? Gostaria de ver como funciona?",
+      options: [
+        { text: "Sim! Quero ver", next: 3 },
+        { text: "Como funciona?", next: 3 },
+      ],
+    },
+    {
+      question:
+        "Perfeito! A melhor forma de começar é criando sua conta gratuita para conhecer. Vamos lá?",
+      options: [
+        { text: "Sim, vamos criar!", action: "register" },
+        { text: "Quero falar com suporte", action: "whatsapp" },
+      ],
+    },
+  ];
+
+  interface Option {
+    text: string;
+    next?: number;
+    action?: string;
+  }
+
+  const handleOption = (option: Option) => {
+    if (option.action === "close") {
+      setIsOpen(false);
+      setStep(0);
+    } else if (option.action === "register") {
+      router.push("/register");
+    } else if (option.action === "whatsapp") {
+      window.open(
+        "https://wa.me/556699762785?text=Olá,preciso%20de%20ajuda%20com%20a%20Agendly%20Glow",
+        "_blank",
+      );
+    } else if (option.next !== undefined) {
+      setIsTyping(true);
+      setTimeout(() => {
+        setStep(option.next!);
+        setIsTyping(false);
+      }, 1000);
+    }
+  };
+
+  return (
+    <div className={styles.whatsappWrapper}>
+      {isOpen && (
+        <div className={styles.whatsappChat}>
+          <div className={styles.chatHeader}>
+            <div className={styles.chatAvatar}>
+              <Sparkles size={20} />
+            </div>
+            <div>
+              <div className={styles.chatName}>Suporte Agendly</div>
+              <div className={styles.chatStatus}>Online</div>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className={styles.chatClose}
+            >
+              ×
+            </button>
+          </div>
+          <div className={styles.chatBody}>
+            <div className={styles.chatMessage}>{script[step].question}</div>
+            {isTyping && (
+              <div className={styles.typingIndicator}>Digitando...</div>
+            )}
+            {!isTyping && (
+              <div className={styles.chatOptions}>
+                {script[step].options.map((opt, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleOption(opt)}
+                    className={styles.chatOptionBtn}
+                  >
+                    {opt.text}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+      <button
         className={styles.whatsappFloat}
-        title="Fale conosco no WhatsApp"
+        onClick={() => setIsOpen(!isOpen)}
+        title="Fale conosco"
       >
         <MessageCircle size={32} />
-      </a>
+      </button>
     </div>
   );
 }

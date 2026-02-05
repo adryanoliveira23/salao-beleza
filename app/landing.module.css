@@ -119,6 +119,10 @@
   gap: 1rem;
 }
 
+.navCtaMobileOnly {
+  display: none;
+}
+
 .btn {
   padding: 0.75rem 1.75rem;
   border-radius: 12px;
@@ -140,9 +144,15 @@
 }
 
 .btnPrimary:hover {
-  background: var(--primary-dark);
+  background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(255, 107, 157, 0.4);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.btnNavCompact {
+  padding: 0.5rem 1.25rem;
+  font-size: 0.85rem;
+  border-radius: 12px;
 }
 
 .btnOutline {
@@ -690,7 +700,6 @@
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   border: 1px solid transparent;
   position: relative;
-  overflow: hidden;
 }
 
 .pricingCard:hover {
@@ -724,6 +733,8 @@
   font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
+  white-space: nowrap;
+  z-index: 10;
 }
 
 .pricingCard h3 {
@@ -961,6 +972,19 @@
   .navLinks {
     display: none;
   }
+  .navCtaMobileOnly {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .navCtaMobile .btnNav {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    text-decoration: none;
+  }
   .navCta {
     gap: 0.5rem;
   }
@@ -1074,11 +1098,19 @@
   }
 }
 
-/* Floating WhatsApp Button */
-.whatsappFloat {
+/* Floating WhatsApp Button & Widget */
+.whatsappWrapper {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.whatsappFloat {
   width: 65px;
   height: 65px;
   background-color: #25d366;
@@ -1088,10 +1120,10 @@
   align-items: center;
   justify-content: center;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  z-index: 1000;
   transition: all 0.3s ease;
   cursor: pointer;
-  text-decoration: none;
+  border: none;
+  outline: none;
 }
 
 .whatsappFloat:hover {
@@ -1100,11 +1132,132 @@
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
 
+.whatsappChat {
+  width: 320px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  animation: fadeIn 0.3s ease-out;
+  border: 1px solid rgba(255, 107, 157, 0.1);
+}
+
+.chatHeader {
+  background: var(--primary);
+  color: white;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  position: relative;
+}
+
+.chatAvatar {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chatName {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.chatStatus {
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.chatClose {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.chatClose:hover {
+  opacity: 1;
+}
+
+.chatBody {
+  padding: 1.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.chatMessage {
+  background: #f0f0f0;
+  padding: 1rem;
+  border-radius: 0 15px 15px 15px;
+  font-size: 0.9rem;
+  color: var(--text-main);
+  line-height: 1.5;
+  margin-bottom: 1.5rem;
+}
+
+.typingIndicator {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-bottom: 1rem;
+}
+
+.chatOptions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chatOptionBtn {
+  background: white;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  padding: 0.75rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.chatOptionBtn:hover {
+  background: var(--primary);
+  color: white;
+}
+
 @media (max-width: 768px) {
-  .whatsappFloat {
+  .whatsappWrapper {
     bottom: 1.5rem;
     right: 1.5rem;
+  }
+  .whatsappFloat {
     width: 55px;
     height: 55px;
+  }
+  .whatsappChat {
+    width: 280px;
+    position: fixed;
+    bottom: 5.5rem;
+    right: 1.5rem;
+  }
+}
+
+/* Fix for mobile keyboard zoom and input focus issues */
+@media (max-width: 768px) {
+  :global(input),
+  :global(select),
+  :global(textarea) {
+    font-size: 16px !important;
   }
 }

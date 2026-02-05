@@ -3,51 +3,40 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/app/lib/supabase";
 import {
   Sparkles,
   Mail,
-  Lock,
-  AlertCircle,
+  User,
+  Building2,
   ArrowRight,
   ArrowLeft,
   Eye,
   EyeOff,
+  Lock,
 } from "lucide-react";
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [salonName, setSalonName] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
 
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+    // Simulate data collection
+    localStorage.setItem(
+      "user_registration",
+      JSON.stringify({ name, email, salonName, password }),
+    );
 
-      if (error) {
-        throw error;
-      }
-
-      router.push("/dashboard");
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message || "Erro ao realizar login");
-      } else {
-        setError("Erro ao realizar login");
-      }
-    } finally {
-      setLoading(false);
-    }
+    setTimeout(() => {
+      router.push("/escolher-plano");
+    }, 1000);
   };
 
   return (
@@ -69,15 +58,36 @@ export default function LoginPage() {
               <Sparkles size={32} className="text-white" />
             </div>
             <h1 className="text-3xl font-bold text-[#2d1b2e] mb-2">
-              Bem-vindo
+              Comece agora
             </h1>
-            <p className="text-[#2d1b2e]/70">Entre para gerenciar seu salão</p>
+            <p className="text-[#2d1b2e]/70">
+              Preencha seus dados para criar sua conta
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-[#2d1b2e] mb-2">
-                Email
+                Qual seu nome?
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <User className="h-5 w-5 text-[#2d1b2e]/40" />
+                </div>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
+                  placeholder="Seu nome completo"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#2d1b2e] mb-2">
+                Melhor E-mail
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -96,7 +106,26 @@ export default function LoginPage() {
 
             <div>
               <label className="block text-sm font-medium text-[#2d1b2e] mb-2">
-                Senha
+                Nome do seu Salão
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <Building2 className="h-5 w-5 text-[#2d1b2e]/40" />
+                </div>
+                <input
+                  type="text"
+                  value={salonName}
+                  onChange={(e) => setSalonName(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
+                  placeholder="Ex: Studio Glow"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-[#2d1b2e] mb-2">
+                Escolha uma Senha
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -109,6 +138,7 @@ export default function LoginPage() {
                   className="w-full pl-12 pr-12 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
                   placeholder="••••••••"
                   required
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -120,43 +150,31 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {error && (
-              <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-                <AlertCircle size={18} />
-                <span>{error}</span>
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={loading}
               className="w-full bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white font-semibold py-3.5 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? (
-                "Entrando..."
+                "Salvando..."
               ) : (
                 <>
-                  Entrar
+                  Ver Planos
                   <ArrowRight size={20} />
                 </>
               )}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-[#2d1b2e]/10 text-center space-y-4">
+          <div className="mt-8 pt-6 border-t border-[#2d1b2e]/10 text-center space-y-2">
             <p className="text-sm text-[#2d1b2e]/50">
-              Esqueceu sua senha?{" "}
-              <a href="#" className="text-[#FF6B9D] hover:underline">
-                Recuperar acesso
-              </a>
+              Após escolher o plano e realizar o pagamento, você receberá seus
+              dados de acesso por e-mail.
             </p>
             <p className="text-sm text-[#2d1b2e]/50">
-              Ainda não tem conta?{" "}
-              <a
-                href="/register"
-                className="text-[#FF6B9D] font-bold hover:underline"
-              >
-                Crie sua conta aqui
+              Já tem conta?{" "}
+              <a href="/login" className="text-[#FF6B9D] hover:underline">
+                Fazer login
               </a>
             </p>
           </div>
