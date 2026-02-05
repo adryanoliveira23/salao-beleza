@@ -43,18 +43,24 @@ export default function ChoosePlanPage() {
             <div className="absolute top-0 right-0 bg-[#FF6B9D] text-white px-6 py-1 rounded-bl-2xl text-sm font-bold uppercase">
               Mais Vendido
             </div>
-            <h2 className="text-2xl font-bold text-[#2d1b2e] mb-2">
-              Plano Essencial
+            <h2
+              className="text-2xl font-normal text-[#2d1b2e] mb-2 font-montserrat"
+              style={{ fontFamily: "var(--font-montserrat)" }}
+            >
+              Agendly Glow
             </h2>
-            <p className="text-[#2d1b2e]/60 mb-6">
+            <p className="text-[#2d1b2e]/60 mb-6 font-sans">
               Tudo o que seu salão precisa para crescer
             </p>
 
-            <div className="text-5xl font-bold text-[#FF6B9D] mb-6 flex items-baseline gap-2">
+            <div
+              className="text-5xl font-black text-[#FF6B9D] mb-6 flex items-baseline gap-1 font-montserrat tracking-tight"
+              style={{ fontFamily: "var(--font-montserrat)" }}
+            >
               <span className="text-2xl font-sans font-medium text-[#FF6B9D]/80">
                 R$
               </span>
-              48,79
+              35,90
               <span className="text-base font-normal font-sans text-gray-400 ml-1">
                 /mês
               </span>
