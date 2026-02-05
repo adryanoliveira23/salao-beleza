@@ -5,6 +5,30 @@ import { CheckCircle2, Timer, TrendingUp, Users } from "lucide-react";
 
 export default function ChoosePlanPage() {
   const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
+  const [paymentUrl, setPaymentUrl] = useState(
+    "https://pay.cakto.com.br/4j8q5du_754033",
+  );
+
+  useEffect(() => {
+    // Attempt to get user registration data to pass to Cakto
+    const registrationData = localStorage.getItem("user_registration");
+    if (registrationData) {
+      try {
+        const { email, name, salonName } = JSON.parse(registrationData);
+        // Build dynamic URL with metadata
+        // Note: Cakto often uses query params like ?email=...&name=...
+        const baseUrl = "https://pay.cakto.com.br/4j8q5du_754033";
+        const params = new URLSearchParams();
+        if (email) params.append("email", email);
+        if (name) params.append("name", name);
+        if (salonName) params.append("metadata[salonName]", salonName);
+
+        setPaymentUrl(`${baseUrl}?${params.toString()}`);
+      } catch (e) {
+        console.error("Error parsing registration data", e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (timeLeft <= 0) return;
@@ -83,7 +107,7 @@ export default function ChoosePlanPage() {
             </ul>
 
             <a
-              href="https://pay.cakto.com.br/4j8q5du_754033"
+              href={paymentUrl}
               className="block w-full text-center bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all"
             >
               ADQUIRIR AGORA
