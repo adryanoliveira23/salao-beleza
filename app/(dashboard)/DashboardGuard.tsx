@@ -17,7 +17,7 @@ export function DashboardGuard({ children }: { children: React.ReactNode }) {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
+      <div className="min-h-dvh w-full flex items-center justify-center bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
         <Loader2 className="w-12 h-12 text-[#FF6B9D] animate-spin" />
       </div>
     );
