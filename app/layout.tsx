@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
-import { Outfit, Playfair_Display, Montserrat } from "next/font/google";
+import {
+  Outfit,
+  Playfair_Display,
+  Montserrat,
+  Great_Vibes,
+  Cormorant_Garamond,
+} from "next/font/google";
 import "./globals.css";
 import { SalonDataProvider } from "@/contexts/SalonDataContext";
 import { SuppressHydrationWarning } from "./suppress-hydration-warning";
@@ -18,6 +24,18 @@ const fontMontserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
   weight: ["400", "700", "800", "900"],
+});
+
+const fontGreatVibes = Great_Vibes({
+  variable: "--font-great-vibes",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const fontCormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -39,7 +57,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${fontOutfit.variable} ${fontPlayfair.variable} ${fontMontserrat.variable} antialiased`}
+        className={`${fontOutfit.variable} ${fontPlayfair.variable} ${fontMontserrat.variable} ${fontGreatVibes.variable} ${fontCormorant.variable} antialiased`}
         suppressHydrationWarning
       >
         <script

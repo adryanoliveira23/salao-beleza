@@ -74,7 +74,7 @@ export default function Professionals() {
         </div>
         {professionals.length === 0 && (
           <p className="text-[#666] text-center py-12">
-            Nenhum profissional cadastrado. Adicione para começar a receber
+            Nenhuma profissional cadastrada. Adicione para começar a receber
             agendamentos!
           </p>
         )}

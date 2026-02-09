@@ -81,15 +81,16 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-[#FF6B9D] to-[#C77DFF] rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-12 h-12 bg-linear-to-br from-[#FF6B9D] to-[#C77DFF] rounded-xl flex items-center justify-center shadow-lg">
                 <Shield size={24} className="text-white" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-[#2d1b2e]">
+                <h1 className="text-2xl md:text-3xl font-bold font-display text-[#2d1b2e]">
                   Painel Administrativo
                 </h1>
                 <p className="text-[#2d1b2e]/70 text-sm md:text-base">
-                  Gestão da Plataforma Agendly Glow
+                  Gestão da Plataforma{" "}
+                  <span className="font-bold ml-1">Agendly Glow</span>
                 </p>
               </div>
             </div>
@@ -121,10 +122,12 @@ export default function AdminDashboard() {
             return (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() =>
+                  setActiveTab(tab.id as "overview" | "users" | "settings")
+                }
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium ${
                   activeTab === tab.id
-                    ? "bg-gradient-to-r from-[#FF6B9D] to-[#C77DFF] text-white shadow-md"
+                    ? "bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white shadow-md"
                     : "text-[#2d1b2e]/70 hover:bg-[#ffeef8]"
                 }`}
               >
@@ -142,56 +145,56 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
                     <Users size={24} className="text-white" />
                   </div>
                 </div>
                 <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
                   Total de Usuários
                 </h3>
-                <p className="text-3xl font-bold text-[#2d1b2e]">
+                <p className="text-2xl font-bold text-[#2d1b2e]">
                   {stats.totalUsers}
                 </p>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-linear-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
                     <CheckCircle2 size={24} className="text-white" />
                   </div>
                 </div>
                 <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
                   Usuários Ativos
                 </h3>
-                <p className="text-3xl font-bold text-[#2d1b2e]">
+                <p className="text-2xl font-bold text-[#2d1b2e]">
                   {stats.activeUsers}
                 </p>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
                     <CreditCard size={24} className="text-white" />
                   </div>
                 </div>
                 <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
                   Receita Mensal
                 </h3>
-                <p className="text-2xl font-bold text-[#2d1b2e]">
+                <p className="text-xl font-bold text-[#2d1b2e]">
                   R$ {stats.monthlyRevenue.toFixed(2).replace(".", ",")}
                 </p>
               </div>
 
               <div className="bg-white rounded-xl shadow-lg p-6">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-linear-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
                     <DollarSign size={24} className="text-white" />
                   </div>
                 </div>
                 <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
                   Taxa de Receita
                 </h3>
-                <p className="text-3xl font-bold text-[#2d1b2e]">
+                <p className="text-2xl font-bold text-[#2d1b2e]">
                   {config.revenueRate}%
                 </p>
               </div>
@@ -201,7 +204,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-1 gap-4">
               <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#FF6B9D]">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#FF6B9D] to-[#C77DFF] rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-linear-to-br from-[#FF6B9D] to-[#C77DFF] rounded-lg flex items-center justify-center">
                     <CreditCard size={20} className="text-white" />
                   </div>
                   <div>
@@ -214,7 +217,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-2xl font-bold text-[#2d1b2e]">
+                  <p className="text-xl font-bold text-[#2d1b2e]">
                     {stats.essencialUsers}
                   </p>
                   <p className="text-sm text-[#2d1b2e]/70">usuários</p>
@@ -230,7 +233,7 @@ export default function AdminDashboard() {
             {/* Recent Users */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-[#2d1b2e]">
+                <h2 className="text-2xl font-bold font-display text-[#2d1b2e]">
                   Usuários Recentes
                 </h2>
                 <button
@@ -238,7 +241,7 @@ export default function AdminDashboard() {
                     setEditingUser(null);
                     setShowUserModal(true);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
                 >
                   <UserPlus size={18} />
                   Novo Usuário
@@ -302,7 +305,7 @@ export default function AdminDashboard() {
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold text-[#2d1b2e]">
+                <h2 className="text-2xl font-bold font-display text-[#2d1b2e]">
                   Gestão de Usuários
                 </h2>
                 <button
@@ -310,7 +313,7 @@ export default function AdminDashboard() {
                     setEditingUser(null);
                     setShowUserModal(true);
                   }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
                 >
                   <UserPlus size={18} />
                   Novo Usuário
@@ -434,7 +437,7 @@ export default function AdminDashboard() {
         {activeTab === "settings" && (
           <div className="space-y-6">
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-xl font-bold text-[#2d1b2e] mb-6">
+              <h2 className="text-2xl font-bold font-display text-[#2d1b2e] mb-6">
                 Configurações da Plataforma
               </h2>
 
@@ -555,7 +558,7 @@ export default function AdminDashboard() {
 
                 {/* Preços dos Planos */}
                 <div className="space-y-4 pt-4 border-t border-[#2d1b2e]/10">
-                  <h3 className="text-lg font-bold text-[#2d1b2e] mb-4">
+                  <h3 className="text-xl font-bold font-display text-[#2d1b2e] mb-4">
                     Preços dos Planos
                   </h3>
 
@@ -610,7 +613,7 @@ export default function AdminDashboard() {
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full">
-            <h3 className="text-xl font-bold text-[#2d1b2e] mb-2">
+            <h3 className="text-2xl font-bold font-display text-[#2d1b2e] mb-2">
               Confirmar Exclusão
             </h3>
             <p className="text-[#2d1b2e]/70 mb-6">
@@ -675,7 +678,7 @@ function UserModal({
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-bold text-[#2d1b2e]">
+          <h3 className="text-2xl font-bold font-display text-[#2d1b2e]">
             {user ? "Editar Usuário" : "Novo Usuário"}
           </h3>
           <button
@@ -801,7 +804,7 @@ function UserModal({
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
+              className="flex-1 px-4 py-2 bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
             >
               Salvar
             </button>

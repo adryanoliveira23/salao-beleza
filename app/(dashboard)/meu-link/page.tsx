@@ -52,13 +52,13 @@ export default function MeuLinkPage() {
                   Compartilhe seu link
                 </h2>
                 <p className="text-sm text-[#666]">
-                  Envie para seus clientes agendarem online
+                  Envie para suas clientes agendarem online
                 </p>
               </div>
             </div>
 
             <p className="text-[#666] mb-6">
-              Compartilhe este link com seus clientes para que eles agendem
+              Compartilhe este link com suas clientes para que elas agendem
               online. Os agendamentos aparecerão automaticamente na sua agenda.
             </p>
 
@@ -101,7 +101,7 @@ export default function MeuLinkPage() {
 
             <p className="text-xs text-[#999] mt-6">
               Clique em &quot;Abrir página de agendamento&quot; para visualizar
-              como seus clientes verão o formulário.
+              como suas clientes verão o formulário.
             </p>
           </div>
         </div>

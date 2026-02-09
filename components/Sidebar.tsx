@@ -47,7 +47,7 @@ export function Sidebar() {
         <div className="flex items-center justify-between gap-3 p-4 md:p-8 border-b border-white/20">
           <div className="flex items-center gap-3">
             <Scissors size={28} className="md:w-8 md:h-8 shrink-0" />
-            <span className="text-xl md:text-2xl font-bold font-serif">
+            <span className="text-2xl md:text-3xl font-bold font-script mt-1">
               Agendly Glow
             </span>
           </div>

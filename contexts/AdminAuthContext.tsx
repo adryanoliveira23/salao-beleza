@@ -1,6 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from "react";
 
 const ADMIN_ACCESS_KEY = "Adiel&Adryan2026@!";
 const ADMIN_SESSION_KEY = "admin_session";
@@ -12,7 +18,9 @@ interface AdminAuthContextType {
   isLoading: boolean;
 }
 
-const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
+const AdminAuthContext = createContext<AdminAuthContextType | undefined>(
+  undefined,
+);
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
   // Inicializar sempre como false para evitar diferenças de hidratação
@@ -46,8 +54,18 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const value = React.useMemo(
+    () => ({
+      isAuthenticated,
+      login,
+      logout,
+      isLoading,
+    }),
+    [isAuthenticated, isLoading],
+  );
+
   return (
-    <AdminAuthContext.Provider value={{ isAuthenticated, login, logout, isLoading }}>
+    <AdminAuthContext.Provider value={value}>
       {children}
     </AdminAuthContext.Provider>
   );

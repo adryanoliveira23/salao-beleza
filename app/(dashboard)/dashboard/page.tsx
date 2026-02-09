@@ -110,7 +110,7 @@ export default function Dashboard() {
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 2xl:p-10">
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
           {/* Revenue Card */}
-          <div className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-6 2xl:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
+          <div className="bg-white rounded-[24px] md:rounded-[32px] p-4 md:p-6 2xl:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#D45D79]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
             <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-linear-to-br from-[#10b981] to-[#059669] text-white">
               <DollarSign size={22} className="md:w-7 md:h-7" />
             </div>
@@ -118,7 +118,7 @@ export default function Dashboard() {
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Receita Hoje
               </span>
-              <span className="text-xl md:text-[28px] font-semibold [font-family:var(--font-outfit)] text-[#2d1b2e] truncate">
+              <span className="text-xl md:text-2xl font-semibold font-display text-[#2d1b2e] truncate">
                 R$ {todayRevenue.toFixed(2)}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
@@ -128,7 +128,7 @@ export default function Dashboard() {
           </div>
 
           {/* Appointments Card */}
-          <div className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
+          <div className="bg-white rounded-[24px] md:rounded-[32px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#D45D79]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
             <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white">
               <Calendar size={22} className="md:w-7 md:h-7" />
             </div>
@@ -136,7 +136,7 @@ export default function Dashboard() {
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Agendamentos Hoje
               </span>
-              <span className="text-xl md:text-[28px] font-semibold [font-family:var(--font-outfit)] text-[#2d1b2e]">
+              <span className="text-xl md:text-2xl font-semibold font-display text-[#2d1b2e]">
                 {todayAppointmentsList.length}
               </span>
               <span className="text-[12px] font-semibold text-[#f59e0b]">
@@ -146,7 +146,7 @@ export default function Dashboard() {
           </div>
 
           {/* Clients Card */}
-          <div className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
+          <div className="bg-white rounded-[24px] md:rounded-[32px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#D45D79]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
             <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-linear-to-br from-[#3b82f6] to-[#2563eb] text-white">
               <Users size={22} className="md:w-7 md:h-7" />
             </div>
@@ -154,17 +154,17 @@ export default function Dashboard() {
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Total de Clientes
               </span>
-              <span className="text-xl md:text-[28px] font-semibold [font-family:var(--font-outfit)] text-[#2d1b2e]">
+              <span className="text-xl md:text-2xl font-semibold font-display text-[#2d1b2e]">
                 {clients.length}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
-                Cadastrados
+                Cadastradas
               </span>
             </div>
           </div>
 
           {/* Monthly Revenue Card */}
-          <div className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
+          <div className="bg-white rounded-[24px] md:rounded-[32px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#D45D79]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
             <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-linear-to-br from-[#f59e0b] to-[#d97706] text-white">
               <TrendingUp size={22} className="md:w-7 md:h-7" />
             </div>
@@ -172,7 +172,7 @@ export default function Dashboard() {
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Receita Mensal
               </span>
-              <span className="text-xl md:text-[28px] font-semibold [font-family:var(--font-outfit)] text-[#2d1b2e] truncate">
+              <span className="text-xl md:text-2xl font-semibold font-display text-[#2d1b2e] truncate">
                 R$ {monthlyRevenue.toLocaleString()}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
@@ -182,9 +182,9 @@ export default function Dashboard() {
           </div>
 
           {/* Appointments Today List */}
-          <div className="col-span-1 2xl:col-span-2 bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-6 2xl:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10">
+          <div className="col-span-1 2xl:col-span-2 bg-white rounded-[24px] md:rounded-[32px] p-4 md:p-6 2xl:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#D45D79]/10">
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4 md:mb-6">
-              <h3 className="text-base md:text-lg font-bold font-serif text-[#2d1b2e]">
+              <h3 className="text-xl md:text-2xl font-bold font-display text-[#2d1b2e]">
                 Próximos Agendamentos
               </h3>
               <button
@@ -249,16 +249,16 @@ export default function Dashboard() {
               {todayAppointmentsList.length === 0 && (
                 <p className="text-[#666] text-sm py-4 text-center">
                   Nenhum agendamento para hoje. Compartilhe seu link de
-                  agendamento com os clientes!
+                  agendamento com suas clientes!
                 </p>
               )}
             </div>
           </div>
 
           {/* Top Services Chart */}
-          <div className="col-span-1 2xl:col-span-2 bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-6 2xl:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10">
+          <div className="col-span-1 2xl:col-span-2 bg-white rounded-[24px] md:rounded-[32px] p-4 md:p-6 2xl:p-7 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#D45D79]/10">
             <div className="flex justify-between items-center mb-4 md:mb-6">
-              <h3 className="text-base md:text-lg font-bold font-serif text-[#2d1b2e]">
+              <h3 className="text-xl md:text-2xl font-bold font-display text-[#2d1b2e]">
                 Serviços Mais Populares
               </h3>
             </div>

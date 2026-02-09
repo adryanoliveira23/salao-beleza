@@ -116,7 +116,7 @@ export default function LandingPage() {
             >
               Gestão inteligente que une agendamento, financeiro e marketing em
               uma experiência premium. Deixe a tecnologia cuidar da rotina
-              enquanto você cuida da beleza dos seus clientes.
+              enquanto você cuida da beleza das suas clientes.
             </p>
             <div
               className={styles.heroCtaRow}

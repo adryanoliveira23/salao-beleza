@@ -48,7 +48,7 @@ export function Header({ title }: HeaderProps) {
         >
           <Menu size={24} />
         </button>
-        <h1 className="text-lg md:text-2xl font-bold font-serif text-[#2d1b2e] truncate max-w-[200px] md:max-w-[400px]">
+        <h1 className="text-xl md:text-2xl font-bold font-display text-[#2d1b2e] truncate max-w-[200px] md:max-w-[400px]">
           {displayTitle}
         </h1>
       </div>

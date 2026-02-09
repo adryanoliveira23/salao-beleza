@@ -335,7 +335,7 @@ export default function Settings() {
                   Link de Agendamento
                 </h3>
                 <p className="text-[#666] mb-6">
-                  Compartilhe este link com seus clientes para que eles agendem
+                  Compartilhe este link com suas clientes para que elas agendem
                   online. Os agendamentos aparecerão automaticamente na sua
                   agenda.
                 </p>
