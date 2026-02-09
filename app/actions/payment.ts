@@ -36,6 +36,12 @@ export async function processPaymentAndCreateUser(
         id: userData.user.id,
         email,
         name,
+        salon_name: salonName,
+        username:
+          email
+            .split("@")[0]
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, "") + Math.floor(Math.random() * 1000),
         plan: "essencial",
         status: "active",
       });

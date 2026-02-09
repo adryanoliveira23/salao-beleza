@@ -9,6 +9,9 @@ interface Profile {
   id: string;
   name: string;
   email: string;
+  salon_name?: string;
+  username?: string;
+  avatar_url?: string;
   plan: "essencial" | "profissional" | "enterprise";
   status: "active" | "inactive" | "suspended";
 }
@@ -18,6 +21,7 @@ interface AuthContextType {
   profile: Profile | null;
   isLoading: boolean;
   signOut: () => Promise<void>;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,6 +29,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   isLoading: true,
   signOut: async () => {},
+  refreshProfile: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -35,7 +40,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error("AuthContext: Error getting session:", error);
+        setIsLoading(false);
+        return;
+      }
+
+      console.log("AuthContext: Session retrieved", session?.user?.id);
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
@@ -62,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
+      console.log("AuthContext: Fetching profile for", userId);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
@@ -69,12 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
-        console.error("Error fetching profile:", error);
+        console.error("AuthContext: Error fetching profile:", error);
       } else {
+        console.log("AuthContext: Profile fetched successfully");
         setProfile(data);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("AuthContext: Unexpected error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -87,8 +101,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push("/login");
   };
 
+  const refreshProfile = async () => {
+    if (user) {
+      await fetchProfile(user.id);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, profile, isLoading, signOut }}>
+    <AuthContext.Provider
+      value={{ user, profile, isLoading, signOut, refreshProfile }}
+    >
       {children}
     </AuthContext.Provider>
   );

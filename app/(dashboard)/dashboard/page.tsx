@@ -16,7 +16,13 @@ import { useSalonData } from "@/contexts/SalonDataContext";
 
 export default function Dashboard() {
   const router = useRouter();
-  const { appointments, clients, deleteAppointment, realizedRevenueByDate = {}, refreshFromStorage } = useSalonData();
+  const {
+    appointments,
+    clients,
+    deleteAppointment,
+    realizedRevenueByDate = {},
+    refreshFromStorage,
+  } = useSalonData();
 
   useEffect(() => {
     refreshFromStorage();
@@ -51,33 +57,37 @@ export default function Dashboard() {
 
   const todayAppointmentsList = useMemo(
     () => appointments.filter((apt) => apt.date === today),
-    [appointments, today]
+    [appointments, today],
   );
 
   const todayRevenue = useMemo(
     () =>
       todayAppointmentsList.reduce((sum, apt) => sum + apt.price, 0) +
       (realizedRevenueByDate[today] || 0),
-    [todayAppointmentsList, realizedRevenueByDate, today]
+    [todayAppointmentsList, realizedRevenueByDate, today],
   );
 
   const monthlyAppointments = useMemo(
     () => appointments.filter((apt) => apt.date.startsWith(thisMonth)),
-    [appointments, thisMonth]
+    [appointments, thisMonth],
   );
 
   const monthlyRevenue = useMemo(() => {
-    const fromAppointments = monthlyAppointments.reduce((sum, apt) => sum + apt.price, 0);
+    const fromAppointments = monthlyAppointments.reduce(
+      (sum, apt) => sum + apt.price,
+      0,
+    );
     const fromRealized = Object.entries(realizedRevenueByDate).reduce(
       (sum, [date, value]) => (date.startsWith(thisMonth) ? sum + value : sum),
-      0
+      0,
     );
     return fromAppointments + fromRealized;
   }, [monthlyAppointments, realizedRevenueByDate, thisMonth]);
 
   const pendingCount = useMemo(
-    () => todayAppointmentsList.filter((apt) => apt.status === "pending").length,
-    [todayAppointmentsList]
+    () =>
+      todayAppointmentsList.filter((apt) => apt.status === "pending").length,
+    [todayAppointmentsList],
   );
 
   const serviceCounts = useMemo(() => {
@@ -101,14 +111,14 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
           {/* Revenue Card */}
           <div className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-6 2xl:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
-            <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[#10b981] to-[#059669] text-white">
+            <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-linear-to-br from-[#10b981] to-[#059669] text-white">
               <DollarSign size={22} className="md:w-7 md:h-7" />
             </div>
             <div className="flex flex-col justify-center gap-1 min-w-0">
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Receita Hoje
               </span>
-              <span className="text-xl md:text-[28px] font-bold font-serif text-[#2d1b2e] truncate">
+              <span className="text-xl md:text-[28px] font-semibold [font-family:var(--font-outfit)] text-[#2d1b2e] truncate">
                 R$ {todayRevenue.toFixed(2)}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
@@ -119,14 +129,14 @@ export default function Dashboard() {
 
           {/* Appointments Card */}
           <div className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
-            <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[#FF6B9D] to-[#C73866] text-white">
+            <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white">
               <Calendar size={22} className="md:w-7 md:h-7" />
             </div>
             <div className="flex flex-col justify-center gap-1 min-w-0">
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Agendamentos Hoje
               </span>
-              <span className="text-xl md:text-[28px] font-bold font-serif text-[#2d1b2e]">
+              <span className="text-xl md:text-[28px] font-semibold [font-family:var(--font-outfit)] text-[#2d1b2e]">
                 {todayAppointmentsList.length}
               </span>
               <span className="text-[12px] font-semibold text-[#f59e0b]">
@@ -137,14 +147,14 @@ export default function Dashboard() {
 
           {/* Clients Card */}
           <div className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
-            <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white">
+            <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-linear-to-br from-[#3b82f6] to-[#2563eb] text-white">
               <Users size={22} className="md:w-7 md:h-7" />
             </div>
             <div className="flex flex-col justify-center gap-1 min-w-0">
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Total de Clientes
               </span>
-              <span className="text-xl md:text-[28px] font-bold font-serif text-[#2d1b2e]">
+              <span className="text-xl md:text-[28px] font-semibold [font-family:var(--font-outfit)] text-[#2d1b2e]">
                 {clients.length}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
@@ -155,14 +165,14 @@ export default function Dashboard() {
 
           {/* Monthly Revenue Card */}
           <div className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-7 flex gap-3 md:gap-5 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300">
-            <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-gradient-to-br from-[#f59e0b] to-[#d97706] text-white">
+            <div className="w-[48px] h-[48px] md:w-[60px] md:h-[60px] rounded-xl md:rounded-2xl flex items-center justify-center shrink-0 bg-linear-to-br from-[#f59e0b] to-[#d97706] text-white">
               <TrendingUp size={22} className="md:w-7 md:h-7" />
             </div>
             <div className="flex flex-col justify-center gap-1 min-w-0">
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Receita Mensal
               </span>
-              <span className="text-xl md:text-[28px] font-bold font-serif text-[#2d1b2e] truncate">
+              <span className="text-xl md:text-[28px] font-semibold [font-family:var(--font-outfit)] text-[#2d1b2e] truncate">
                 R$ {monthlyRevenue.toLocaleString()}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
@@ -238,7 +248,8 @@ export default function Dashboard() {
               ))}
               {todayAppointmentsList.length === 0 && (
                 <p className="text-[#666] text-sm py-4 text-center">
-                  Nenhum agendamento para hoje. Compartilhe seu link de agendamento com os clientes!
+                  Nenhum agendamento para hoje. Compartilhe seu link de
+                  agendamento com os clientes!
                 </p>
               )}
             </div>
@@ -265,7 +276,7 @@ export default function Dashboard() {
                     </div>
                     <div className="h-2 bg-[#f0f0f0] rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-gradient-to-r from-[#FF6B9D] to-[#C73866] rounded-full transition-all duration-700 ease-out"
+                        className="h-full bg-linear-to-r from-[#FF6B9D] to-[#C73866] rounded-full transition-all duration-700 ease-out"
                         style={{
                           width: `${(service.count / maxServiceCount) * 100}%`,
                         }}

@@ -16,6 +16,9 @@ import {
   Clock,
   DollarSign,
 } from "lucide-react";
+import { DemoSection } from "@/components/LandingPage/DemoSection";
+import { FAQSection } from "@/components/LandingPage/FAQSection";
+import { SegmentsSection } from "@/components/LandingPage/SegmentsSection";
 
 export default function LandingPage() {
   useEffect(() => {
@@ -80,92 +83,75 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContainer}>
-          <div className={styles.heroContent}>
+          <div
+            className={styles.heroContent}
+            style={{
+              textAlign: "center",
+              margin: "0 auto",
+              paddingBottom: "2rem",
+            }}
+          >
             <span className={styles.heroBadge}>
               ✨ Software nº 1 para Salões de Beleza e Spas
             </span>
-            <h1>
+            <h1
+              style={{
+                fontSize: "3.5rem",
+                lineHeight: "1.1",
+                marginBottom: "1.5rem",
+              }}
+            >
               Eleve o nível do seu
               <br />
-              <span className={styles.gradientText}>salão de beleza</span>
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary-dark">
+                salão de beleza
+              </span>
             </h1>
-            <p>
+            <p
+              style={{
+                maxWidth: "700px",
+                margin: "0 auto 2rem",
+                fontSize: "1.2rem",
+              }}
+            >
               Gestão inteligente que une agendamento, financeiro e marketing em
               uma experiência premium. Deixe a tecnologia cuidar da rotina
               enquanto você cuida da beleza dos seus clientes.
             </p>
-            <div className={styles.heroCtaRow}>
-              <div className={styles.heroCta}>
+            <div
+              className={styles.heroCtaRow}
+              style={{ justifyContent: "center" }}
+            >
+              <div
+                className={styles.heroCta}
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                }}
+              >
                 <a
                   href="#precos"
                   className={`${styles.btn} ${styles.btnPrimary}`}
                 >
                   Quero esse sistema
                 </a>
-              </div>
-              <div className={styles.heroStatsCarousel}>
-                <div className={styles.heroStatsTrack}>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>+8.5k</span>
-                    <span className={styles.statLabel}>Salões Parceiros</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>99%</span>
-                    <span className={styles.statLabel}>Aprovação</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>+1.2M</span>
-                    <span className={styles.statLabel}>Agendamentos/mês</span>
-                  </div>
-                  {/* Duplicados para loop infinito */}
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>+8.5k</span>
-                    <span className={styles.statLabel}>Salões Parceiros</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>99%</span>
-                    <span className={styles.statLabel}>Aprovação</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>+1.2M</span>
-                    <span className={styles.statLabel}>Agendamentos/mês</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className={styles.heroVisual}>
-            <div className={styles.dashboardMock}>
-              <div className={styles.dashHeader}>
-                <div className={styles.dashTitle}>Visão Geral do Negócio</div>
-                <div className={styles.dashTime}>Atualizado em tempo real</div>
-              </div>
-              <div className={styles.metricsGrid}>
-                <div className={styles.metricBox}>
-                  <div className={styles.metricLabel}>Faturamento Diário</div>
-                  <div className={styles.metricValue}>R$ 2.845,90</div>
-                  <div className={styles.metricTrend}>↗ +28% meta diária</div>
-                </div>
-                <div className={styles.metricBox}>
-                  <div className={styles.metricLabel}>Agendamentos</div>
-                  <div className={styles.metricValue}>23</div>
-                  <div className={styles.metricTrend}>↗ 8 para confirmar</div>
-                </div>
-                <div className={styles.metricBox}>
-                  <div className={styles.metricLabel}>Ticket Médio</div>
-                  <div className={styles.metricValue}>R$ 185,50</div>
-                  <div className={styles.metricTrend}>↗ +12% este mês</div>
-                </div>
-                <div className={styles.metricBox}>
-                  <div className={styles.metricLabel}>Retenção</div>
-                  <div className={styles.metricValue}>85%</div>
-                  <div className={styles.metricTrend}>↗ Clientes fiéis</div>
-                </div>
+                <a
+                  href="#demo"
+                  className={`${styles.btn} ${styles.btnWhite}`}
+                  style={{ border: "2px solid #f0f0f0" }}
+                >
+                  Ver Demonstração
+                </a>
               </div>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Interactive Demo Section */}
+      <DemoSection />
 
       {/* Transformation Section */}
       <section className={styles.transformation}>
@@ -331,6 +317,9 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Segments Section */}
+      <SegmentsSection />
+
       {/* Pricing */}
       <section className={styles.pricing} id="precos">
         <div className={styles.pricingContainer}>
@@ -384,6 +373,9 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <FAQSection />
 
       {/* CTA Final */}
       <section className={styles.ctaFinal}>

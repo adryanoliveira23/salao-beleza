@@ -3,6 +3,12 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Default Theme (Pink) */
+  --primary: #ff6b9d;
+  --primary-dark: #c73866;
+  --primary-light: #ffeef8;
+  --primary-light-hover: #fff5f7;
 }
 
 @theme inline {
@@ -12,6 +18,11 @@
   --font-serif: var(--font-playfair);
   --font-montserrat: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
+
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-light: var(--primary-light);
+  --color-primary-light-hover: var(--primary-light-hover);
 }
 
 @media (prefers-color-scheme: dark) {

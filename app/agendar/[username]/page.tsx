@@ -3,11 +3,32 @@
 export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  useSalonData,
-  saveAppointmentToStorage,
-} from "@/contexts/SalonDataContext";
+import { supabase } from "@/app/lib/supabase";
+import { useParams } from "next/navigation";
 
+// Types matching Supabase
+interface Service {
+  id: string;
+  name: string;
+  duration: number;
+  price: number;
+  category: string;
+}
+
+interface Professional {
+  id: string;
+  name: string;
+  specialty: string;
+  commission: number;
+}
+
+interface Appointment {
+  date: string;
+  time: string;
+  duration: number;
+}
+
+// Reuse logic from previous implementation
 const SLOT_START = 8;
 const SLOT_END = 18;
 const SLOT_INTERVAL = 30;
@@ -45,8 +66,19 @@ function formatPhone(value: string): string {
 }
 
 export default function AgendarPage() {
-  const { services, professionals, appointments, refreshFromStorage } =
-    useSalonData();
+  const params = useParams();
+  const username = params?.username as string;
+
+  const [salonUserId, setSalonUserId] = useState<string | null>(null);
+  const [salonName, setSalonName] = useState<string>("");
+  const [loadingSalon, setLoadingSalon] = useState(true);
+
+  const [services, setServices] = useState<Service[]>([]);
+  const [professionals, setProfessionals] = useState<Professional[]>([]);
+  const [existingAppointments, setExistingAppointments] = useState<
+    Appointment[]
+  >([]);
+
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
 
@@ -71,6 +103,74 @@ export default function AgendarPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("");
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
 
+  // Fetch Salon User ID from Username
+  useEffect(() => {
+    async function fetchSalonUser() {
+      if (!username) return;
+      setLoadingSalon(true);
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, salon_name")
+        .eq("username", username)
+        .single();
+
+      if (data) {
+        setSalonUserId(data.id);
+        setSalonName(data.salon_name || "Salão de Beleza");
+      } else {
+        console.error("Salon not found", error);
+        setError("Salão não encontrado.");
+      }
+      setLoadingSalon(false);
+    }
+    fetchSalonUser();
+  }, [username]);
+
+  // Fetch Data (Services, Professionals) when salonUserId is set
+  useEffect(() => {
+    if (!salonUserId) return;
+
+    async function fetchData() {
+      const { data: sData } = await supabase
+        .from("services")
+        .select("*")
+        .eq("user_id", salonUserId);
+
+      if (sData)
+        setServices(
+          sData.map((s: any) => ({ ...s, category: s.category || "Outros" })),
+        );
+
+      const { data: pData } = await supabase
+        .from("professionals")
+        .select("*")
+        .eq("user_id", salonUserId);
+
+      if (pData)
+        setProfessionals(
+          pData.map((p: any) => ({ ...p, specialty: p.specialty || "" })),
+        );
+    }
+    fetchData();
+  }, [salonUserId]);
+
+  // Fetch Appointments for check availability
+  useEffect(() => {
+    if (!salonUserId || !form.date) return;
+
+    async function fetchAppointments() {
+      const { data } = await supabase
+        .from("appointments")
+        .select("date, time, duration")
+        .eq("user_id", salonUserId)
+        .eq("date", form.date)
+        .neq("status", "cancelled");
+
+      if (data) setExistingAppointments(data);
+    }
+    fetchAppointments();
+  }, [salonUserId, form.date]);
+
   const filteredServices = useMemo(() => {
     if (!selectedCategory) return services;
     return services.filter((s) => {
@@ -89,7 +189,9 @@ export default function AgendarPage() {
       form.serviceId &&
       !filteredServices.some((s) => s.id === form.serviceId)
     ) {
-      setForm((f) => ({ ...f, serviceId: "" }));
+      // Fix synchronous setState in effect by wrapping in setTimeout or just letting it be if logical
+      // But here we are just clearing invalid selection, likely fine.
+      setTimeout(() => setForm((f) => ({ ...f, serviceId: "" })), 0);
     }
   }, [filteredServices, form.serviceId]);
 
@@ -100,8 +202,8 @@ export default function AgendarPage() {
 
   const occupiedSlots = useMemo(() => {
     const occupied = new Set<string>();
-    for (const apt of appointments) {
-      if (apt.date !== form.date) continue;
+    for (const apt of existingAppointments) {
+      if (apt.date !== form.date) continue; // Should already be filtered by query but double check
       const startMin = parseTimeToMinutes(apt.time);
       const endMin = startMin + apt.duration;
       for (const slot of TIME_SLOTS) {
@@ -112,7 +214,7 @@ export default function AgendarPage() {
       }
     }
     return occupied;
-  }, [appointments, form.date]);
+  }, [existingAppointments, form.date]);
 
   const selectedDateObj = useMemo(() => {
     if (!form.date) return null;
@@ -154,9 +256,14 @@ export default function AgendarPage() {
     return `${weekday}, ${dayMonth}`;
   }, [selectedDateObj, isToday, isTomorrow]);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
+
+    if (!salonUserId) {
+      setError("Erro no salão. Tente recarregar a página.");
+      return;
+    }
 
     if (!form.clientName?.trim()) {
       setError("Preencha seu nome.");
@@ -184,34 +291,42 @@ export default function AgendarPage() {
       return;
     }
 
-    const professionalId = form.professionalId || "a-definir";
-    const professionalName = selectedProfessional?.name || "A definir";
-
     if (professionals.length > 0 && !form.professionalId) {
       setError("Selecione o profissional.");
       return;
     }
 
     try {
-      saveAppointmentToStorage({
-        clientName: form.clientName,
-        clientPhone: form.clientPhone,
-        clientEmail: form.clientEmail || "não informado",
-        serviceId: form.serviceId,
-        serviceName: selectedService.name,
-        professionalId,
-        professionalName,
-        date: form.date,
-        time: form.time,
-        duration: selectedService.duration,
-        price: selectedService.price,
-        status: "pending",
-        hairType: form.hairType || undefined,
-        skinType: form.skinType || undefined,
-        allergies: form.allergies || undefined,
-        observations: form.observations || undefined,
-      });
-      refreshFromStorage();
+      // Find or create client logic can be handled in backend or simplistic here
+      // For now we just insert the appointment with snapshot data
+
+      const { error: insertError } = await supabase
+        .from("appointments")
+        .insert({
+          user_id: salonUserId,
+          client_id: null, // Public booking doesn't link to a client ID in auth sense yet, or we'd need to lookup
+          service_id: form.serviceId,
+          professional_id: form.professionalId || null,
+          date: form.date,
+          time: form.time,
+          duration: selectedService.duration,
+          price: selectedService.price,
+          status: "pending",
+          client_name: form.clientName,
+          client_phone: form.clientPhone,
+          client_email: form.clientEmail,
+          service_name: selectedService.name,
+          professional_name: selectedProfessional?.name || "A definir",
+          hair_type: form.hairType,
+          skin_type: form.skinType,
+          allergies: form.allergies,
+          observations: form.observations,
+        });
+
+      if (insertError) {
+        throw insertError;
+      }
+
       setSubmitted(true);
       setForm({
         clientName: "",
@@ -227,9 +342,31 @@ export default function AgendarPage() {
         observations: "",
       });
     } catch (err) {
+      console.error(err);
       setError("Erro ao salvar. Tente novamente.");
     }
   };
+
+  if (loadingSalon) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
+        <p className="text-[#FF6B9D] animate-pulse">Carregando salão...</p>
+      </div>
+    );
+  }
+
+  if (error === "Salão não encontrado.") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-[#2d1b2e] mb-2">
+            Salão não encontrado
+          </h1>
+          <p className="text-[#666]">Verifique o link e tente novamente.</p>
+        </div>
+      </div>
+    );
+  }
 
   if (submitted) {
     return (
@@ -242,8 +379,8 @@ export default function AgendarPage() {
             Agendamento realizado!
           </h1>
           <p className="text-[#666] mb-6">
-            Seu agendamento foi enviado com sucesso. O salão entrará em contato
-            para confirmar.
+            Seu agendamento em <strong>{salonName}</strong> foi enviado com
+            sucesso.
           </p>
           <button
             onClick={() => setSubmitted(false)}
@@ -260,10 +397,10 @@ export default function AgendarPage() {
     <div className="min-h-screen bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
       <main className="max-w-2xl mx-auto p-4 md:p-8 py-12">
         <h1 className="text-2xl md:text-3xl font-bold text-[#2d1b2e] mb-2 text-center [font-family:var(--font-outfit)]">
-          Agende seu horário
+          {salonName}
         </h1>
         <p className="text-[#666] text-center mb-8 [font-family:var(--font-outfit)]">
-          Preencha o formulário abaixo para agendar seu atendimento.
+          Agende seu horário
         </p>
 
         <form
@@ -478,7 +615,7 @@ export default function AgendarPage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, clientName: e.target.value }))
                 }
-                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
                 placeholder="Seu nome completo"
               />
             </div>
@@ -497,7 +634,7 @@ export default function AgendarPage() {
                     clientPhone: formatPhone(e.target.value),
                   }))
                 }
-                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
                 placeholder="(00) 00000-0000"
                 maxLength={16}
               />
@@ -513,7 +650,7 @@ export default function AgendarPage() {
                 onChange={(e) =>
                   setForm((f) => ({ ...f, clientEmail: e.target.value }))
                 }
-                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
                 placeholder="seu@email.com"
               />
             </div>
@@ -529,7 +666,7 @@ export default function AgendarPage() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, professionalId: e.target.value }))
                   }
-                  className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                  className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
                 >
                   <option value="">Selecione o profissional</option>
                   {professionals.map((p) => (
@@ -555,7 +692,7 @@ export default function AgendarPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, hairType: e.target.value }))
                     }
-                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
                   >
                     <option value="">Selecione</option>
                     <option value="liso">Liso</option>
@@ -573,7 +710,7 @@ export default function AgendarPage() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, skinType: e.target.value }))
                     }
-                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
                   >
                     <option value="">Selecione</option>
                     <option value="normal">Normal</option>
@@ -592,7 +729,7 @@ export default function AgendarPage() {
                       setForm((f) => ({ ...f, allergies: e.target.value }))
                     }
                     rows={2}
-                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] resize-none"
+                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white resize-none"
                     placeholder="Informe se possui alguma alergia a produtos..."
                   />
                 </div>
@@ -606,7 +743,7 @@ export default function AgendarPage() {
                       setForm((f) => ({ ...f, observations: e.target.value }))
                     }
                     rows={3}
-                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] resize-none"
+                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white resize-none"
                     placeholder="Alguma informação adicional para o atendimento..."
                   />
                 </div>

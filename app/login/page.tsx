@@ -51,10 +51,10 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff] flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-linear-to-br from-primary-light via-primary-light-hover to-white flex items-center justify-center p-4 relative">
       <Link
         href="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-[#2d1b2e]/60 hover:text-[#FF6B9D] font-medium transition-colors group"
+        className="absolute top-6 left-6 flex items-center gap-2 text-[#2d1b2e]/60 hover:text-primary font-medium transition-colors group"
       >
         <ArrowLeft
           size={20}
@@ -65,7 +65,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-[#FF6B9D] to-[#C77DFF] rounded-2xl mb-4 shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-primary to-primary-dark rounded-2xl mb-4 shadow-lg">
               <Sparkles size={32} className="text-white" />
             </div>
             <h1 className="text-3xl font-bold text-[#2d1b2e] mb-2">
@@ -87,7 +87,7 @@ export default function LoginPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
+                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-[#2d1b2e] font-medium"
                   placeholder="seu@email.com"
                   required
                 />
@@ -106,7 +106,7 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-[#2d1b2e] font-medium"
                   placeholder="••••••••"
                   required
                 />
@@ -130,7 +130,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white font-semibold py-3.5 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full bg-linear-to-r from-primary to-primary-dark text-white font-semibold py-3.5 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? (
                 "Entrando..."
@@ -146,7 +146,7 @@ export default function LoginPage() {
           <div className="mt-8 pt-6 border-t border-[#2d1b2e]/10 text-center space-y-4">
             <p className="text-sm text-[#2d1b2e]/50">
               Esqueceu sua senha?{" "}
-              <a href="#" className="text-[#FF6B9D] hover:underline">
+              <a href="#" className="text-primary hover:underline">
                 Recuperar acesso
               </a>
             </p>
@@ -154,7 +154,7 @@ export default function LoginPage() {
               Ainda não tem conta?{" "}
               <a
                 href="/register"
-                className="text-[#FF6B9D] font-bold hover:underline"
+                className="text-primary font-bold hover:underline"
               >
                 Crie sua conta aqui
               </a>

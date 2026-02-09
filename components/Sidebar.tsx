@@ -41,7 +41,7 @@ export function Sidebar() {
         aria-hidden="true"
       />
       <aside
-        className={`w-[280px] max-w-[85vw] bg-linear-to-b from-[#FF6B9D] to-[#C73866] text-white flex flex-col shadow-[4px_0_20px_rgba(255,107,157,0.3)] z-50 h-dvh fixed left-0 top-0 transition-transform duration-300 ease-out
+        className={`w-[280px] max-w-[85vw] bg-linear-to-b from-primary to-primary-dark text-white flex flex-col shadow-[4px_0_20px_rgba(var(--primary),0.3)] z-50 h-dvh fixed left-0 top-0 transition-transform duration-300 ease-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
         <div className="flex items-center justify-between gap-3 p-4 md:p-8 border-b border-white/20">
@@ -73,7 +73,7 @@ export function Sidebar() {
                 className={`flex items-center gap-3 px-4 md:px-5 py-3 md:py-3.5 rounded-xl transition-all duration-300 font-medium font-sans text-sm md:text-base
                 ${
                   isActive
-                    ? "bg-white text-[#FF6B9D] font-semibold shadow-lg translate-x-1"
+                    ? "bg-white text-primary font-semibold shadow-lg translate-x-1"
                     : "text-white/85 hover:bg-white/15 hover:text-white hover:translate-x-1"
                 }`}
               >

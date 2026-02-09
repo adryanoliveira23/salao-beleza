@@ -40,10 +40,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff] flex items-center justify-center p-4 relative">
+    <div className="min-h-screen bg-linear-to-br from-primary-light via-primary-light-hover to-white flex items-center justify-center p-4 relative">
       <Link
         href="/"
-        className="absolute top-6 left-6 flex items-center gap-2 text-[#2d1b2e]/60 hover:text-[#FF6B9D] font-medium transition-colors group"
+        className="absolute top-6 left-6 flex items-center gap-2 text-[#2d1b2e]/60 hover:text-primary font-medium transition-colors group"
       >
         <ArrowLeft
           size={20}
@@ -54,7 +54,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-[#FF6B9D] to-[#C77DFF] rounded-2xl mb-4 shadow-lg">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-primary to-primary-dark rounded-2xl mb-4 shadow-lg">
               <Sparkles size={32} className="text-white" />
             </div>
             <h1 className="text-3xl font-bold text-[#2d1b2e] mb-2">
@@ -78,7 +78,7 @@ export default function RegisterPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
+                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-[#2d1b2e] font-medium"
                   placeholder="Seu nome completo"
                   required
                 />
@@ -97,7 +97,7 @@ export default function RegisterPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
+                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-[#2d1b2e] font-medium"
                   placeholder="seu@email.com"
                   required
                 />
@@ -116,7 +116,7 @@ export default function RegisterPage() {
                   type="text"
                   value={salonName}
                   onChange={(e) => setSalonName(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
+                  className="w-full pl-12 pr-4 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-[#2d1b2e] font-medium"
                   placeholder="Ex: Studio Glow"
                   required
                 />
@@ -135,7 +135,7 @@ export default function RegisterPage() {
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-12 pr-12 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] focus:ring-2 focus:ring-[#FF6B9D]/20 transition-all text-[#2d1b2e] font-medium"
+                  className="w-full pl-12 pr-12 py-3 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all text-[#2d1b2e] font-medium"
                   placeholder="••••••••"
                   required
                   minLength={6}
@@ -143,7 +143,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#2d1b2e]/40 hover:text-[#FF6B9D] transition-colors"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-[#2d1b2e]/40 hover:text-primary transition-colors"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -153,7 +153,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white font-semibold py-3.5 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full bg-linear-to-r from-primary to-primary-dark text-white font-semibold py-3.5 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {loading ? (
                 "Salvando..."
@@ -173,7 +173,7 @@ export default function RegisterPage() {
             </p>
             <p className="text-sm text-[#2d1b2e]/50">
               Já tem conta?{" "}
-              <a href="/login" className="text-[#FF6B9D] hover:underline">
+              <a href="/login" className="text-primary hover:underline">
                 Fazer login
               </a>
             </p>

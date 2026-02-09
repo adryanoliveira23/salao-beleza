@@ -4,12 +4,15 @@ import React, { useState } from "react";
 import { Link2, Copy, Check, ExternalLink } from "lucide-react";
 import { Header } from "@/components/Header";
 
+import { useAuth } from "@/contexts/AuthContext";
+
 export default function MeuLinkPage() {
   const [copied, setCopied] = useState(false);
+  const { profile } = useAuth();
 
   const bookingUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/agendar`
+      ? `${window.location.origin}/agendar${profile?.username ? `/${profile.username}` : ""}`
       : "/agendar";
 
   const copyLink = async () => {
@@ -41,7 +44,7 @@ export default function MeuLinkPage() {
         <div className="max-w-[640px] mx-auto">
           <div className="bg-white rounded-[16px] md:rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 overflow-hidden p-6 md:p-8">
             <div className="flex items-center gap-3 mb-6">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FF6B9D] to-[#C73866] flex items-center justify-center text-white">
+              <div className="w-12 h-12 rounded-xl bg-linear-to-br from-[#FF6B9D] to-[#C73866] flex items-center justify-center text-white">
                 <Link2 size={24} />
               </div>
               <div>
@@ -55,7 +58,8 @@ export default function MeuLinkPage() {
             </div>
 
             <p className="text-[#666] mb-6">
-              Compartilhe este link com seus clientes para que eles agendem online. Os agendamentos aparecerão automaticamente na sua agenda.
+              Compartilhe este link com seus clientes para que eles agendem
+              online. Os agendamentos aparecerão automaticamente na sua agenda.
             </p>
 
             <div className="flex flex-col gap-4">
@@ -69,7 +73,7 @@ export default function MeuLinkPage() {
                 <button
                   type="button"
                   onClick={copyLink}
-                  className="flex items-center justify-center gap-2 bg-gradient-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all shrink-0"
+                  className="flex items-center justify-center gap-2 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all shrink-0"
                 >
                   {copied ? (
                     <>
@@ -96,7 +100,8 @@ export default function MeuLinkPage() {
             </div>
 
             <p className="text-xs text-[#999] mt-6">
-              Clique em &quot;Abrir página de agendamento&quot; para visualizar como seus clientes verão o formulário.
+              Clique em &quot;Abrir página de agendamento&quot; para visualizar
+              como seus clientes verão o formulário.
             </p>
           </div>
         </div>

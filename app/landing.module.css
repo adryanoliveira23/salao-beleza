@@ -1,17 +1,16 @@
 .landingPage {
-  --primary: #ff6b9d;
-  --primary-dark: #c73866;
+  /* Variables inherited from global theme */
   --secondary: #ffd1e0;
   --accent: #f43f5e;
   --text-main: #2d1b2e;
   --text-muted: #666666;
-  --bg-gradient-start: #fff5f7;
+  --bg-gradient-start: var(--primary-light-hover);
   --bg-gradient-end: #ffffff;
   --white: #ffffff;
   --glass-bg: rgba(255, 255, 255, 0.7);
   --glass-border: rgba(255, 107, 157, 0.1);
   --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 10px 40px rgba(255, 107, 157, 0.15);
+  --shadow-md: 0 10px 40px rgba(var(--primary), 0.15);
 
   font-family: var(--font-outfit), sans-serif;
   color: var(--text-main);
@@ -140,7 +139,7 @@
 .btnPrimary {
   background: var(--primary);
   color: var(--white);
-  box-shadow: 0 4px 15px rgba(255, 107, 157, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .btnPrimary:hover {
@@ -210,13 +209,14 @@
 .heroBadge {
   display: inline-block;
   padding: 0.5rem 1rem;
-  background: #fff0f5;
+  background: var(--primary-light);
   color: var(--primary-dark);
   border-radius: 100px;
   font-size: 0.9rem;
   font-weight: 600;
   margin-bottom: 2rem;
-  border: 1px solid rgba(255, 107, 157, 0.2);
+  border: 1px solid var(--primary);
+  opacity: 0.9;
 }
 
 .heroContent h1 {
@@ -229,7 +229,11 @@
 
 .heroContent h1 span {
   color: var(--primary);
-  background: linear-gradient(135deg, #ff6b9d 0%, #c73866 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-dark) 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
