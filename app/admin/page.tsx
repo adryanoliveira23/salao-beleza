@@ -85,7 +85,7 @@ export default function AdminDashboard() {
                 <Shield size={24} className="text-white" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-bold font-display text-[#2d1b2e]">
+                <h1 className="text-2xl md:text-[32px] font-bold font-display text-[#2d1b2e]">
                   Painel Administrativo
                 </h1>
                 <p className="text-[#2d1b2e]/70 text-sm md:text-base">
@@ -152,7 +152,7 @@ export default function AdminDashboard() {
                 <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
                   Total de Usuários
                 </h3>
-                <p className="text-2xl font-bold text-[#2d1b2e]">
+                <p className="text-2xl md:text-[28px] font-bold text-[#2d1b2e]">
                   {stats.totalUsers}
                 </p>
               </div>
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
                 <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
                   Usuários Ativos
                 </h3>
-                <p className="text-2xl font-bold text-[#2d1b2e]">
+                <p className="text-2xl md:text-[28px] font-bold text-[#2d1b2e]">
                   {stats.activeUsers}
                 </p>
               </div>
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
                 <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
                   Receita Mensal
                 </h3>
-                <p className="text-xl font-bold text-[#2d1b2e]">
+                <p className="text-xl md:text-[26px] font-bold text-[#2d1b2e]">
                   R$ {stats.monthlyRevenue.toFixed(2).replace(".", ",")}
                 </p>
               </div>
@@ -194,7 +194,7 @@ export default function AdminDashboard() {
                 <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
                   Taxa de Receita
                 </h3>
-                <p className="text-2xl font-bold text-[#2d1b2e]">
+                <p className="text-2xl md:text-[28px] font-bold text-[#2d1b2e]">
                   {config.revenueRate}%
                 </p>
               </div>
@@ -217,7 +217,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="mt-4">
-                  <p className="text-xl font-bold text-[#2d1b2e]">
+                  <p className="text-xl md:text-[26px] font-bold text-[#2d1b2e]">
                     {stats.essencialUsers}
                   </p>
                   <p className="text-sm text-[#2d1b2e]/70">usuários</p>

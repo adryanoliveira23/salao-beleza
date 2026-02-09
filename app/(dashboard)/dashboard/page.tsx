@@ -118,7 +118,7 @@ export default function Dashboard() {
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Receita Hoje
               </span>
-              <span className="text-xl md:text-2xl font-semibold font-display text-[#2d1b2e] truncate">
+              <span className="text-2xl md:text-[28px] font-semibold font-display text-[#2d1b2e] truncate">
                 R$ {todayRevenue.toFixed(2)}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
@@ -136,7 +136,7 @@ export default function Dashboard() {
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Agendamentos Hoje
               </span>
-              <span className="text-xl md:text-2xl font-semibold font-display text-[#2d1b2e]">
+              <span className="text-2xl md:text-[28px] font-semibold font-display text-[#2d1b2e]">
                 {todayAppointmentsList.length}
               </span>
               <span className="text-[12px] font-semibold text-[#f59e0b]">
@@ -154,7 +154,7 @@ export default function Dashboard() {
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Total de Clientes
               </span>
-              <span className="text-xl md:text-2xl font-semibold font-display text-[#2d1b2e]">
+              <span className="text-2xl md:text-[28px] font-semibold font-display text-[#2d1b2e]">
                 {clients.length}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
@@ -172,7 +172,7 @@ export default function Dashboard() {
               <span className="text-xs md:text-[13px] text-[#666] font-medium">
                 Receita Mensal
               </span>
-              <span className="text-xl md:text-2xl font-semibold font-display text-[#2d1b2e] truncate">
+              <span className="text-2xl md:text-[28px] font-semibold font-display text-[#2d1b2e] truncate">
                 R$ {monthlyRevenue.toLocaleString()}
               </span>
               <span className="text-[12px] font-semibold text-[#10b981]">
