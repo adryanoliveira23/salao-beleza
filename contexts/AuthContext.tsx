@@ -39,37 +39,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Check active session
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        console.error("AuthContext: Error getting session:", error);
-        setIsLoading(false);
-        return;
-      }
-
-      console.log("AuthContext: Session retrieved", session?.user?.id);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      } else {
-        setIsLoading(false);
-      }
-    });
-
-    // Listen for auth changes
+    // Listen for auth changes (fires initially too)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setUser(session?.user ?? null);
+      console.log("AuthContext: Auth state changed", _event, session?.user?.id);
+
       if (session?.user) {
+        setUser(session.user);
         await fetchProfile(session.user.id);
       } else {
+        setUser(null);
         setProfile(null);
         setIsLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    const safetyTimeout = setTimeout(() => {
+      // Use functional state update to check current value if needed,
+      // but here we just force false after timeout to unblock UI
+      setIsLoading((prev) => {
+        if (prev) {
+          console.warn("AuthContext: Loading timed out, forcing completion");
+          return false;
+        }
+        return prev;
+      });
+    }, 5000);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
