@@ -24,10 +24,6 @@ export default function Dashboard() {
     refreshFromStorage,
   } = useSalonData();
 
-  useEffect(() => {
-    refreshFromStorage();
-  }, [refreshFromStorage]);
-
   const formatPhoneForWhatsApp = (phone: string) => {
     const numbers = phone.replace(/\D/g, "");
     if (numbers.length >= 10 && numbers.length <= 11) {
