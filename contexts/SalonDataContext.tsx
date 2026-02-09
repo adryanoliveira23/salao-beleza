@@ -608,10 +608,10 @@ export function SalonDataProvider({ children }: { children: React.ReactNode }) {
     fetchData();
   };
 
-  const refreshFromStorage = async () => {
+  const refreshFromStorage = useCallback(async () => {
     // Reusing this name to mean "refresh from server"
-    fetchData();
-  };
+    await fetchData();
+  }, [fetchData]);
 
   const clearAllData = async () => {
     if (!user) return;
