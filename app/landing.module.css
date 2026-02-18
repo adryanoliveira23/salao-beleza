@@ -137,31 +137,44 @@
 }
 
 .btnPrimary {
-  background: var(--primary);
-  color: var(--white);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-dark) 100%
+  );
+  color: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(130, 10, 209, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .btnPrimary:hover {
-  background: linear-gradient(135deg, #1a1a1a 0%, #333333 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary-dark) 0%,
+    var(--primary) 100%
+  );
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 8px 25px rgba(130, 10, 209, 0.4),
+    0 0 15px rgba(130, 10, 209, 0.2);
+  filter: brightness(1.1);
 }
 
 .btnNavCompact {
-  padding: 0.5rem 1.25rem;
-  font-size: 0.85rem;
-  border-radius: 12px;
+  padding: 0.6rem 1.5rem;
+  font-size: 0.875rem;
+  border-radius: 50px; /* More modern pill shape */
+  letter-spacing: 0.02em;
 }
 
 .btnOutline {
   background: transparent;
   color: var(--primary);
-  border: 1px solid var(--primary);
+  border: 1.5px solid var(--primary);
 }
 
 .btnOutline:hover {
-  background: var(--secondary);
+  background: var(--primary-light);
   color: var(--primary-dark);
 }
 
