@@ -19,7 +19,9 @@ import { Header } from "@/components/Header";
 import { useSalonData } from "@/contexts/SalonDataContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { supabase } from "@/app/lib/supabase";
+import { storage, db } from "@/app/lib/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { doc, setDoc, updateDoc } from "firebase/firestore";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -49,7 +51,7 @@ export default function Settings() {
       setFormData({
         name: profile.name || "",
         email: profile.email || "",
-        phone: "", // Phone is not in profile interface yet, keeping blank or adding to profile later
+        phone: "",
         salon_name: profile.salon_name || "",
         username: profile.username || "",
         avatar_url: profile.avatar_url || "",
@@ -69,27 +71,20 @@ export default function Settings() {
 
       const file = event.target.files[0];
       const fileExt = file.name.split(".").pop();
-      const fileName = `${user?.id}-${Math.random()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const fileName = `${user?.uid}-${Math.random()}.${fileExt}`;
+      const storageRef = ref(storage, `avatars/${fileName}`);
 
-      const { error: uploadError } = await supabase.storage
-        .from("avatars")
-        .upload(filePath, file);
+      await uploadBytes(storageRef, file);
+      const publicUrl = await getDownloadURL(storageRef);
 
-      if (uploadError) {
-        throw uploadError;
-      }
-
-      const { data } = supabase.storage.from("avatars").getPublicUrl(filePath);
-
-      setFormData((prev) => ({ ...prev, avatar_url: data.publicUrl }));
+      setFormData((prev) => ({ ...prev, avatar_url: publicUrl }));
 
       // Auto-save the new avatar URL to profile immediately
       if (user) {
-        await supabase.from("profiles").upsert({
-          id: user.id,
-          avatar_url: data.publicUrl,
-          updated_at: new Date().toISOString(),
+        const userRef = doc(db, "profiles", user.uid);
+        await updateDoc(userRef, {
+          avatar_url: publicUrl,
+          // created_at or updated_at logic if needed
         });
         await refreshProfile();
         setMessage({ type: "success", text: "Foto de perfil atualizada!" });
@@ -131,16 +126,21 @@ export default function Settings() {
     setMessage(null);
 
     try {
-      const { error } = await supabase.from("profiles").upsert({
-        id: user.id,
-        name: formData.name,
-        salon_name: formData.salon_name,
-        username: formData.username,
-        avatar_url: formData.avatar_url,
-        updated_at: new Date().toISOString(),
-      });
-
-      if (error) throw error;
+      const userRef = doc(db, "profiles", user.uid);
+      await setDoc(
+        userRef,
+        {
+          id: user.uid,
+          name: formData.name,
+          email: formData.email, // Ensure email is kept
+          salon_name: formData.salon_name,
+          username: formData.username,
+          avatar_url: formData.avatar_url,
+          plan: profile?.plan || "essencial", // Preserve plan
+          status: profile?.status || "active", // Preserve status
+        },
+        { merge: true },
+      );
 
       await refreshProfile();
       setMessage({ type: "success", text: "Perfil atualizado com sucesso!" });

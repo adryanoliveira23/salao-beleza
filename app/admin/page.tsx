@@ -97,14 +97,14 @@ export default function AdminDashboard() {
             <div className="flex items-center gap-3">
               <button
                 onClick={() => router.push("/dashboard")}
-                className="flex items-center gap-2 px-4 py-2 bg-[#FF6B9D]/10 hover:bg-[#FF6B9D]/20 text-[#FF6B9D] rounded-xl transition-all font-medium border border-[#FF6B9D]/20"
+                className="flex items-center gap-2 px-5 py-2.5 bg-white text-[#FF6B9D] rounded-xl transition-all font-medium border border-[#FF6B9D]/30 shadow-sm hover:bg-[#FF6B9D]/5 hover:shadow-md hover:-translate-y-0.5"
               >
                 <Users size={18} />
                 Área do Cliente
               </button>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-2 px-4 py-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-xl transition-colors font-medium border border-red-100"
+                className="flex items-center gap-2 px-5 py-2.5 bg-white text-red-500 rounded-xl transition-all font-medium border border-red-100 shadow-sm hover:bg-red-50 hover:shadow-md hover:-translate-y-0.5"
               >
                 <LogOut size={18} />
                 Sair
@@ -114,9 +114,9 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
         {/* Tabs */}
-        <div className="bg-white rounded-xl shadow-lg p-2 mb-6 flex gap-2">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white p-1.5 mb-8 flex gap-2 max-w-fit">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
@@ -125,10 +125,10 @@ export default function AdminDashboard() {
                 onClick={() =>
                   setActiveTab(tab.id as "overview" | "users" | "settings")
                 }
-                className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg transition-all font-medium ${
+                className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl transition-all font-medium text-sm ${
                   activeTab === tab.id
-                    ? "bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white shadow-md"
-                    : "text-[#2d1b2e]/70 hover:bg-[#ffeef8]"
+                    ? "bg-[#FF6B9D] text-white shadow-md shadow-[#FF6B9D]/20"
+                    : "text-[#2d1b2e]/60 hover:bg-[#FF6B9D]/5 hover:text-[#FF6B9D]"
                 }`}
               >
                 <Icon size={18} />
@@ -140,61 +140,61 @@ export default function AdminDashboard() {
 
         {/* Overview Tab */}
         {activeTab === "overview" && (
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 border border-white hover:border-[#FF6B9D]/20 transition-all group">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-linear-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
-                    <Users size={24} className="text-white" />
+                  <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                    <Users size={24} className="text-blue-500" />
                   </div>
                 </div>
-                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
+                <h3 className="text-sm font-medium text-[#2d1b2e]/60 mb-1">
                   Total de Usuários
                 </h3>
-                <p className="text-2xl md:text-[28px] font-bold text-[#2d1b2e]">
+                <p className="text-3xl font-bold text-[#2d1b2e] font-display">
                   {stats.totalUsers}
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 border border-white hover:border-[#FF6B9D]/20 transition-all group">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-linear-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center">
-                    <CheckCircle2 size={24} className="text-white" />
+                  <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
+                    <CheckCircle2 size={24} className="text-green-500" />
                   </div>
                 </div>
-                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
+                <h3 className="text-sm font-medium text-[#2d1b2e]/60 mb-1">
                   Usuários Ativos
                 </h3>
-                <p className="text-2xl md:text-[28px] font-bold text-[#2d1b2e]">
+                <p className="text-3xl font-bold text-[#2d1b2e] font-display">
                   {stats.activeUsers}
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 border border-white hover:border-[#FF6B9D]/20 transition-all group">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-linear-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
-                    <CreditCard size={24} className="text-white" />
+                  <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                    <CreditCard size={24} className="text-purple-500" />
                   </div>
                 </div>
-                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
+                <h3 className="text-sm font-medium text-[#2d1b2e]/60 mb-1">
                   Receita Mensal
                 </h3>
-                <p className="text-xl md:text-[26px] font-bold text-[#2d1b2e]">
+                <p className="text-3xl font-bold text-[#2d1b2e] font-display">
                   R$ {stats.monthlyRevenue.toFixed(2).replace(".", ",")}
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 border border-white hover:border-[#FF6B9D]/20 transition-all group">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-linear-to-br from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
-                    <DollarSign size={24} className="text-white" />
+                  <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
+                    <DollarSign size={24} className="text-orange-500" />
                   </div>
                 </div>
-                <h3 className="text-sm text-[#2d1b2e]/70 mb-1">
+                <h3 className="text-sm font-medium text-[#2d1b2e]/60 mb-1">
                   Taxa de Receita
                 </h3>
-                <p className="text-2xl md:text-[28px] font-bold text-[#2d1b2e]">
+                <p className="text-3xl font-bold text-[#2d1b2e] font-display">
                   {config.revenueRate}%
                 </p>
               </div>

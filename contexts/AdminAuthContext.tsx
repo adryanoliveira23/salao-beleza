@@ -29,9 +29,14 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Verificar se há sessão válida ao carregar (apenas no cliente, após hidratação)
-    const session = localStorage.getItem(ADMIN_SESSION_KEY);
-    if (session === "authenticated") {
-      setIsAuthenticated(true);
+    if (typeof window !== "undefined") {
+      const session = localStorage.getItem(ADMIN_SESSION_KEY);
+      if (session === "authenticated") {
+        setIsAuthenticated((prev) => {
+          if (!prev) return true;
+          return prev;
+        });
+      }
     }
     setIsLoading(false);
   }, []);

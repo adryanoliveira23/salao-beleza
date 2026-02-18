@@ -1,14 +1,17 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
+  --background: #f5f5f5;
   --foreground: #171717;
 
-  /* Default Theme (Pink) */
-  --primary: #d45d79;
-  --primary-dark: #a83d59;
-  --primary-light: #fbe4ec;
-  --primary-light-hover: #fcebf1;
+  /* Nubank Theme */
+  --primary: #820ad1;
+  --primary-dark: #6d08af;
+  --primary-light: #e8d3f9;
+  --primary-light-hover: #f2e4fc;
+
+  --surface: #ffffff;
+  --surface-hover: #fcfcfc;
 }
 
 @theme inline {
@@ -25,12 +28,14 @@
   --color-primary-dark: var(--primary-dark);
   --color-primary-light: var(--primary-light);
   --color-primary-light-hover: var(--primary-light-hover);
+  --color-surface: var(--surface);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --surface: #171717;
   }
 }
 

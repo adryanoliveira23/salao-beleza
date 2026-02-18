@@ -1,6 +1,6 @@
 "use server";
 
-import { supabaseAdmin } from "@/app/lib/supabase-admin";
+// import { supabaseAdmin } from "@/app/lib/supabase-admin"; // Removed
 
 export async function processPaymentAndCreateUser(
   email: string,
@@ -15,6 +15,16 @@ export async function processPaymentAndCreateUser(
 
     console.log(`[SIMULATION] Creating user: ${email}`);
 
+    // Firebase Admin SDK required for server-side user creation
+    // Since we are migrating to client-side Firebase or need Admin SDK credentials
+    // this part is temporarily disabled/stubbed.
+
+    console.warn("Firebase Admin SDK not configured. User creation skipped.");
+    throw new Error(
+      "Firebase Admin SDK required for server-side user creation.",
+    );
+
+    /*
     // 2. Create user in Supabase Auth via Admin API
     const { data: userData, error: authError } =
       await supabaseAdmin.auth.admin.createUser({
@@ -55,9 +65,13 @@ export async function processPaymentAndCreateUser(
     await simulateEmail(email, name);
 
     return { success: true };
+    */
   } catch (err) {
     console.error("Unexpected error:", err);
-    return { success: false, error: "Erro interno no servidor" };
+    return {
+      success: false,
+      error: "Erro interno no servidor (Firebase Admin missing)",
+    };
   }
 }
 

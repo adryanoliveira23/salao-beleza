@@ -22,9 +22,12 @@ export function ColorProvider({ children }: { children: React.ReactNode }) {
     const savedTheme = localStorage.getItem(
       "agendly-color-theme",
     ) as ColorTheme;
-    if (savedTheme) {
+    if (savedTheme && savedTheme !== colorTheme) {
       setColorTheme(savedTheme);
       document.documentElement.setAttribute("data-color", savedTheme);
+    } else if (!savedTheme) {
+      // Ensure default is set attribute-wise if nothing in storage
+      document.documentElement.setAttribute("data-color", "pink");
     }
   }, []);
 

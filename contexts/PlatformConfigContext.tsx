@@ -113,29 +113,7 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
       }
 
       if (data.users) {
-        // Map DB profiles to PlatformUser
-        const mappedUsers: PlatformUser[] = (data.users || []).map(
-          (u: {
-            id: string;
-            email: string;
-            name: string;
-            salon_name?: string;
-            plan: PlanType;
-            status: PlatformUser["status"];
-            created_at: string;
-            last_sign_in_at?: string;
-          }) => ({
-            id: u.id,
-            email: u.email,
-            name: u.name,
-            salonName: u.salon_name, // Map if it exists in DB, otherwise it might be in metadata
-            plan: u.plan,
-            status: u.status,
-            createdAt: u.created_at,
-            lastLogin: u.last_sign_in_at,
-          }),
-        );
-        setUsers(mappedUsers);
+        setUsers(data.users);
       }
     } catch (e) {
       console.error("Failed to load admin data:", e);

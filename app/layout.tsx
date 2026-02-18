@@ -8,6 +8,7 @@ import {
 } from "next/font/google";
 import "./globals.css";
 import { SalonDataProvider } from "@/contexts/SalonDataContext";
+import { FinanceProvider } from "@/contexts/FinanceContext";
 import { SuppressHydrationWarning } from "./suppress-hydration-warning";
 
 const fontOutfit = Outfit({
@@ -77,7 +78,9 @@ export default function RootLayout({
           }}
         />
         <SuppressHydrationWarning />
-        <SalonDataProvider>{children}</SalonDataProvider>
+        <SalonDataProvider>
+          <FinanceProvider>{children}</FinanceProvider>
+        </SalonDataProvider>
       </body>
     </html>
   );

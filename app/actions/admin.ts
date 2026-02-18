@@ -1,6 +1,6 @@
 "use server";
 
-import { supabaseAdmin } from "@/app/lib/supabase-admin";
+// import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { PlatformUser, PlatformConfig } from "@/contexts/PlatformConfigContext";
 
 const ADMIN_ACCESS_KEY = "Adiel&Adryan2026@!"; // In a real app, use existing environment variable or Context constant
@@ -11,9 +11,20 @@ function authorize(key: string) {
   }
 }
 
-export async function getAdminData(accessKey: string) {
+export async function getAdminData(
+  accessKey: string,
+): Promise<{ users: PlatformUser[]; config: PlatformConfig | null }> {
   authorize(accessKey);
 
+  console.warn("Firebase Admin SDK not configured. Returning empty data.");
+  // throw new Error("Firebase Admin SDK required for server-side admin data fetching.");
+
+  return {
+    users: [],
+    config: null,
+  };
+
+  /*
   const [usersResult, configResult] = await Promise.all([
     supabaseAdmin.from("profiles").select("*"),
     supabaseAdmin.from("platform_config").select("config").eq("id", 1).single(),
@@ -21,13 +32,11 @@ export async function getAdminData(accessKey: string) {
 
   if (usersResult.error) throw new Error(usersResult.error.message);
 
-  // Transform profiles to PlatformUser shape if needed
-  // (Assuming database columns match PlatformUser interface roughly)
-
   return {
     users: usersResult.data || [],
     config: configResult.data?.config || null,
   };
+  */
 }
 
 export async function createPlatformUser(
@@ -35,9 +44,19 @@ export async function createPlatformUser(
   userData: Omit<PlatformUser, "id" | "createdAt" | "lastLogin"> & {
     password?: string;
   },
-) {
+): Promise<{ id: string; createdAt: string; tempPassword?: string }> {
   authorize(accessKey);
 
+  console.warn("Firebase Admin SDK not configured. Returning mock user.");
+  // throw new Error("Firebase Admin SDK required for server-side user creation.");
+
+  return {
+    id: "mock-id-" + Math.random().toString(36).substring(2, 9),
+    createdAt: new Date().toISOString(),
+    tempPassword: userData.password || "mock-password",
+  };
+
+  /*
   // 1. Create Auth User
   // Use provided password or generate a random one.
   const password =
@@ -81,6 +100,7 @@ export async function createPlatformUser(
     createdAt,
     tempPassword: password, // Return the password used (generated or provided)
   };
+  */
 }
 
 export async function updatePlatformUser(
@@ -89,7 +109,15 @@ export async function updatePlatformUser(
   updates: Partial<PlatformUser>,
 ) {
   authorize(accessKey);
+  void id;
+  void updates;
 
+  console.warn(
+    "Firebase Admin SDK not configured. updatePlatformUser skipped.",
+  );
+  throw new Error("Firebase Admin SDK required for server-side user updates.");
+
+  /*
   // Update profile
   const { error } = await supabaseAdmin
     .from("profiles")
@@ -102,14 +130,23 @@ export async function updatePlatformUser(
     .eq("id", id);
 
   if (error) throw new Error("Erro ao atualizar usuário: " + error.message);
+  */
 }
 
 export async function deletePlatformUser(accessKey: string, id: string) {
   authorize(accessKey);
+  void id;
 
+  console.warn(
+    "Firebase Admin SDK not configured. deletePlatformUser skipped.",
+  );
+  throw new Error("Firebase Admin SDK required for server-side user deletion.");
+
+  /*
   // Delete from Auth (Cascade should delete profile)
   const { error } = await supabaseAdmin.auth.admin.deleteUser(id);
   if (error) throw new Error("Erro ao excluir usuário: " + error.message);
+  */
 }
 
 export async function updatePlatformConfig(
@@ -117,7 +154,16 @@ export async function updatePlatformConfig(
   config: PlatformConfig,
 ) {
   authorize(accessKey);
+  void config;
 
+  console.warn(
+    "Firebase Admin SDK not configured. updatePlatformConfig skipped.",
+  );
+  throw new Error(
+    "Firebase Admin SDK required for server-side config updates.",
+  );
+
+  /*
   const { error } = await supabaseAdmin.from("platform_config").upsert({
     id: 1,
     config,
@@ -126,4 +172,5 @@ export async function updatePlatformConfig(
 
   if (error)
     throw new Error("Erro ao atualizar configuração: " + error.message);
+  */
 }

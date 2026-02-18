@@ -12,6 +12,12 @@ import {
   Link2,
   Settings,
   X,
+  DollarSign,
+  Wallet,
+  TrendingUp,
+  Sparkles,
+  Crown,
+  CheckSquare,
 } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
 
@@ -22,10 +28,16 @@ export function Sidebar() {
   const menuItems = [
     { name: "Dashboard", icon: BarChart3, path: "/dashboard" },
     { name: "Agenda", icon: Calendar, path: "/agenda" },
-    { name: "Clientes", icon: Users, path: "/clientes" },
-    { name: "Serviços", icon: Package, path: "/servicos" },
-    { name: "Profissionais", icon: User, path: "/profissionais" },
-    { name: "Link de Agendamento", icon: Link2, path: "/meu-link" },
+    { name: "Custos", icon: DollarSign, path: "/custos" },
+    { name: "Caixa Diário", icon: Wallet, path: "/caixa" },
+    { name: "Metas", icon: TrendingUp, path: "/metas" },
+    { name: "IA Consultora", icon: Sparkles, path: "/ia-consultora" },
+    { name: "Assinaturas", icon: Crown, path: "/assinaturas" },
+    { name: "Lista de verificação", icon: CheckSquare, path: "/checklist" },
+    { name: "Colaboradores", icon: Users, path: "/colaboradores" },
+    { name: "Clientes", icon: User, path: "/clientes" },
+    { name: "Serviços", icon: Scissors, path: "/servicos" },
+    { name: "Agendamento", icon: Link2, path: "/meu-link" },
   ];
 
   return (

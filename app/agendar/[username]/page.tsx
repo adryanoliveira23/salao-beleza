@@ -1,12 +1,13 @@
 "use client";
 
-export const dynamic = "force-dynamic";
+// export const dynamic = "force-dynamic"; // Firebase SDK might handle caching differently, but force-dynamic is Next.js specific for fetch. Firestore uses websockets/independent connection.
 
 import React, { useState, useEffect, useMemo } from "react";
-import { supabase } from "@/app/lib/supabase";
 import { useParams } from "next/navigation";
+import { db } from "@/app/lib/firebase";
+import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
 
-// Types matching Supabase
+// Types matching Supabase/Firestore
 interface Service {
   id: string;
   name: string;
@@ -108,18 +109,25 @@ export default function AgendarPage() {
     async function fetchSalonUser() {
       if (!username) return;
       setLoadingSalon(true);
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, salon_name")
-        .eq("username", username)
-        .single();
+      try {
+        const q = query(
+          collection(db, "profiles"),
+          where("username", "==", username),
+        );
+        const querySnapshot = await getDocs(q);
 
-      if (data) {
-        setSalonUserId(data.id);
-        setSalonName(data.salon_name || "Salão de Beleza");
-      } else {
-        console.error("Salon not found", error);
-        setError("Salão não encontrado.");
+        if (!querySnapshot.empty) {
+          const doc = querySnapshot.docs[0];
+          const data = doc.data();
+          setSalonUserId(doc.id); // doc.id is the userId (uid)
+          setSalonName(data.salon_name || "Salão de Beleza");
+        } else {
+          console.error("Salon not found");
+          setError("Salão não encontrado.");
+        }
+      } catch (e) {
+        console.error("Error fetching salon:", e);
+        setError("Erro ao carregar salão.");
       }
       setLoadingSalon(false);
     }
@@ -131,25 +139,35 @@ export default function AgendarPage() {
     if (!salonUserId) return;
 
     async function fetchData() {
-      const { data: sData } = await supabase
-        .from("services")
-        .select("*")
-        .eq("user_id", salonUserId);
-
-      if (sData)
+      try {
+        const qServices = query(
+          collection(db, "services"),
+          where("userId", "==", salonUserId),
+        );
+        const sSnap = await getDocs(qServices);
+        const sData = sSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as any[];
         setServices(
-          sData.map((s: any) => ({ ...s, category: s.category || "Outros" })),
+          sData.map((s) => ({ ...s, category: s.category || "Outros" })),
         );
 
-      const { data: pData } = await supabase
-        .from("professionals")
-        .select("*")
-        .eq("user_id", salonUserId);
-
-      if (pData)
+        const qProfs = query(
+          collection(db, "professionals"),
+          where("userId", "==", salonUserId),
+        );
+        const pSnap = await getDocs(qProfs);
+        const pData = pSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        })) as any[];
         setProfessionals(
-          pData.map((p: any) => ({ ...p, specialty: p.specialty || "" })),
+          pData.map((p) => ({ ...p, specialty: p.specialty || "" })),
         );
+      } catch (e) {
+        console.error("Error fetching data:", e);
+      }
     }
     fetchData();
   }, [salonUserId]);
@@ -159,14 +177,19 @@ export default function AgendarPage() {
     if (!salonUserId || !form.date) return;
 
     async function fetchAppointments() {
-      const { data } = await supabase
-        .from("appointments")
-        .select("date, time, duration")
-        .eq("user_id", salonUserId)
-        .eq("date", form.date)
-        .neq("status", "cancelled");
-
-      if (data) setExistingAppointments(data);
+      try {
+        const q = query(
+          collection(db, "appointments"),
+          where("userId", "==", salonUserId),
+          where("date", "==", form.date),
+          // where("status", "!=", "cancelled") // Firestore requires index for complex queries, handle in memory if simple
+        );
+        const snap = await getDocs(q);
+        const data = snap.docs.map((doc) => doc.data()) as Appointment[];
+        setExistingAppointments(data); // Filtered by status in memory or add index
+      } catch (e) {
+        console.error("Error fetching appointments:", e);
+      }
     }
     fetchAppointments();
   }, [salonUserId, form.date]);
@@ -189,8 +212,6 @@ export default function AgendarPage() {
       form.serviceId &&
       !filteredServices.some((s) => s.id === form.serviceId)
     ) {
-      // Fix synchronous setState in effect by wrapping in setTimeout or just letting it be if logical
-      // But here we are just clearing invalid selection, likely fine.
       setTimeout(() => setForm((f) => ({ ...f, serviceId: "" })), 0);
     }
   }, [filteredServices, form.serviceId]);
@@ -203,7 +224,10 @@ export default function AgendarPage() {
   const occupiedSlots = useMemo(() => {
     const occupied = new Set<string>();
     for (const apt of existingAppointments) {
-      if (apt.date !== form.date) continue; // Should already be filtered by query but double check
+      // @ts-ignore
+      if (apt.status === "cancelled") continue; // Manually filter if not in query
+
+      if (apt.date !== form.date) continue;
       const startMin = parseTimeToMinutes(apt.time);
       const endMin = startMin + apt.duration;
       for (const slot of TIME_SLOTS) {
@@ -297,35 +321,27 @@ export default function AgendarPage() {
     }
 
     try {
-      // Find or create client logic can be handled in backend or simplistic here
-      // For now we just insert the appointment with snapshot data
-
-      const { error: insertError } = await supabase
-        .from("appointments")
-        .insert({
-          user_id: salonUserId,
-          client_id: null, // Public booking doesn't link to a client ID in auth sense yet, or we'd need to lookup
-          service_id: form.serviceId,
-          professional_id: form.professionalId || null,
-          date: form.date,
-          time: form.time,
-          duration: selectedService.duration,
-          price: selectedService.price,
-          status: "pending",
-          client_name: form.clientName,
-          client_phone: form.clientPhone,
-          client_email: form.clientEmail,
-          service_name: selectedService.name,
-          professional_name: selectedProfessional?.name || "A definir",
-          hair_type: form.hairType,
-          skin_type: form.skinType,
-          allergies: form.allergies,
-          observations: form.observations,
-        });
-
-      if (insertError) {
-        throw insertError;
-      }
+      await addDoc(collection(db, "appointments"), {
+        userId: salonUserId,
+        clientId: null,
+        serviceId: form.serviceId,
+        professionalId: form.professionalId || null,
+        date: form.date,
+        time: form.time,
+        duration: selectedService.duration,
+        price: selectedService.price,
+        status: "pending",
+        clientName: form.clientName,
+        clientPhone: form.clientPhone,
+        clientEmail: form.clientEmail,
+        serviceName: selectedService.name,
+        professionalName: selectedProfessional?.name || "A definir",
+        hairType: form.hairType,
+        skinType: form.skinType,
+        allergies: form.allergies,
+        observations: form.observations,
+        createdAt: new Date().toISOString(),
+      });
 
       setSubmitted(true);
       setForm({

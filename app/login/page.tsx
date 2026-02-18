@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { supabase } from "@/app/lib/supabase";
+// import { supabase } from "@/app/lib/supabase"; // Removed
 import {
   Sparkles,
   Mail,
@@ -29,19 +29,20 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { signInWithEmailAndPassword } = await import("firebase/auth");
+      const { auth } = await import("@/app/lib/firebase");
 
-      if (error) {
-        throw error;
-      }
+      await signInWithEmailAndPassword(auth, email, password);
 
       router.push("/dashboard");
     } catch (error) {
       if (error instanceof Error) {
-        setError(error.message || "Erro ao realizar login");
+        // Firebase auth errors
+        if (error.message.includes("auth/invalid-credential")) {
+          setError("Email ou senha inválidos.");
+        } else {
+          setError(error.message || "Erro ao realizar login");
+        }
       } else {
         setError("Erro ao realizar login");
       }
