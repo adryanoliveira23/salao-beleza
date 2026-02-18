@@ -13,11 +13,13 @@ export default function MetasPage() {
     setFormData(settings);
   }, [settings]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: Number(value),
+      [name]: name === "neighborhood" ? value : Number(value),
     }));
   };
 
@@ -62,6 +64,23 @@ export default function MetasPage() {
                     onChange={handleChange}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--primary)] text-lg font-bold text-gray-800"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nível Social do Bairro
+                  </label>
+                  <select
+                    name="neighborhood"
+                    value={formData.neighborhood}
+                    onChange={handleChange}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--primary)] text-lg font-medium text-gray-800"
+                  >
+                    <option value="simples">
+                      Gente Simples (Preço competitivo)
+                    </option>
+                    <option value="media">Classe Média (Padrão mercado)</option>
+                    <option value="rica">Gente Rica (Serviço Premium)</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -178,7 +197,7 @@ export default function MetasPage() {
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--primary)]"
                   />
                   <p className="text-xs text-gray-400 mt-1">
-                    Isso define o valor "Pode Retirar" no Dashboard.
+                    Isso define o valor &quot;Pode Retirar&quot; no Dashboard.
                   </p>
                 </div>
               </div>

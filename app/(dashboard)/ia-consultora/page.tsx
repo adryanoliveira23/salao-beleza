@@ -12,20 +12,14 @@ import {
   Calculator,
   ArrowRight,
   CheckCircle2,
-  AlertTriangle,
 } from "lucide-react";
 
 export default function IAConsultoraPage() {
   const { financialHealth, settings } = useFinance();
   const { clients } = useSalonData();
 
-  const {
-    dailyRevenue,
-    dailyGoalStatus,
-    gapToDailyGoal,
-    advice,
-    suggestedCombo,
-  } = financialHealth;
+  const { dailyRevenue, dailyGoalStatus, advice, suggestedCombo } =
+    financialHealth;
 
   const targetDailyGoal = settings.monthlyGoal / 22; // Approx business days
   const percentReached = Math.min(100, (dailyRevenue / targetDailyGoal) * 100);
@@ -115,7 +109,7 @@ export default function IAConsultoraPage() {
             </div>
           </div>
 
-          {/* 2. Action Card - "O que fazer agora" */}
+          {/* 4. Action Card - "O que fazer agora" */}
           {dailyGoalStatus === "behind" && (
             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
               <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -124,7 +118,7 @@ export default function IAConsultoraPage() {
               </h3>
               <p className="text-gray-600 mb-4">
                 Identifiquei que alguns clientes não vêm há mais de 30 dias. Que
-                tal mandar um "oi"?
+                tal mandar um &quot;oi&quot;?
               </p>
 
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-4">
@@ -132,9 +126,9 @@ export default function IAConsultoraPage() {
                   Modelo de mensagem:
                 </p>
                 <p className="italic text-gray-700">
-                  "Oi {lostClient.name || "Fulana"}, sumida(o)! 💖 Estou com
-                  saudade! Que tal agendar um horário essa semana? Tenho um
-                  mimozinho pra você! 😘"
+                  &quot;Oi {lostClient.name || "Fulana"}, sumida(o)! 💖 Estou
+                  com saudade! Que tal agendar um horário essa semana? Tenho um
+                  mimozinho pra você! 😘&quot;
                 </p>
               </div>
 
@@ -147,7 +141,7 @@ export default function IAConsultoraPage() {
             </div>
           )}
 
-          {/* 3. Strategy/Combo Card */}
+          {/* Combo Strategy */}
           {suggestedCombo && dailyGoalStatus === "behind" && (
             <div className="bg-linear-to-r from-purple-500 to-indigo-600 rounded-3xl p-6 text-white shadow-lg">
               <div className="flex items-center gap-2 mb-2 opacity-90">
@@ -173,6 +167,44 @@ export default function IAConsultoraPage() {
               </p>
             </div>
           )}
+
+          {/* 5. Subscription Plan Idea */}
+          <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+            <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+              <CheckCircle2 className="text-green-500" />
+              Oportunidade de Assinatura
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Para garantir faturamento fixo, que tal criar um plano de
+              recorrência?
+            </p>
+
+            <div className="bg-green-50 p-6 rounded-2xl border border-green-100">
+              <h4 className="font-bold text-green-800 mb-2">
+                Clube da Escova Ilimitada
+              </h4>
+              <p className="text-sm text-green-700 mb-4 italic">
+                &quot;Receba por mês e a cliente pode vir toda semana no
+                salão&quot;
+              </p>
+              <ul className="space-y-2 mb-6">
+                <li className="flex items-center gap-2 text-sm text-green-800">
+                  <CheckCircle2 size={14} /> 4 Escovas por mês
+                </li>
+                <li className="flex items-center gap-2 text-sm text-green-800">
+                  <CheckCircle2 size={14} /> 1 Hidratação cortesia
+                </li>
+              </ul>
+              <div className="flex items-center justify-between border-t border-green-200 pt-4">
+                <span className="text-green-800 font-bold">
+                  Sugestão de Preço:
+                </span>
+                <span className="text-2xl font-black text-green-600">
+                  R$ 199,90
+                </span>
+              </div>
+            </div>
+          </div>
 
           {/* 4. Simple Calculator */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">

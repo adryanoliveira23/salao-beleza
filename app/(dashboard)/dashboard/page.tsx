@@ -4,7 +4,6 @@ export const dynamic = "force-dynamic";
 
 import React from "react";
 import {
-  CreditCard,
   Wallet,
   PiggyBank,
   ShieldCheck,
@@ -12,13 +11,16 @@ import {
   Eye,
   EyeOff,
   HelpCircle,
+  Menu,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinance } from "@/contexts/FinanceContext";
+import { useSidebar } from "@/contexts/SidebarContext";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { financialHealth, settings, isLoading } = useFinance();
+  const { toggle } = useSidebar();
   const [showValues, setShowValues] = React.useState(true);
 
   const today = new Date().toLocaleDateString("pt-BR", {
@@ -36,14 +38,6 @@ export default function Dashboard() {
     );
   }
 
-  // Progress calculations
-  const billsProgress = Math.min(
-    (financialHealth.billsDueToday /
-      (financialHealth.totalFixedCosts / 30 || 100)) *
-      100, // Approximate denominator
-    100,
-  );
-
   // Format currency helper
   const formatCurrency = (value: number) => {
     return showValues
@@ -60,6 +54,13 @@ export default function Dashboard() {
       <div className="bg-[var(--primary)] text-white p-6 md:px-8 md:pt-8 md:pb-16 rounded-b-[2rem] shadow-lg mb-4">
         <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
           <div className="flex items-center gap-4">
+            <button
+              onClick={toggle}
+              className="md:hidden p-2 -ml-2 hover:bg-[var(--primary-dark)] rounded-full transition-colors"
+              aria-label="Abrir menu"
+            >
+              <Menu size={24} />
+            </button>
             <div className="bg-[var(--primary-dark)] p-3 rounded-full hover:bg-opacity-80 transition cursor-pointer shrink-0">
               <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center">
                 <span className="font-bold text-sm">
@@ -132,6 +133,22 @@ export default function Dashboard() {
             </span>
           </div>
 
+          {/* Card: Save for Fixed Costs */}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative group hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-gray-500 font-medium text-sm">
+                Quanto Guardar (Contas)
+              </span>
+              <ShieldCheck className="w-5 h-5 text-blue-500" />
+            </div>
+            <div className="text-2xl font-bold text-blue-600 mb-1">
+              {formatCurrency(financialHealth.mustSaveForFixedCosts)}
+            </div>
+            <span className="text-xs text-gray-400">
+              Para pagar custos fixos este mês
+            </span>
+          </div>
+
           {/* Card: Safe to Withdraw */}
           <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative group hover:shadow-md transition-all">
             <div className="flex justify-between items-start mb-2">
@@ -147,29 +164,65 @@ export default function Dashboard() {
               Já descontando custos e reservas
             </span>
           </div>
+        </div>
 
-          {/* Card: Bills */}
-          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative group hover:shadow-md transition-all">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-gray-500 font-medium text-sm">
-                Contas a Pagar (Hoje)
+        {/* Growth Stats - 20% Goal Section */}
+        <div className="bg-white rounded-2xl p-6 border border-gray-100">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-800 text-lg">
+              Crescimento Mensal (Meta 20%)
+            </h3>
+            {financialHealth.growthGoalReached ? (
+              <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                <ShieldCheck size={14} /> Meta Batida
               </span>
-              <CreditCard className="w-5 h-5 text-red-500" />
+            ) : (
+              <span className="bg-orange-100 text-orange-700 text-xs font-bold px-2 py-1 rounded-full">
+                Em progresso
+              </span>
+            )}
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Mês Passado</p>
+              <p className="text-lg font-bold text-gray-400">
+                {formatCurrency(financialHealth.previousMonthRevenue)}
+              </p>
             </div>
-            <div className="text-2xl font-bold text-[var(--foreground)] mb-1">
-              {formatCurrency(financialHealth.billsDueToday)}
+            <div>
+              <p className="text-xs text-gray-500 mb-1">Este Mês</p>
+              <p className="text-lg font-bold text-[var(--primary)]">
+                {formatCurrency(financialHealth.monthlyRevenue)}
+              </p>
             </div>
-            <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2 mb-1">
-              <div
-                className="bg-red-500 h-1.5 rounded-full"
-                style={{ width: `${billsProgress}%` }}
-              />
+            <div className="col-span-2">
+              <p className="text-xs text-gray-500 mb-1">
+                Progresso Meta de Crescimento
+              </p>
+              <div className="w-full bg-gray-100 h-2 rounded-full mt-1">
+                <div
+                  className="bg-[var(--primary)] h-2 rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.min((financialHealth.monthlyRevenue / (financialHealth.previousMonthRevenue * 1.2 || 1)) * 100, 100)}%`,
+                  }}
+                />
+              </div>
+              <p className="text-right text-[10px] text-gray-400 mt-1">
+                Faltam{" "}
+                {formatCurrency(
+                  Math.max(
+                    0,
+                    financialHealth.previousMonthRevenue * 1.2 -
+                      financialHealth.monthlyRevenue,
+                  ),
+                )}{" "}
+                para +20%
+              </p>
             </div>
-            <span className="text-xs text-gray-400">Evite juros e multas</span>
           </div>
         </div>
 
-        {/* AI Insight & Combo - "Pedacinho do Nubank" Style */}
+        {/* AI Insight & Combo section */}
         <div className="bg-[var(--primary-light)]/30 rounded-2xl p-6 border border-[var(--primary-light)] flex gap-4 items-start">
           <div className="bg-white p-3 rounded-full shadow-sm text-[var(--primary)]">
             <Zap size={24} />
@@ -182,7 +235,6 @@ export default function Dashboard() {
               {financialHealth.advice ||
                 "Analisando seus dados para gerar insights..."}
             </p>
-
             {financialHealth.suggestedCombo && (
               <div className="bg-white p-4 rounded-xl border border-gray-200 mt-2 inline-block">
                 <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider">
@@ -219,9 +271,6 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {(settings.customFunds || []).map((fund) => {
               if (!fund.enabled) return null;
-
-              // Map color names to Tailwind classes (simplified approximation or reuse map from CaixaPage if needed)
-              // For dashboard, we can use a simpler generic icon color or try to match
               const colorClasses: Record<string, string> = {
                 emerald: "text-emerald-600 bg-emerald-100",
                 blue: "text-blue-600 bg-blue-100",
@@ -229,12 +278,10 @@ export default function Dashboard() {
                 red: "text-red-600 bg-red-100",
                 violet: "text-purple-600 bg-purple-100",
               };
-
               const styleClass =
                 colorClasses[fund.color] ||
                 "text-[var(--primary)] bg-purple-100";
               const amount = financialHealth.fundsAccumulated[fund.id] || 0;
-
               return (
                 <div
                   key={fund.id}
@@ -254,11 +301,6 @@ export default function Dashboard() {
                 </div>
               );
             })}
-            {(!settings.customFunds || settings.customFunds.length === 0) && (
-              <div className="col-span-full text-center py-6 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
-                Nenhuma caixinha configurada.
-              </div>
-            )}
           </div>
         </div>
       </div>

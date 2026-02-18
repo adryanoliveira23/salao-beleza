@@ -109,7 +109,6 @@ export default function ColaboradoresPage() {
 
   const generateContract = (employee: Employee) => {
     const doc = new jsPDF();
-    const lineHeight = 10;
     let y = 20;
 
     // Header
@@ -143,8 +142,8 @@ export default function ColaboradoresPage() {
     CLÁUSULA QUARTA - DOS PAGAMENTOS
     Os repasses da cota-parte devida ao PROFISSIONAL-PARCEIRO serão realizados através de transferência bancária para a Chave PIX: ${employee.pixKey}.
 
-    CLÁUSULA QUINTA - DA VIGÊNCIA E RESCISÃO
-    Este contrato entra em vigor na data de sua assinatura e terá vigência por prazo indeterminado, podendo ser rescindido por qualquer das partes mediante aviso prévio de 30 (trinta) dias.
+    CLÁUSULA SEXTA - DA CONFIDENCIALIDADE E NÃO CONCORRÊNCIA
+    O PROFISSIONAL-PARCEIRO compromete-se a manter sigilo sobre as técnicas, fórmulas e dados de clientes do SALÃO-PARCEIRO, comprometendo-se também a não desviar clientela para atendimento próprio fora das dependências do salão durante a vigência deste contrato.
 
     E, por estarem assim justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma.
 
@@ -333,6 +332,15 @@ export default function ColaboradoresPage() {
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[var(--primary)] outline-none"
                     placeholder="30"
                   />
+                  <p className="text-[10px] text-gray-400 mt-1 italic">
+                    {formData.role === "Cabeleireiro(a)"
+                      ? "Sugestão mercado: 30-50%"
+                      : formData.role === "Manicure"
+                        ? "Sugestão mercado: 40-60%"
+                        : formData.role === "Maquiador(a)"
+                          ? "Sugestão mercado: 30-50%"
+                          : "Sugestão mercado: 30%"}
+                  </p>
                 </div>
               </div>
 

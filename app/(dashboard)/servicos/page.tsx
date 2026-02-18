@@ -44,7 +44,10 @@ export default function Services() {
                   Duração
                 </th>
                 <th className="p-3 md:p-4 text-left font-semibold text-[#666] text-xs md:text-sm uppercase tracking-wider">
-                  Preço
+                  Preço Venda
+                </th>
+                <th className="p-3 md:p-4 text-left font-semibold text-[#666] text-xs md:text-sm uppercase tracking-wider">
+                  Custo Produto
                 </th>
                 <th className="p-3 md:p-4 text-left font-semibold text-[#666] text-xs md:text-sm uppercase tracking-wider">
                   Ações
@@ -70,6 +73,9 @@ export default function Services() {
                   </td>
                   <td className="p-4 md:p-6 font-bold font-serif text-[#10b981] text-sm md:text-base">
                     R$ {service.price.toFixed(2)}
+                  </td>
+                  <td className="p-4 md:p-6 font-medium text-orange-500 text-sm md:text-base">
+                    R$ {(service.costPrice || 0).toFixed(2)}
                   </td>
                   <td className="p-4 md:p-6">
                     <div className="flex gap-2">
@@ -137,23 +143,31 @@ function ServiceModal({
   onClose,
   onSave,
 }: {
-  service?: { name: string; duration: number; price: number; category: string };
+  service?: {
+    name: string;
+    duration: number;
+    price: number;
+    costPrice: number;
+    category: string;
+  };
   onClose: () => void;
   onSave: (data: {
     name: string;
     duration: number;
     price: number;
+    costPrice: number;
     category: string;
   }) => void;
 }) {
   const [name, setName] = useState(service?.name ?? "");
   const [duration, setDuration] = useState(service?.duration ?? 45);
   const [price, setPrice] = useState(service?.price ?? 0);
+  const [costPrice, setCostPrice] = useState(service?.costPrice ?? 0);
   const [category, setCategory] = useState(service?.category ?? "Cabelo");
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    onSave({ name, duration, price, category });
+    onSave({ name, duration, price, costPrice, category });
   };
 
   return (
@@ -218,7 +232,7 @@ function ServiceModal({
             </div>
             <div>
               <label className="block font-semibold text-sm text-[#2d1b2e] mb-1">
-                Preço (R$)
+                Preço Venda (R$)
               </label>
               <input
                 type="number"
@@ -227,6 +241,20 @@ function ServiceModal({
                 step={0.01}
                 value={price}
                 onChange={(e) => setPrice(Number(e.target.value))}
+                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold text-sm text-[#2d1b2e] mb-1">
+                Custo de Produto (R$)
+              </label>
+              <input
+                type="number"
+                required
+                min={0}
+                step={0.01}
+                value={costPrice}
+                onChange={(e) => setCostPrice(Number(e.target.value))}
                 className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
               />
             </div>

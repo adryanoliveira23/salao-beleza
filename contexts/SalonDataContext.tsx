@@ -39,6 +39,7 @@ export interface Service {
   name: string;
   duration: number;
   price: number;
+  costPrice: number; // New field
   category: string;
 }
 
@@ -311,6 +312,7 @@ export function SalonDataProvider({ children }: { children: React.ReactNode }) {
         name: service.name,
         duration: service.duration,
         price: service.price,
+        costPrice: service.costPrice || 0,
         category: service.category,
       });
       fetchData();

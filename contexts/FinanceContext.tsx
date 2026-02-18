@@ -46,6 +46,13 @@ export interface CustomFund {
   enabled: boolean;
 }
 
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+  category: "morning" | "afternoon" | "evening" | "maintenance";
+}
+
 export interface FinanceSettings {
   monthlyGoal: number;
   taxRate: number; // % (e.g., 6% SIMPLES)
@@ -79,6 +86,12 @@ export interface FinancialHealth {
   dailyGoalStatus: "behind" | "on_track" | "ahead";
   gapToDailyGoal: number;
   averageTicket: number;
+  // Growth & Targets
+  previousMonthRevenue: number;
+  growthGoalReached: boolean;
+  targetDailyForNextMonth: number;
+  // Account Separation
+  mustSaveForFixedCosts: number;
   // New
   advice?: string;
   suggestedCombo?: {
@@ -121,6 +134,51 @@ const DEFAULT_SETTINGS: FinanceSettings = {
   ],
 };
 
+const DEFAULT_CHECKLIST: ChecklistItem[] = [
+  {
+    id: "1",
+    text: "Abrir o salão e ligar luzes/ar",
+    completed: false,
+    category: "morning",
+  },
+  {
+    id: "2",
+    text: "Verificar agenda do dia",
+    completed: false,
+    category: "morning",
+  },
+  {
+    id: "3",
+    text: "Organizar bancadas e materiais",
+    completed: false,
+    category: "morning",
+  },
+  {
+    id: "4",
+    text: "Limpeza rápida entre atendimentos",
+    completed: false,
+    category: "maintenance",
+  },
+  {
+    id: "5",
+    text: "Repor produtos de uso frequente",
+    completed: false,
+    category: "afternoon",
+  },
+  {
+    id: "6",
+    text: "Fechar caixa e conferir valores",
+    completed: false,
+    category: "evening",
+  },
+  {
+    id: "7",
+    text: "Limpeza geral e organização para amanhã",
+    completed: false,
+    category: "evening",
+  },
+];
+
 interface FinanceContextType {
   settings: FinanceSettings;
   updateSettings: (settings: Partial<FinanceSettings>) => Promise<void>;
@@ -134,6 +192,10 @@ interface FinanceContextType {
   addCustomFund: (fund: Omit<CustomFund, "id">) => Promise<void>;
   removeCustomFund: (id: string) => Promise<void>;
   updateCustomFund: (id: string, updates: Partial<CustomFund>) => Promise<void>;
+  // Checklist
+  checklist: ChecklistItem[];
+  toggleChecklistItem: (id: string) => Promise<void>;
+  resetDailyChecklist: () => Promise<void>;
 }
 
 const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
@@ -146,6 +208,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<FinanceSettings>(DEFAULT_SETTINGS);
   const [fixedCosts, setFixedCosts] = useState<FixedCost[]>([]);
   const [variableCosts, setVariableCosts] = useState<VariableCost[]>([]);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Firestore Sync
@@ -168,12 +231,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           setSettings({ ...DEFAULT_SETTINGS, ...data.settings });
           setFixedCosts(data.fixedCosts || []);
           setVariableCosts(data.variableCosts || []);
+          setChecklist(data.checklist || []);
         } else {
           // Init doc if not exists
           setDoc(docRef, {
             settings: DEFAULT_SETTINGS,
             fixedCosts: [],
             variableCosts: [],
+            checklist: DEFAULT_CHECKLIST,
           });
         }
         setIsLoading(false);
@@ -189,6 +254,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       settings: FinanceSettings;
       fixedCosts: FixedCost[];
       variableCosts: VariableCost[];
+      checklist: ChecklistItem[];
     }>,
   ) => {
     if (!user) return;
@@ -245,6 +311,20 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       f.id === id ? { ...f, ...updates } : f,
     );
     await updateSettings({ customFunds: updatedFunds });
+  };
+
+  const toggleChecklistItem = async (id: string) => {
+    const updated = checklist.map((item) =>
+      item.id === id ? { ...item, completed: !item.completed } : item,
+    );
+    setChecklist(updated);
+    await saveToFirestore({ checklist: updated });
+  };
+
+  const resetDailyChecklist = async () => {
+    const updated = checklist.map((item) => ({ ...item, completed: false }));
+    setChecklist(updated);
+    await saveToFirestore({ checklist: updated });
   };
 
   // Calculations
@@ -395,6 +475,37 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
+    // 9. Growth Calculations
+    const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    const yearOfLastMonth = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+    let previousMonthRevenue = 0;
+    appointments.forEach((apt) => {
+      const aptDate = new Date(apt.date);
+      if (
+        aptDate.getMonth() === lastMonth &&
+        aptDate.getFullYear() === yearOfLastMonth &&
+        apt.status === "confirmed"
+      ) {
+        previousMonthRevenue += apt.price;
+      }
+    });
+
+    const growthGoalReached =
+      previousMonthRevenue > 0
+        ? monthlyRevenue >= previousMonthRevenue * 1.2
+        : true;
+
+    const targetDailyForNextMonth =
+      previousMonthRevenue > 0
+        ? (previousMonthRevenue * 1.2) / 30
+        : settings.monthlyGoal / 30;
+
+    // 10. Savings Separation
+    const mustSaveForFixedCosts = fixedCosts
+      .filter((c) => !c.paid)
+      .reduce((acc, c) => acc + c.amount, 0);
+
     return {
       dailyRevenue,
       monthlyRevenue,
@@ -408,6 +519,10 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       dailyGoalStatus,
       gapToDailyGoal,
       averageTicket,
+      previousMonthRevenue,
+      growthGoalReached,
+      targetDailyForNextMonth,
+      mustSaveForFixedCosts,
       advice,
       suggestedCombo,
     };
@@ -433,6 +548,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     addCustomFund,
     removeCustomFund,
     updateCustomFund,
+    checklist,
+    toggleChecklistItem,
+    resetDailyChecklist,
   };
 
   return (
