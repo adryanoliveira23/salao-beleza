@@ -143,7 +143,7 @@
     var(--primary-dark) 100%
   );
   color: #ffffff !important;
-  box-shadow: 0 4px 15px rgba(130, 10, 209, 0.2);
+  box-shadow: 0 4px 12px rgba(130, 10, 20, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -153,11 +153,8 @@
     var(--primary-dark) 0%,
     var(--primary) 100%
   );
-  transform: translateY(-2px);
-  box-shadow:
-    0 8px 25px rgba(130, 10, 209, 0.4),
-    0 0 15px rgba(130, 10, 209, 0.2);
-  filter: brightness(1.1);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 16px rgba(130, 10, 20, 0.2);
 }
 
 .btnNavCompact {
