@@ -12,14 +12,10 @@
   --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.05);
   --shadow-md: 0 10px 40px rgba(var(--primary), 0.15);
 
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   color: var(--text-main);
-  background: linear-gradient(
-    180deg,
-    var(--bg-gradient-start) 0%,
-    var(--bg-gradient-end) 100%
-  );
-  line-height: 1.7;
+  background: #ffffff;
+  line-height: 1.6;
   overflow-x: hidden;
   width: 100%;
 }
@@ -28,9 +24,10 @@
 .landingPage h2,
 .landingPage h3,
 .landingPage h4 {
-  font-family: var(--font-playfair), serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 700;
   color: var(--text-main);
+  letter-spacing: -0.02em;
 }
 
 /* Animations */
@@ -69,10 +66,9 @@
   position: fixed;
   top: 0;
   width: 100%;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(15px);
+  background: #ffffff;
   z-index: 1000;
-  border-bottom: 1px solid var(--glass-border);
+  border-bottom: 1px solid #eeeeee;
   transition: all 0.3s ease;
 }
 
@@ -124,44 +120,35 @@
 
 .btn {
   padding: 0.75rem 1.75rem;
-  border-radius: 12px;
+  border-radius: 50px;
   font-weight: 600;
   text-decoration: none;
-  transition: all 0.3s ease;
+  transition: all 0.2s ease;
   cursor: pointer;
   border: none;
-  font-size: 0.95rem;
+  font-size: 1rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .btnPrimary {
-  background: linear-gradient(
-    135deg,
-    var(--primary) 0%,
-    var(--primary-dark) 100%
-  );
+  background: var(--primary);
   color: #ffffff !important;
-  box-shadow: 0 4px 12px rgba(130, 10, 20, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+  border: none;
 }
 
 .btnPrimary:hover {
-  background: linear-gradient(
-    135deg,
-    var(--primary-dark) 0%,
-    var(--primary) 100%
-  );
-  transform: translateY(-1.5px);
-  box-shadow: 0 6px 16px rgba(130, 10, 20, 0.2);
+  background: var(--primary-dark);
+  transform: translateY(-1px);
 }
 
 .btnNavCompact {
   padding: 0.6rem 1.5rem;
   font-size: 0.875rem;
-  border-radius: 50px; /* More modern pill shape */
-  letter-spacing: 0.02em;
+  border-radius: 50px;
+  letter-spacing: 0;
 }
 
 .btnOutline {
@@ -178,18 +165,8 @@
 /* Hero Section */
 .hero {
   padding: 10rem 3rem 6rem;
-  background-image:
-    radial-gradient(
-      circle at 10% 20%,
-      rgba(255, 209, 224, 0.4) 0%,
-      transparent 40%
-    ),
-    radial-gradient(
-      circle at 90% 80%,
-      rgba(255, 230, 240, 0.6) 0%,
-      transparent 40%
-    );
-  min-height: 90vh;
+  background: #ffffff;
+  min-height: 80vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,15 +195,14 @@
 
 .heroBadge {
   display: inline-block;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 1rem;
   background: var(--primary-light);
-  color: var(--primary-dark);
+  color: var(--primary);
   border-radius: 100px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   margin-bottom: 2rem;
-  border: 1px solid var(--primary);
-  opacity: 0.9;
+  opacity: 1;
 }
 
 .heroContent h1 {
@@ -451,10 +427,10 @@
 
 .transformCard {
   padding: 2.5rem 1.5rem;
-  border-radius: 20px;
-  background: #fffbfd;
-  border: 1px solid #fff0f5;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Bouncy transition */
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
 }
@@ -476,10 +452,10 @@
 }
 
 .transformCard:hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 20px 40px rgba(255, 107, 157, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04);
   background: white;
-  border-color: rgba(255, 107, 157, 0.3);
+  border-color: #e0e0e0;
 }
 
 .transformCard:hover::after {
@@ -498,9 +474,10 @@
 }
 
 .transformCard h3 {
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   margin-bottom: 0.75rem;
-  color: var(--primary);
+  color: var(--text-main);
+  font-weight: 600;
 }
 
 .transformCard p {
@@ -549,17 +526,17 @@
 .featureCard {
   background: white;
   padding: 2.5rem;
-  border-radius: 24px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
-  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-  border: 1px solid transparent;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+  transition: all 0.3s ease;
+  border: 1px solid #f0f0f0;
   position: relative;
 }
 
 .featureCard:hover {
-  transform: translateY(-8px);
-  border-color: rgba(255, 107, 157, 0.4);
-  box-shadow: 0 25px 50px rgba(255, 107, 157, 0.15);
+  transform: translateY(-4px);
+  border-color: #e0e0e0;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.04);
 }
 
 .featureIcon {
@@ -567,8 +544,8 @@
   margin-bottom: 1.5rem;
   width: 64px;
   height: 64px;
-  background: #fff0f5;
-  border-radius: 16px;
+  background: #f7f7f7;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -577,10 +554,9 @@
 }
 
 .featureCard:hover .featureIcon {
-  background: var(--primary);
-  color: white;
-  transform: scale(1.1);
-  box-shadow: 0 10px 20px rgba(255, 107, 157, 0.3);
+  background: var(--primary-light);
+  color: var(--primary);
+  transform: scale(1.05);
 }
 
 .featureCard h3 {

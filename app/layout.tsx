@@ -5,11 +5,17 @@ import {
   Montserrat,
   Great_Vibes,
   Cormorant_Garamond,
+  Inter,
 } from "next/font/google";
 import "./globals.css";
 import { SalonDataProvider } from "@/contexts/SalonDataContext";
 import { FinanceProvider } from "@/contexts/FinanceContext";
 import { SuppressHydrationWarning } from "./suppress-hydration-warning";
+
+const fontInter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin"],
+});
 
 const fontOutfit = Outfit({
   variable: "--font-outfit",
@@ -58,7 +64,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <body
-        className={`${fontOutfit.variable} ${fontPlayfair.variable} ${fontMontserrat.variable} ${fontGreatVibes.variable} ${fontCormorant.variable} antialiased`}
+        className={`${fontInter.variable} ${fontOutfit.variable} ${fontPlayfair.variable} ${fontMontserrat.variable} ${fontGreatVibes.variable} ${fontCormorant.variable} antialiased`}
         suppressHydrationWarning
       >
         <script

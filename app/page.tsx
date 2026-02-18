@@ -83,54 +83,21 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className={styles.hero}>
         <div className={styles.heroContainer}>
-          <div
-            className={styles.heroContent}
-            style={{
-              textAlign: "center",
-              margin: "0 auto",
-              paddingBottom: "2rem",
-            }}
-          >
+          <div className={styles.heroContent}>
             <span className={styles.heroBadge}>
               ✨ Software nº 1 para Salões de Beleza e Spas
             </span>
-            <h1
-              style={{
-                fontSize: "3.5rem",
-                lineHeight: "1.1",
-                marginBottom: "1.5rem",
-              }}
-            >
-              Eleve o nível do seu
-              <br />
-              <span className="text-transparent bg-clip-text bg-linear-to-r from-primary to-primary-dark">
-                salão de beleza
-              </span>
+            <h1>
+              Eleve o nível do seu{" "}
+              <span className="text-primary">salão de beleza</span>
             </h1>
-            <p
-              style={{
-                maxWidth: "700px",
-                margin: "0 auto 2rem",
-                fontSize: "1.2rem",
-              }}
-            >
+            <p>
               Gestão inteligente que une agendamento, financeiro e marketing em
-              uma experiência premium. Deixe a tecnologia cuidar da rotina
-              enquanto você cuida da beleza das suas clientes.
+              uma experiência moderna e intuitiva. Deixe a tecnologia cuidar da
+              rotina enquanto você foca na beleza.
             </p>
-            <div
-              className={styles.heroCtaRow}
-              style={{ justifyContent: "center" }}
-            >
-              <div
-                className={styles.heroCta}
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  flexWrap: "wrap",
-                  justifyContent: "center",
-                }}
-              >
+            <div className={styles.heroCtaRow}>
+              <div className={styles.heroCta}>
                 <a
                   href="#precos"
                   className={`${styles.btn} ${styles.btnPrimary}`}
@@ -140,7 +107,7 @@ export default function LandingPage() {
                 <a
                   href="#demo"
                   className={`${styles.btn} ${styles.btnWhite}`}
-                  style={{ border: "2px solid #f0f0f0" }}
+                  style={{ background: "#ffffff", border: "1px solid #eeeeee" }}
                 >
                   Ver Demonstração
                 </a>
