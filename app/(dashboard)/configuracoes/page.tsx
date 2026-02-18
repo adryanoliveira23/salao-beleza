@@ -3,17 +3,20 @@
 import React, { useState, useEffect } from "react";
 import {
   User,
-  Bell,
-  Shield,
-  Palette,
-  Save,
-  Moon,
-  Sun,
   Link2,
-  Copy,
-  Check,
+  Bell,
+  Palette,
+  Shield,
   Trash2,
+  LogOut,
+  Upload,
   Loader2,
+  Save,
+  DollarSign,
+  Check,
+  Copy,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useSalonData } from "@/contexts/SalonDataContext";
@@ -22,6 +25,7 @@ import { useNotifications } from "@/contexts/NotificationContext";
 import { storage, db } from "@/app/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { useFinance, NeighborhoodType } from "@/contexts/FinanceContext";
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
@@ -31,6 +35,7 @@ export default function Settings() {
   const { clearAllData } = useSalonData();
   const { user, profile, refreshProfile } = useAuth();
   const { notifications, markAsRead, clearNotifications } = useNotifications();
+  const { settings, updateSettings } = useFinance();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -40,6 +45,19 @@ export default function Settings() {
     username: "",
     avatar_url: "",
   });
+
+  // Finance Form State
+  const [financeForm, setFinanceForm] = useState({
+    neighborhood: "media" as NeighborhoodType,
+    chairs: 2,
+    rentCost: 0,
+    energyCost: 0,
+    internetCost: 0,
+    systemCost: 0,
+    monthlyGoal: 0,
+    ownerSalaryPercent: 0,
+  });
+
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
@@ -58,6 +76,21 @@ export default function Settings() {
       });
     }
   }, [profile]);
+
+  useEffect(() => {
+    if (settings) {
+      setFinanceForm({
+        neighborhood: settings.neighborhood,
+        chairs: settings.chairs,
+        rentCost: settings.rentCost,
+        energyCost: settings.energyCost,
+        internetCost: settings.internetCost,
+        systemCost: settings.systemCost,
+        monthlyGoal: settings.monthlyGoal,
+        ownerSalaryPercent: settings.ownerSalaryPercent,
+      });
+    }
+  }, [settings]);
 
   const [uploading, setUploading] = useState(false);
 
@@ -152,6 +185,24 @@ export default function Settings() {
     }
   };
 
+  const handleSaveFinance = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+    try {
+      await updateSettings(financeForm);
+      setMessage({
+        type: "success",
+        text: "Configurações financeiras salvas!",
+      });
+    } catch (error) {
+      console.error("Error updating finance settings:", error);
+      setMessage({ type: "error", text: "Erro ao salvar configurações." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <Header title="Configurações" />
@@ -162,6 +213,7 @@ export default function Settings() {
           <div className="w-full md:w-[260px] bg-[#fafafa] border-b md:border-b-0 md:border-r border-[#f0f0f0] p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible shrink-0">
             {[
               { id: "profile", label: "Perfil", icon: User },
+              { id: "financial", label: "Financeiro", icon: DollarSign },
               { id: "booking", label: "Link de Agendamento", icon: Link2 },
               { id: "notifications", label: "Notificações", icon: Bell },
               { id: "appearance", label: "Aparência", icon: Palette },
@@ -323,6 +375,199 @@ export default function Settings() {
                         <Save size={18} />
                       )}
                       Salvar Alterações
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {activeTab === "financial" && (
+              <div className="max-w-[600px] animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <h3 className="text-xl font-bold font-serif text-[#2d1b2e] mb-6">
+                  Configurações Financeiras
+                </h3>
+
+                <form
+                  onSubmit={handleSaveFinance}
+                  className="flex flex-col gap-5"
+                >
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-[#2d1b2e] text-sm">
+                        Bairro
+                      </label>
+                      <select
+                        value={financeForm.neighborhood}
+                        onChange={(e) =>
+                          setFinanceForm({
+                            ...financeForm,
+                            neighborhood: e.target.value as NeighborhoodType,
+                          })
+                        }
+                        className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] bg-white"
+                      >
+                        <option value="simples">Simples (Popular)</option>
+                        <option value="media">Bairro Médio</option>
+                        <option value="rica">Bairro Nobre</option>
+                      </select>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="font-semibold text-[#2d1b2e] text-sm">
+                        Nº Cadeiras
+                      </label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={financeForm.chairs}
+                        onChange={(e) =>
+                          setFinanceForm({
+                            ...financeForm,
+                            chairs: Number(e.target.value),
+                          })
+                        }
+                        className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-gray-50 rounded-xl space-y-4">
+                    <h4 className="font-bold text-[#2d1b2e] text-sm">
+                      Custos Fixos Mensais (Estimativa)
+                    </h4>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">
+                          Aluguel
+                        </label>
+                        <input
+                          type="number"
+                          value={financeForm.rentCost}
+                          onChange={(e) =>
+                            setFinanceForm({
+                              ...financeForm,
+                              rentCost: Number(e.target.value),
+                            })
+                          }
+                          className="w-full p-2 rounded-lg border border-gray-200 text-sm"
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">
+                          Energia
+                        </label>
+                        <input
+                          type="number"
+                          value={financeForm.energyCost}
+                          onChange={(e) =>
+                            setFinanceForm({
+                              ...financeForm,
+                              energyCost: Number(e.target.value),
+                            })
+                          }
+                          className="w-full p-2 rounded-lg border border-gray-200 text-sm"
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">
+                          Internet
+                        </label>
+                        <input
+                          type="number"
+                          value={financeForm.internetCost}
+                          onChange={(e) =>
+                            setFinanceForm({
+                              ...financeForm,
+                              internetCost: Number(e.target.value),
+                            })
+                          }
+                          className="w-full p-2 rounded-lg border border-gray-200 text-sm"
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-500 mb-1 block">
+                          Sistema
+                        </label>
+                        <input
+                          type="number"
+                          value={financeForm.systemCost}
+                          onChange={(e) =>
+                            setFinanceForm({
+                              ...financeForm,
+                              systemCost: Number(e.target.value),
+                            })
+                          }
+                          className="w-full p-2 rounded-lg border border-gray-200 text-sm"
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="font-semibold text-[#2d1b2e] text-sm">
+                      Meta de Faturamento Mensal
+                    </label>
+                    <input
+                      type="number"
+                      value={financeForm.monthlyGoal}
+                      onChange={(e) =>
+                        setFinanceForm({
+                          ...financeForm,
+                          monthlyGoal: Number(e.target.value),
+                        })
+                      }
+                      className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                      placeholder="R$ 20.000,00"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="font-semibold text-[#2d1b2e] text-sm">
+                      Percentual do Dono (% Lucro)
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={financeForm.ownerSalaryPercent}
+                      onChange={(e) =>
+                        setFinanceForm({
+                          ...financeForm,
+                          ownerSalaryPercent: Number(e.target.value),
+                        })
+                      }
+                      className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                      placeholder="20%"
+                    />
+                    <p className="text-xs text-gray-400">
+                      Quanto do lucro líquido você retira como pró-labore
+                      variável.
+                    </p>
+                  </div>
+
+                  {message && (
+                    <div
+                      className={`p-3 rounded-xl text-sm ${message.type === "success" ? "bg-green-50 text-green-600 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}
+                    >
+                      {message.text}
+                    </div>
+                  )}
+
+                  <div className="pt-4">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="flex items-center gap-2 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <Loader2 className="animate-spin" size={18} />
+                      ) : (
+                        <Save size={18} />
+                      )}
+                      Salvar Configurações
                     </button>
                   </div>
                 </form>

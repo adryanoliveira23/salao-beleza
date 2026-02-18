@@ -18,15 +18,16 @@ export function ColorProvider({ children }: { children: React.ReactNode }) {
   const [colorTheme, setColorTheme] = useState<ColorTheme>("pink");
 
   useEffect(() => {
-    // Load saved theme
+    // Load saved theme on mount
     const savedTheme = localStorage.getItem(
       "agendly-color-theme",
     ) as ColorTheme;
-    if (savedTheme && savedTheme !== colorTheme) {
-      setColorTheme(savedTheme);
+    if (savedTheme) {
+      setTimeout(() => {
+        setColorTheme(savedTheme);
+      }, 0);
       document.documentElement.setAttribute("data-color", savedTheme);
-    } else if (!savedTheme) {
-      // Ensure default is set attribute-wise if nothing in storage
+    } else {
       document.documentElement.setAttribute("data-color", "pink");
     }
   }, []);

@@ -3,27 +3,23 @@
 export const dynamic = "force-dynamic";
 
 import React from "react";
-// import { useRouter } from "next/navigation"; // Unused
 import {
-  TrendingUp,
   CreditCard,
   Wallet,
-  // AlertCircle, // Unused
   PiggyBank,
-  ArrowUpRight,
-  ArrowDownRight,
   ShieldCheck,
   Zap,
+  Eye,
+  EyeOff,
+  HelpCircle,
 } from "lucide-react";
-// import { Header } from "@/components/Header"; // Unused
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinance } from "@/contexts/FinanceContext";
-// import { useSalonData } from "@/contexts/SalonDataContext"; // Unused
 
 export default function Dashboard() {
-  // const router = useRouter(); // Unused
   const { user } = useAuth();
-  const { financialHealth, settings } = useFinance();
+  const { financialHealth, settings, isLoading } = useFinance();
+  const [showValues, setShowValues] = React.useState(true);
 
   const today = new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
@@ -32,239 +28,237 @@ export default function Dashboard() {
     day: "numeric",
   });
 
-  // Calculate percentages for bars
+  if (isLoading) {
+    return (
+      <div className="flex bg-[#f5f5f5] h-full items-center justify-center text-[var(--primary)]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-current"></div>
+      </div>
+    );
+  }
+
+  // Progress calculations
   const billsProgress = Math.min(
-    (financialHealth.billsDueToday / (settings.monthlyGoal / 30)) * 100,
-    100,
-  );
-  const maintenanceProgress = Math.min(
-    (financialHealth.maintenanceFundAccumulated / 1000) * 100,
-    100,
-  ); // Arbitrary goal for bar
-  const emergencyProgress = Math.min(
-    (financialHealth.emergencyFundAccumulated / 5000) * 100,
+    (financialHealth.billsDueToday /
+      (financialHealth.totalFixedCosts / 30 || 100)) *
+      100, // Approximate denominator
     100,
   );
 
+  // Format currency helper
+  const formatCurrency = (value: number) => {
+    return showValues
+      ? new Intl.NumberFormat("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        }).format(value)
+      : "R$ ••••";
+  };
+
   return (
-    <div className="flex flex-col h-full bg-[#f5f5f5]">
+    <div className="flex flex-col h-full bg-[#f5f5f5] font-sans">
       {/* Nubank-style Header Section */}
-      <div className="bg-[var(--primary)] text-white p-6 md:p-8 rounded-b-[3rem] shadow-lg mb-6">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold font-outfit mb-1">
-              Olá, {user?.displayName?.split(" ")[0] || "Parceira"}
-            </h1>
-            <p className="text-[var(--primary-light)] text-sm capitalize">
-              {today}
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <div className="bg-[var(--primary-dark)] p-2 rounded-full">
-              <ShieldCheck className="text-white" size={24} />
+      <div className="bg-[var(--primary)] text-white p-6 md:px-8 md:pt-8 md:pb-16 rounded-b-[2rem] shadow-lg mb-4">
+        <div className="flex flex-col md:flex-row justify-between items-start mb-6 gap-4">
+          <div className="flex items-center gap-4">
+            <div className="bg-[var(--primary-dark)] p-3 rounded-full hover:bg-opacity-80 transition cursor-pointer shrink-0">
+              <div className="bg-white/20 w-8 h-8 rounded-full flex items-center justify-center">
+                <span className="font-bold text-sm">
+                  {user?.displayName?.charAt(0) || "U"}
+                </span>
+              </div>
             </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold mb-0 leading-tight break-words">
+                Olá, {user?.displayName?.split(" ")[0] || "Parceira"}
+              </h1>
+              <p className="text-[var(--primary-light)] text-xs capitalize opacity-80">
+                {today}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-4 items-center self-end md:self-auto">
+            <button
+              onClick={() => setShowValues(!showValues)}
+              className="hover:bg-[var(--primary-dark)] p-2 rounded-full transition"
+            >
+              {showValues ? <Eye size={24} /> : <EyeOff size={24} />}
+            </button>
+            <button className="hover:bg-[var(--primary-dark)] p-2 rounded-full transition">
+              <HelpCircle size={24} />
+            </button>
           </div>
         </div>
 
-        {/* Main Status Card - Floating overlap */}
-        <div className="bg-white text-[var(--foreground)] rounded-2xl p-6 shadow-xl relative top-8 mb-[-2rem]">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-500 font-medium text-sm">
-              Meta Diária
-            </span>
-            <span
-              className={`px-3 py-1 rounded-full text-xs font-bold ${
-                financialHealth.dailyGoalStatus === "ahead"
-                  ? "bg-green-100 text-green-700"
-                  : financialHealth.dailyGoalStatus === "on_track"
-                    ? "bg-yellow-100 text-yellow-700"
-                    : "bg-red-100 text-red-700"
-              }`}
-            >
-              {financialHealth.dailyGoalStatus === "ahead"
-                ? "Batida! 🚀"
-                : financialHealth.dailyGoalStatus === "on_track"
-                  ? "No Caminho"
-                  : "Atenção"}
-            </span>
+        {/* Main Account Balance */}
+        <div className="mt-2">
+          <span className="text-sm font-medium opacity-90 block mb-1">
+            Conta da Empresa
+          </span>
+          <div className="text-3xl font-bold mb-1">
+            {formatCurrency(financialHealth.dailyRevenue)}
           </div>
-          <div className="flex items-baseline gap-2">
-            <h2 className="text-4xl font-bold text-[var(--foreground)]">
-              R$ {financialHealth.dailyRevenue.toFixed(2)}
-            </h2>
-            <span className="text-gray-400 text-sm">
-              / R$ {(settings.monthlyGoal / 30).toFixed(2)}
-            </span>
-          </div>
-
-          {financialHealth.gapToDailyGoal > 0 && (
-            <div className="mt-4 bg-purple-50 p-3 rounded-lg border border-purple-100 flex items-start gap-3">
-              <Zap className="text-[var(--primary)] shrink-0" size={20} />
-              <div>
-                <p className="text-xs text-[var(--primary)] font-bold mb-1">
-                  DICA DA IA
-                </p>
-                <p className="text-sm text-gray-700">
-                  Faltam{" "}
-                  <strong>
-                    R$ {financialHealth.gapToDailyGoal.toFixed(2)}
-                  </strong>{" "}
-                  para a meta. Sugiro lançar uma oferta relâmpago:
-                  <span className="font-bold">
-                    {" "}
-                    Combo Reconstrução + Escova
-                  </span>{" "}
-                  com 14% OFF!
-                </p>
-              </div>
-            </div>
-          )}
+          <span className="text-xs text-[var(--primary-light)]">
+            Entradas de hoje
+          </span>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 pt-12 pb-8 md:px-8 space-y-8">
-        {/* Financial Cards Grid */}
-        <div>
-          <h3 className="text-lg font-bold text-gray-800 mb-4 font-outfit">
-            Fluxo de Hoje
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            {/* Safe to Withdraw */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
-              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                <Wallet size={64} className="text-green-600" />
-              </div>
-              <p className="text-gray-500 text-sm mb-1">
-                Pode Retirar (Meu Salário)
-              </p>
-              <h4 className="text-2xl font-bold text-green-600">
-                R$ {financialHealth.safeToWithdraw.toFixed(2)}
-              </h4>
-              <p className="text-xs text-gray-400 mt-2">
-                Disponível na conta física
-              </p>
+      <div className="flex-1 overflow-y-auto px-4 pb-8 md:px-8 -mt-10 space-y-6">
+        {/* Horizontal Scroll Cards (App Style) used as Grid here for Desktop */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Card: Daily Goal */}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative group hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-gray-500 font-medium text-sm">
+                Meta Diária
+              </span>
+              <Zap
+                className={`w-5 h-5 ${financialHealth.dailyGoalStatus === "ahead" ? "text-green-500" : "text-yellow-500"}`}
+              />
             </div>
+            <div className="text-2xl font-bold text-[var(--foreground)] mb-1">
+              {formatCurrency(financialHealth.dailyRevenue)}
+            </div>
+            <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2 mb-1">
+              <div
+                className={`h-1.5 rounded-full ${financialHealth.dailyGoalStatus === "ahead" ? "bg-green-500" : "bg-[var(--primary)]"}`}
+                style={{
+                  width: `${Math.min((financialHealth.dailyRevenue / (settings.monthlyGoal / 30 || 1)) * 100, 100)}%`,
+                }}
+              />
+            </div>
+            <span className="text-xs text-gray-400">
+              Meta: {formatCurrency(settings.monthlyGoal / 30)}
+            </span>
+          </div>
 
-            {/* Bills Due */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
-              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                <ArrowDownRight size={64} className="text-red-500" />
-              </div>
-              <p className="text-gray-500 text-sm mb-1">Contas a Pagar Hoje</p>
-              <h4 className="text-2xl font-bold text-red-500">
-                R$ {financialHealth.billsDueToday.toFixed(2)}
-              </h4>
-              <div className="w-full bg-gray-100 h-1.5 rounded-full mt-3">
-                <div
-                  className="bg-red-500 h-1.5 rounded-full"
-                  style={{ width: `${billsProgress}%` }}
-                ></div>
-              </div>
+          {/* Card: Safe to Withdraw */}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative group hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-gray-500 font-medium text-sm">
+                Disponível para Você
+              </span>
+              <Wallet className="w-5 h-5 text-green-600" />
             </div>
+            <div className="text-2xl font-bold text-green-600 mb-1">
+              {formatCurrency(financialHealth.safeToWithdraw)}
+            </div>
+            <span className="text-xs text-gray-400">
+              Já descontando custos e reservas
+            </span>
+          </div>
 
-            {/* Maintenance Fund */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
-              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                <CreditCard size={64} className="text-orange-500" />
-              </div>
-              <p className="text-gray-500 text-sm mb-1">Reserva Manutenção</p>
-              <h4 className="text-2xl font-bold text-orange-500">
-                R$ {financialHealth.maintenanceFundAccumulated.toFixed(2)}
-              </h4>
-              <div className="w-full bg-gray-100 h-1.5 rounded-full mt-3">
-                <div
-                  className="bg-orange-500 h-1.5 rounded-full"
-                  style={{ width: `${maintenanceProgress}%` }}
-                ></div>
-              </div>
+          {/* Card: Bills */}
+          <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative group hover:shadow-md transition-all">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-gray-500 font-medium text-sm">
+                Contas a Pagar (Hoje)
+              </span>
+              <CreditCard className="w-5 h-5 text-red-500" />
             </div>
-
-            {/* Emergency Fund */}
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden group hover:shadow-md transition-all">
-              <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-                <PiggyBank size={64} className="text-[var(--primary)]" />
-              </div>
-              <p className="text-gray-500 text-sm mb-1">Fundo de Emergência</p>
-              <h4 className="text-2xl font-bold text-[var(--primary)]">
-                R$ {financialHealth.emergencyFundAccumulated.toFixed(2)}
-              </h4>
-              <div className="w-full bg-gray-100 h-1.5 rounded-full mt-3">
-                <div
-                  className="bg-[var(--primary)] h-1.5 rounded-full"
-                  style={{ width: `${emergencyProgress}%` }}
-                ></div>
-              </div>
+            <div className="text-2xl font-bold text-[var(--foreground)] mb-1">
+              {formatCurrency(financialHealth.billsDueToday)}
             </div>
+            <div className="w-full bg-gray-100 h-1.5 rounded-full mt-2 mb-1">
+              <div
+                className="bg-red-500 h-1.5 rounded-full"
+                style={{ width: `${billsProgress}%` }}
+              />
+            </div>
+            <span className="text-xs text-gray-400">Evite juros e multas</span>
           </div>
         </div>
 
-        {/* Growth & Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Monthly Growth Chart (Simulated) */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 lg:col-span-2">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-bold text-gray-800 font-outfit">
-                Crescimento Mensal (Meta: +20%)
-              </h3>
-              <TrendingUp className="text-green-500" />
-            </div>
-
-            <div className="flex items-end gap-4 h-48">
-              {[40, 55, 45, 60, 75, 65, 85].map((h, i) => (
-                <div
-                  key={i}
-                  className="flex-1 flex flex-col items-center gap-2 group"
-                >
-                  <div
-                    className="w-full bg-[var(--primary-light)] rounded-t-lg relative group-hover:bg-[var(--primary)] transition-colors"
-                    style={{ height: `${h}%` }}
-                  >
-                    {i === 6 && (
-                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded">
-                        +22%
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-xs text-gray-400">Dia {i + 14}</span>
-                </div>
-              ))}
-            </div>
+        {/* AI Insight & Combo - "Pedacinho do Nubank" Style */}
+        <div className="bg-[var(--primary-light)]/30 rounded-2xl p-6 border border-[var(--primary-light)] flex gap-4 items-start">
+          <div className="bg-white p-3 rounded-full shadow-sm text-[var(--primary)]">
+            <Zap size={24} />
           </div>
-
-          {/* Daily Actions Checklist */}
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-gray-800 font-outfit mb-4">
-              Ações Recomendadas
+          <div>
+            <h3 className="font-bold text-[var(--primary-dark)] text-lg mb-1">
+              Consultor Inteligente
             </h3>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100">
-                <div
-                  className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${financialHealth.dailyGoalStatus === "ahead" ? "border-green-500 bg-green-500" : "border-gray-300"}`}
-                >
-                  {financialHealth.dailyGoalStatus === "ahead" && (
-                    <ArrowUpRight size={14} className="text-white" />
-                  )}
+            <p className="text-gray-700 text-sm mb-3">
+              {financialHealth.advice ||
+                "Analisando seus dados para gerar insights..."}
+            </p>
+
+            {financialHealth.suggestedCombo && (
+              <div className="bg-white p-4 rounded-xl border border-gray-200 mt-2 inline-block">
+                <span className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider">
+                  Sugestão de Combo
+                </span>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="font-bold text-gray-800">
+                    {financialHealth.suggestedCombo.name}
+                  </span>
                 </div>
-                <span className="text-sm text-gray-600">
-                  Verificar Estoque de Shampoos
-                </span>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-lg font-bold text-green-600">
+                    {formatCurrency(financialHealth.suggestedCombo.price)}
+                  </span>
+                  <span className="text-sm text-gray-400 line-through">
+                    {formatCurrency(
+                      financialHealth.suggestedCombo.originalPrice,
+                    )}
+                  </span>
+                  <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-bold">
+                    14% OFF
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100">
-                <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
-                <span className="text-sm text-gray-600">
-                  Confirmar agenda de amanhã
-                </span>
+            )}
+          </div>
+        </div>
+
+        {/* Caixinhas (Funds) */}
+        <div>
+          <h3 className="text-lg font-bold text-gray-800 mb-4 px-1">
+            Minhas Caixinhas (Reservas)
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {(settings.customFunds || []).map((fund) => {
+              if (!fund.enabled) return null;
+
+              // Map color names to Tailwind classes (simplified approximation or reuse map from CaixaPage if needed)
+              // For dashboard, we can use a simpler generic icon color or try to match
+              const colorClasses: Record<string, string> = {
+                emerald: "text-emerald-600 bg-emerald-100",
+                blue: "text-blue-600 bg-blue-100",
+                orange: "text-orange-600 bg-orange-100",
+                red: "text-red-600 bg-red-100",
+                violet: "text-purple-600 bg-purple-100",
+              };
+
+              const styleClass =
+                colorClasses[fund.color] ||
+                "text-[var(--primary)] bg-purple-100";
+              const amount = financialHealth.fundsAccumulated[fund.id] || 0;
+
+              return (
+                <div
+                  key={fund.id}
+                  className="bg-white p-4 rounded-2xl border border-gray-100 flex items-center gap-4 transition-shadow hover:shadow-md"
+                >
+                  <div className={`p-3 rounded-full ${styleClass}`}>
+                    <PiggyBank size={24} />
+                  </div>
+                  <div>
+                    <span className="block text-sm text-gray-500 font-medium">
+                      {fund.name}
+                    </span>
+                    <span className="block text-xl font-bold text-gray-800">
+                      {formatCurrency(amount)}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+            {(!settings.customFunds || settings.customFunds.length === 0) && (
+              <div className="col-span-full text-center py-6 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
+                Nenhuma caixinha configurada.
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 cursor-pointer hover:bg-gray-100">
-                <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
-                <span className="text-sm text-gray-600">
-                  Postar foto &quot;Antes e Depois&quot;
-                </span>
-              </div>
-            </div>
-            <button className="w-full mt-6 py-3 rounded-xl bg-[var(--primary)] text-white font-medium hover:bg-[var(--primary-dark)] transition-colors">
-              Ver Checklist Completo
-            </button>
+            )}
           </div>
         </div>
       </div>

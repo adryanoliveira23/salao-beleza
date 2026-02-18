@@ -3,7 +3,15 @@
 export const dynamic = "force-dynamic";
 
 import React, { useState, useEffect } from "react";
-import { Search, Plus, Edit2, Trash2, MessageCircle, X } from "lucide-react";
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  MessageCircle,
+  X,
+  Upload,
+} from "lucide-react";
 import { Header } from "@/components/Header";
 import { useSalonData } from "@/contexts/SalonDataContext";
 
@@ -11,6 +19,7 @@ export default function Clients() {
   const { clients, addClient, updateClient, deleteClient } = useSalonData();
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -54,16 +63,25 @@ export default function Clients() {
               className="flex-1 min-w-0 border-none outline-none text-sm font-sans"
             />
           </div>
-          <button
-            onClick={() => {
-              setEditingId(null);
-              setShowModal(true);
-            }}
-            className="flex items-center justify-center gap-2 bg-gradient-to-br from-[#FF6B9D] to-[#C73866] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base shadow-lg hover:-translate-y-0.5 transition-all duration-300 shadow-[#FF6B9D]/30 w-full sm:w-auto"
-          >
-            <Plus size={18} className="md:w-5 md:h-5" />
-            Novo Cliente
-          </button>
+          <div className="flex gap-2 w-full sm:w-auto">
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="flex items-center justify-center gap-2 bg-white text-[var(--primary)] border border-[var(--primary)] px-4 py-2.5 rounded-xl font-semibold text-sm hover:bg-purple-50 transition-all w-full sm:w-auto"
+            >
+              <Upload size={18} />
+              Importar
+            </button>
+            <button
+              onClick={() => {
+                setEditingId(null);
+                setShowModal(true);
+              }}
+              className="flex items-center justify-center gap-2 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-4 md:px-6 py-2.5 md:py-3 rounded-xl font-semibold text-sm md:text-base shadow-lg hover:-translate-y-0.5 transition-all duration-300 shadow-[#FF6B9D]/30 w-full sm:w-auto"
+            >
+              <Plus size={18} className="md:w-5 md:h-5" />
+              Novo Cliente
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4 md:gap-6">
@@ -73,7 +91,7 @@ export default function Clients() {
               className="bg-white rounded-[16px] md:rounded-[20px] p-4 md:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgba(0,0,0,0.1)] transition-all duration-300 flex flex-col gap-4"
             >
               <div className="flex justify-center">
-                <div className="w-[60px] h-[60px] rounded-full bg-gradient-to-br from-[#FF6B9D] to-[#C73866] flex items-center justify-center text-white font-bold text-xl shadow-md">
+                <div className="w-[60px] h-[60px] rounded-full bg-linear-to-br from-[#FF6B9D] to-[#C73866] flex items-center justify-center text-white font-bold text-xl shadow-md">
                   {client.name
                     .split(" ")
                     .map((n) => n[0])
@@ -170,6 +188,16 @@ export default function Clients() {
             }
             setShowModal(false);
             setEditingId(null);
+          }}
+        />
+      )}
+
+      {showImportModal && (
+        <ImportModal
+          onClose={() => setShowImportModal(false)}
+          onImport={(newClients) => {
+            newClients.forEach((c) => addClient(c));
+            setShowImportModal(false);
           }}
         />
       )}
@@ -307,12 +335,103 @@ function ClientModal({
             </button>
             <button
               type="submit"
-              className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-gradient-to-br from-[#FF6B9D] to-[#C73866] text-white hover:shadow-lg"
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white hover:shadow-lg"
             >
               {client ? "Salvar alterações" : "Salvar"}
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+}
+
+function ImportModal({
+  onClose,
+  onImport,
+}: {
+  onClose: () => void;
+  onImport: (
+    data: Array<{ name: string; phone: string; email: string }>,
+  ) => void;
+}) {
+  const [text, setText] = useState("");
+
+  const handleImport = () => {
+    const lines = text.split("\n");
+    const clients = lines
+      .map((line) => {
+        // Simple CSV: Name,Phone,Email
+        const parts = line.split(",");
+        if (parts.length < 2) return null;
+        return {
+          name: parts[0]?.trim(),
+          phone: parts[1]?.trim(),
+          email: parts[2]?.trim() || "",
+        };
+      })
+      .filter(Boolean) as Array<{ name: string; phone: string; email: string }>;
+
+    if (clients.length === 0) {
+      alert(
+        "Nenhum cliente válido encontrado. Use o formato: Nome, Telefone, Email",
+      );
+      return;
+    }
+
+    if (
+      confirm(`Encontrados ${clients.length} clientes. Confirmar importação?`)
+    ) {
+      onImport(clients);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-[1000]">
+      <div
+        className="bg-white rounded-[24px] w-[90%] max-w-[500px] shadow-2xl p-7"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold font-serif text-[#2d1b2e]">
+            Importar Clientes (CSV)
+          </h3>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-[#f5f5f5] rounded-full transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-gray-500">
+            Cole abaixo sua lista de clientes no formato: <br />
+            <strong>Nome, Telefone, Email</strong> (um por linha)
+          </p>
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            className="w-full h-40 p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] font-mono"
+            placeholder="Maria Silva, 1199999999, maria@email.com&#10;João Souza, 1188888888, joao@email.com"
+          />
+
+          <div className="flex gap-3 justify-end mt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm border-2 border-[#FF6B9D] text-[#FF6B9D] hover:bg-[#fff0f5]"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleImport}
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white hover:shadow-lg"
+            >
+              Processar Importação
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

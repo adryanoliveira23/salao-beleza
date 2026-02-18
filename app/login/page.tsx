@@ -147,9 +147,12 @@ export default function LoginPage() {
           <div className="mt-8 pt-6 border-t border-[#2d1b2e]/10 text-center space-y-4">
             <p className="text-sm text-[#2d1b2e]/50">
               Esqueceu sua senha?{" "}
-              <a href="#" className="text-primary hover:underline">
+              <Link
+                href="/recuperar-senha"
+                className="text-primary hover:underline"
+              >
                 Recuperar acesso
-              </a>
+              </Link>
             </p>
             <p className="text-sm text-[#2d1b2e]/50">
               Ainda não tem conta?{" "}

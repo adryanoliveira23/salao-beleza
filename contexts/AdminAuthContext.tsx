@@ -24,26 +24,28 @@ const AdminAuthContext = createContext<AdminAuthContextType | undefined>(
 
 export function AdminAuthProvider({ children }: { children: ReactNode }) {
   // Inicializar sempre como false para evitar diferenças de hidratação
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [state, setState] = useState({
+    isAuthenticated: false,
+    isLoading: true,
+  });
 
   useEffect(() => {
     // Verificar se há sessão válida ao carregar (apenas no cliente, após hidratação)
+    let isAuth = false;
     if (typeof window !== "undefined") {
       const session = localStorage.getItem(ADMIN_SESSION_KEY);
       if (session === "authenticated") {
-        setIsAuthenticated((prev) => {
-          if (!prev) return true;
-          return prev;
-        });
+        isAuth = true;
       }
     }
-    setIsLoading(false);
+    setTimeout(() => {
+      setState({ isAuthenticated: isAuth, isLoading: false });
+    }, 0);
   }, []);
 
   const login = (accessKey: string): boolean => {
     if (accessKey === ADMIN_ACCESS_KEY) {
-      setIsAuthenticated(true);
+      setState((prev) => ({ ...prev, isAuthenticated: true }));
       if (typeof window !== "undefined") {
         localStorage.setItem(ADMIN_SESSION_KEY, "authenticated");
       }
@@ -53,7 +55,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
-    setIsAuthenticated(false);
+    setState((prev) => ({ ...prev, isAuthenticated: false }));
     if (typeof window !== "undefined") {
       localStorage.removeItem(ADMIN_SESSION_KEY);
     }
@@ -61,12 +63,12 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
 
   const value = React.useMemo(
     () => ({
-      isAuthenticated,
+      isAuthenticated: state.isAuthenticated,
       login,
       logout,
-      isLoading,
+      isLoading: state.isLoading,
     }),
-    [isAuthenticated, isLoading],
+    [state.isAuthenticated, state.isLoading],
   );
 
   return (

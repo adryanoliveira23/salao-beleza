@@ -1,203 +1,383 @@
 "use client";
 
-import React, { useState } from "react";
-import { Plus, Trash2, FileText, User, Scissors } from "lucide-react";
-import { Header } from "@/components/Header";
-import { useSalonData } from "@/contexts/SalonDataContext";
+import React, { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/app/lib/firebase";
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  addDoc,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+import { jsPDF } from "jspdf";
+import { Plus, Trash2, FileText, User, Users } from "lucide-react";
+
+interface Employee {
+  id: string;
+  name: string;
+  role: string;
+  commission: number;
+  pixKey: string;
+  cpf: string;
+  email?: string;
+  phone?: string;
+}
 
 export default function ColaboradoresPage() {
-  const { professionals, addProfessional, deleteProfessional } = useSalonData();
+  const { user } = useAuth();
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   // Form State
-  const [name, setName] = useState("");
-  const [specialty, setSpecialty] = useState("");
-  const [commission, setCommission] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    role: "Cabeleireiro(a)",
+    commission: 30, // Default 30%
+    pixKey: "",
+    cpf: "",
+    email: "",
+    phone: "",
+  });
 
-  const handleAddProfessional = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !specialty) return;
+  useEffect(() => {
+    if (!user) return;
 
-    await addProfessional({
-      name,
-      specialty,
-      commission: Number(commission) || 0,
+    const q = query(
+      collection(db, "employees"),
+      where("ownerId", "==", user.uid),
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data: Employee[] = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data() as Omit<Employee, "id">),
+      }));
+      setEmployees(data);
+      setLoading(false);
     });
 
-    setName("");
-    setSpecialty("");
-    setCommission("");
-    setIsModalOpen(false);
+    return () => unsubscribe();
+  }, [user]);
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleGenerateContract = (professionalName: string) => {
-    // Mock contract generation for now - ideally use jsPDF
-    const contractText = `
-    CONTRATO DE PARCERIA - SALÃO PARCEIRO
-    
-    ENTRE:
-    SALÃO PRO (Salão-Parceiro)
-    e
-    ${professionalName} (Profissional-Parceiro)
-    
-    1. O Profissional-Parceiro atuará com autonomia...
-    2. A cota-parte (comissão) será paga conforme combinado...
-    3. Este contrato segue a Lei do Salão Parceiro (Lei 13.352/2016).
-    
-    Data: ${new Date().toLocaleDateString()}
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      await addDoc(collection(db, "employees"), {
+        ...formData,
+        commission: Number(formData.commission),
+        ownerId: user.uid,
+        createdAt: new Date().toISOString(),
+      });
+      setIsModalOpen(false);
+      setFormData({
+        name: "",
+        role: "Cabeleireiro(a)",
+        commission: 30,
+        pixKey: "",
+        cpf: "",
+        email: "",
+        phone: "",
+      });
+    } catch (error) {
+      console.error("Error adding employee:", error);
+      alert("Erro ao adicionar colaborador.");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Tem certeza que deseja excluir este colaborador?")) {
+      try {
+        await deleteDoc(doc(db, "employees", id));
+      } catch (error) {
+        console.error("Error deleting employee:", error);
+      }
+    }
+  };
+
+  const generateContract = (employee: Employee) => {
+    const doc = new jsPDF();
+    const lineHeight = 10;
+    let y = 20;
+
+    // Header
+    doc.setFontSize(16);
+    doc.setFont("helvetica", "bold");
+    doc.text("CONTRATO DE PARCERIA - SALÃO PARCEIRO", 105, y, {
+      align: "center",
+    });
+    y += 20;
+
+    // Body
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "normal");
+
+    const text = `
+    Pelo presente instrumento particular de contrato de parceria, de um lado [NOME DO SEU SALÃO], pessoa jurídica de direito privado, doravante denominado SALÃO-PARCEIRO.
+
+    E de outro lado, ${employee.name.toUpperCase()}, inscrito(a) no CPF sob o nº ${employee.cpf}, doravante denominado(a) PROFISSIONAL-PARCEIRO.
+
+    Têm entre si justo e contratado o seguinte:
+
+    CLÁUSULA PRIMEIRA - DO OBJETO
+    O presente contrato tem por objeto a celebração de parceria entre as partes para o desempenho das atividades de ${employee.role}, nas dependências do SALÃO-PARCEIRO, nos termos da Lei nº 13.352/2016.
+
+    CLÁUSULA SEGUNDA - DA PARTILHA DE RECEITAS (COMISSÃO)
+    Pela parceria ora firmada, o SALÃO-PARCEIRO reterá a título de aluguel de bens móveis, utensílios, despesas operacionais, tributos e encargos locatícios, o percentual correspondente, cabendo ao PROFISSIONAL-PARCEIRO a cota-parte de ${employee.commission}% (por cento) sobre o valor bruto dos serviços prestados.
+
+    CLÁUSULA TERCEIRA - DA INEXISTÊNCIA DE VÍNCULO EMPREGATÍCIO
+    As partes declaram expressamente que a presente relação jurídica não configura vínculo empregatício de qualquer natureza, sendo regida pela Lei do Salão Parceiro. O PROFISSIONAL-PARCEIRO possui total autonomia na execução de seus serviços, não estando sujeito a controle de jornada ou subordinação hierárquica.
+
+    CLÁUSULA QUARTA - DOS PAGAMENTOS
+    Os repasses da cota-parte devida ao PROFISSIONAL-PARCEIRO serão realizados através de transferência bancária para a Chave PIX: ${employee.pixKey}.
+
+    CLÁUSULA QUINTA - DA VIGÊNCIA E RESCISÃO
+    Este contrato entra em vigor na data de sua assinatura e terá vigência por prazo indeterminado, podendo ser rescindido por qualquer das partes mediante aviso prévio de 30 (trinta) dias.
+
+    E, por estarem assim justos e contratados, assinam o presente instrumento em duas vias de igual teor e forma.
+
+    __________________, _____ de ___________________ de ________.
     `;
 
-    const blob = new Blob([contractText], { type: "text/plain;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `Contrato_${professionalName.replace(/\s+/g, "_")}.txt`;
-    link.click();
+    const splitText = doc.splitTextToSize(text, 170);
+    doc.text(splitText, 20, y);
+
+    y += splitText.length * 5 + 30;
+
+    // Signatures
+    doc.line(20, y, 90, y);
+    doc.text("SALÃO-PARCEIRO", 55, y + 5, { align: "center" });
+
+    doc.line(110, y, 180, y);
+    doc.text("PROFISSIONAL-PARCEIRO", 145, y + 5, { align: "center" });
+
+    doc.save(
+      `contrato_${employee.name.replace(/\s+/g, "_").toLowerCase()}.pdf`,
+    );
   };
 
   return (
-    <div className="flex flex-col h-full bg-[#f5f5f5]">
-      <Header title="Gestão de Colaboradores" />
-
-      <div className="flex-1 overflow-y-auto p-4 md:p-8">
-        <div className="max-w-6xl mx-auto">
-          {/* Action Row */}
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-800 font-outfit">
-              Time de Especialistas
-            </h2>
-            <button
-              onClick={() => setIsModalOpen(true)}
-              className="bg-[var(--primary)] text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[var(--primary-dark)] transition-colors shadow-md shadow-purple-200"
-            >
-              <Plus size={18} />
-              Novo Profissional
-            </button>
-          </div>
-
-          {/* Professionals Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {professionals.length === 0 ? (
-              <div className="col-span-full p-10 text-center text-gray-400 bg-white rounded-3xl border border-gray-100">
-                <User size={48} className="mx-auto mb-4 opacity-20" />
-                <p>Nenhum profissional cadastrado.</p>
-              </div>
-            ) : (
-              professionals.map((prof) => (
-                <div
-                  key={prof.id}
-                  className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow group relative"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg"
-                        style={{ backgroundColor: prof.color || "#820AD1" }}
-                      >
-                        {prof.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-gray-800">{prof.name}</h3>
-                        <p className="text-sm text-gray-500">
-                          {prof.specialty}
-                        </p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => deleteProfessional(prof.id)}
-                      className="text-gray-300 hover:text-red-500 transition-colors"
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-
-                  <div className="space-y-3">
-                    <div className="bg-gray-50 p-3 rounded-xl flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Comissão</span>
-                      <span className="font-bold text-[var(--primary)]">
-                        {prof.commission}%
-                      </span>
-                    </div>
-
-                    <button
-                      onClick={() => handleGenerateContract(prof.name)}
-                      className="w-full border border-gray-200 text-gray-600 hover:border-[var(--primary)] hover:text-[var(--primary)] py-2 rounded-xl flex items-center justify-center gap-2 transition-all font-medium text-sm"
-                    >
-                      <FileText size={16} />
-                      Gerar Contrato
-                    </button>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
+    <div className="p-6 md:p-8 space-y-8 font-sans h-full overflow-y-auto">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800 font-outfit">
+            Colaboradores
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Gerencie sua equipe e contratos de parceria
+          </p>
         </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-[var(--primary)] text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:bg-[var(--primary-dark)] transition-colors shadow-sm font-medium"
+        >
+          <Plus size={20} />
+          <span className="hidden md:inline">Novo Colaborador</span>
+        </button>
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl animate-in fade-in zoom-in duration-200">
-            <h3 className="text-xl font-bold font-outfit mb-6">
-              Novo Profissional
-            </h3>
+      {loading ? (
+        <div className="flex justify-center p-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--primary)]"></div>
+        </div>
+      ) : employees.length === 0 ? (
+        <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200">
+          <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Users size={32} className="text-gray-400" />
+          </div>
+          <h3 className="text-lg font-bold text-gray-600 mb-1">
+            Nenhum colaborador ainda
+          </h3>
+          <p className="text-gray-400 text-sm mb-4">
+            Adicione sua equipe para gerar contratos.
+          </p>
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="text-[var(--primary)] font-bold text-sm hover:underline"
+          >
+            Adicionar agora
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {employees.map((emp) => (
+            <div
+              key={emp.id}
+              className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow relative group"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <div className="bg-[var(--primary-light)] p-3 rounded-2xl text-[var(--primary)]">
+                  <User size={24} />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => generateContract(emp)}
+                    className="text-gray-400 hover:text-[var(--primary)] p-2 rounded-full hover:bg-gray-50 transition"
+                    title="Gerar Contrato"
+                  >
+                    <FileText size={20} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(emp.id)}
+                    className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition"
+                    title="Excluir"
+                  >
+                    <Trash2 size={20} />
+                  </button>
+                </div>
+              </div>
 
-            <form onSubmit={handleAddProfessional} className="space-y-4">
+              <h3 className="text-xl font-bold text-gray-800 mb-1">
+                {emp.name}
+              </h3>
+              <p className="text-sm text-gray-500 mb-4">{emp.role}</p>
+
+              <div className="space-y-2 border-t border-gray-100 pt-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Comissão</span>
+                  <span className="font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded-md">
+                    {emp.commission}%
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">CPF</span>
+                  <span className="text-gray-600">{emp.cpf}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-400">Chave PIX</span>
+                  <span className="text-gray-600 truncate max-w-[120px]">
+                    {emp.pixKey}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mt-4 pt-4 border-t border-gray-50 flex justify-center">
+                <button
+                  onClick={() => generateContract(emp)}
+                  className="text-sm font-bold text-[var(--primary)] hover:underline flex items-center gap-1"
+                >
+                  <FileText size={16} /> Baixar Contrato
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal - Nubank style simplistic modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="bg-white rounded-3xl w-full max-w-md p-8 shadow-2xl animate-in fade-in zoom-in duration-200">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 font-outfit">
+              Novo Colaborador
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-500 mb-1">
                   Nome Completo
                 </label>
                 <input
                   type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  name="name"
                   required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Especialidade
-                </label>
-                <div className="relative">
-                  <Scissors
-                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                    size={18}
-                  />
-                  <input
-                    type="text"
-                    value={specialty}
-                    onChange={(e) => setSpecialty(e.target.value)}
-                    placeholder="Ex: Cabeleireira, Manicure"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-[var(--primary)]"
-                    required
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Comissão (%)
-                </label>
-                <input
-                  type="number"
-                  value={commission}
-                  onChange={(e) => setCommission(e.target.value)}
-                  placeholder="Ex: 50"
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-[var(--primary)]"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-light)] outline-none transition-all"
+                  placeholder="Ex: Maria Silva"
                 />
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Cargo/Função
+                  </label>
+                  <select
+                    name="role"
+                    value={formData.role}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[var(--primary)] outline-none bg-white"
+                  >
+                    <option>Cabeleireiro(a)</option>
+                    <option>Manicure</option>
+                    <option>Maquiador(a)</option>
+                    <option>Esteticista</option>
+                    <option>Recepcionista</option>
+                    <option>Auxiliar</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Comissão (%)
+                  </label>
+                  <input
+                    type="number"
+                    name="commission"
+                    required
+                    min="0"
+                    max="100"
+                    value={formData.commission}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[var(--primary)] outline-none"
+                    placeholder="30"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    CPF
+                  </label>
+                  <input
+                    type="text"
+                    name="cpf"
+                    required
+                    value={formData.cpf}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[var(--primary)] outline-none"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-500 mb-1">
+                    Chave PIX
+                  </label>
+                  <input
+                    type="text"
+                    name="pixKey"
+                    required
+                    value={formData.pixKey}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[var(--primary)] outline-none"
+                    placeholder="Chave para pagamentos"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl hover:bg-gray-200 transition-colors"
+                  className="flex-1 py-3 rounded-xl border border-gray-200 font-medium text-gray-600 hover:bg-gray-50 transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 bg-[var(--primary)] text-white font-bold py-3 rounded-xl hover:bg-[var(--primary-dark)] transition-colors shadow-lg shadow-purple-200/50"
+                  className="flex-1 py-3 rounded-xl bg-[var(--primary)] text-white font-bold hover:bg-[var(--primary-dark)] transition-colors shadow-lg shadow-[var(--primary-light)]"
                 >
                   Salvar
                 </button>

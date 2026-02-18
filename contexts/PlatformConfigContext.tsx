@@ -7,19 +7,46 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import { db, firebaseConfig } from "@/app/lib/firebase";
+import { initializeApp, deleteApp } from "firebase/app";
+import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import {
-  getAdminData,
-  createPlatformUser,
-  updatePlatformUser as updatePlatformUserAction,
-  deletePlatformUser as deletePlatformUserAction,
-  updatePlatformConfig,
-} from "@/app/actions/admin";
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
+  QueryDocumentSnapshot,
+  DocumentData,
+} from "firebase/firestore";
 
-// Removed unused context variable
-// const PlatformConfigContext = createContext<PlatformConfigContextType | undefined>(undefined);
-// Wait, I need to keep the Context creation but the lint said 'values' or something.
-// The lint said 'PLATFORM_CONFIG_KEY' is unused.
-const ADMIN_ACCESS_KEY = "Adiel&Adryan2026@!";
+// Helper to create user without logging out the current user (if ever needed to interact as admin)
+// Although for this panel the 'admin' isn't a firebase user, so main auth wouldn't affect it much,
+// but it keeps the main app auth state clean if we were to merge contexts.
+const createAuthUser = async (email: string, password?: string) => {
+  // 1. Initialize a secondary app
+  const appName = "secondaryApp-" + new Date().getTime();
+  const secondaryApp = initializeApp(firebaseConfig, appName);
+  const secondaryAuth = getAuth(secondaryApp);
+
+  try {
+    const pass = password || Math.random().toString(36).slice(-8) + "Aa1!";
+    const userCredential = await createUserWithEmailAndPassword(
+      secondaryAuth,
+      email,
+      pass,
+    );
+    return {
+      user: userCredential.user,
+      password: pass,
+    };
+  } finally {
+    // Cleanup
+    await deleteApp(secondaryApp);
+  }
+};
 
 export type PlanType = "essencial";
 
@@ -49,6 +76,8 @@ export interface PlatformUser {
   lastLogin?: string;
   // Extras
   tempPassword?: string;
+  avatar_url?: string;
+  username?: string;
 }
 
 export interface PlatformConfig {
@@ -101,20 +130,42 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
   const [users, setUsers] = useState<PlatformUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const loadData = React.useCallback(async () => {
-    setIsLoading(true);
+  const loadData = React.useCallback(async (isRefresh = false) => {
+    if (isRefresh) setIsLoading(true);
     try {
-      // Assuming existing admin key logic - in a real app, AdminAuthProvider should provide this key or token
-      // For now we use the hardcoded constant as we are inside the 'Admin Area' context logically
-      const data = await getAdminData(ADMIN_ACCESS_KEY);
-
-      if (data.config) {
-        setConfig({ ...defaultConfig, ...data.config });
+      // Load Config
+      const configRef = doc(db, "platform_config", "general");
+      const configSnap = await getDoc(configRef);
+      if (configSnap.exists()) {
+        setConfig({
+          ...defaultConfig,
+          ...(configSnap.data() as Partial<PlatformConfig>),
+        });
       }
 
-      if (data.users) {
-        setUsers(data.users);
-      }
+      // Load Users
+      const usersRef = collection(db, "profiles");
+      // Getting all profiles. In a real app with many users, pagination is needed.
+      const usersSnap = await getDocs(usersRef);
+      const loadedUsers: PlatformUser[] = [];
+
+      usersSnap.forEach((userDoc: QueryDocumentSnapshot<DocumentData>) => {
+        const data = userDoc.data();
+        loadedUsers.push({
+          id: userDoc.id,
+          email: data.email || "",
+          name: data.name || "Sem Nome",
+          salonName: data.salon_name || "",
+          plan: (data.plan as PlanType) || "essencial",
+          status: (data.status as PlatformUser["status"]) || "active",
+          createdAt: data.created_at || new Date().toISOString(),
+          lastLogin: data.last_login,
+          avatar_url: data.avatar_url,
+          username: data.username,
+        });
+      });
+
+      setUsers(loadedUsers);
     } catch (e) {
       console.error("Failed to load admin data:", e);
     } finally {
@@ -131,7 +182,9 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
       const newConfig = { ...config, ...updates };
       setConfig(newConfig); // Optimistic update
       try {
-        await updatePlatformConfig(ADMIN_ACCESS_KEY, newConfig);
+        await setDoc(doc(db, "platform_config", "general"), newConfig, {
+          merge: true,
+        });
       } catch (e) {
         console.error("Failed to sync config:", e);
         // Revert?
@@ -147,22 +200,41 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
       },
     ) => {
       try {
-        const result = await createPlatformUser(ADMIN_ACCESS_KEY, userData);
+        // 1. Create Auth User
+        const { user: authUser, password } = await createAuthUser(
+          userData.email,
+          userData.password,
+        );
 
+        // 2. Create Profile Doc
+        const createdAt = new Date().toISOString();
         const newUser: PlatformUser = {
-          ...userData,
-          id: result.id,
-          createdAt: result.createdAt,
-          tempPassword: result.tempPassword,
+          id: authUser.uid,
+          name: userData.name,
+          email: userData.email,
+          salonName: userData.salonName,
+          plan: userData.plan,
+          status: userData.status,
+          createdAt: createdAt,
+          tempPassword: password,
         };
+
+        // Firestore data mapping (snake_case generally preferable for DB but keeping it consistent with what we see)
+        // Previous files showed 'salon_name', 'created_at'. Let's stick to that.
+        await setDoc(doc(db, "profiles", authUser.uid), {
+          id: authUser.uid,
+          email: userData.email,
+          name: userData.name,
+          salon_name: userData.salonName,
+          plan: userData.plan,
+          status: userData.status,
+          created_at: createdAt,
+          // Add other fields as necessary
+        });
 
         setUsers((prev) => [...prev, newUser]);
 
-        if (result.tempPassword) {
-          alert(
-            `Usuário criado!\nEmail: ${userData.email}\nSenha: ${result.tempPassword}`,
-          );
-        }
+        alert(`Usuário criado!\nEmail: ${userData.email}\nSenha: ${password}`);
       } catch (e) {
         console.error("Failed to add user:", e);
         const message = e instanceof Error ? e.message : "Erro desconhecido";
@@ -179,24 +251,37 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
         prev.map((u) => (u.id === id ? { ...u, ...updates } : u)),
       ); // Optimistic
       try {
-        await updatePlatformUserAction(ADMIN_ACCESS_KEY, id, updates);
+        // Map updates to DB format
+        const dbUpdates: Partial<DocumentData> = {};
+        if (updates.name) dbUpdates.name = updates.name;
+        if (updates.salonName) dbUpdates.salon_name = updates.salonName;
+        if (updates.plan) dbUpdates.plan = updates.plan;
+        if (updates.status) dbUpdates.status = updates.status;
+        if (updates.email) dbUpdates.email = updates.email; // Note: This doesn't update Auth email!
+
+        await updateDoc(doc(db, "profiles", id), dbUpdates);
       } catch (e) {
         console.error("Failed to update user:", e);
         const message = e instanceof Error ? e.message : "Erro desconhecido";
         alert("Erro ao atualizar usuário: " + message);
+        loadData(); // Revert
       }
     },
-    [],
+    [loadData],
   );
 
   const deleteUser = React.useCallback(
     async (id: string) => {
-      if (!confirm("Tem certeza que deseja excluir este usuário da Supabase?"))
+      if (
+        !confirm(
+          "Tem certeza que deseja excluir o PERFIL deste usuário? (A conta de login permanecerá ativa até exclusão manual no console Firebase)",
+        )
+      )
         return;
 
       setUsers((prev) => prev.filter((u) => u.id !== id)); // Optimistic
       try {
-        await deletePlatformUserAction(ADMIN_ACCESS_KEY, id);
+        await deleteDoc(doc(db, "profiles", id));
       } catch (e) {
         console.error("Failed to delete user:", e);
         const message = e instanceof Error ? e.message : "Erro desconhecido";
@@ -208,7 +293,7 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshUsers = React.useCallback(() => {
-    loadData();
+    loadData(true);
   }, [loadData]);
 
   const value = React.useMemo(

@@ -1,6 +1,6 @@
 "use server";
 
-// import { supabaseAdmin } from "@/app/lib/supabase-admin"; // Removed
+import { adminAuth, adminDb } from "@/app/lib/firebase-admin";
 
 export async function processPaymentAndCreateUser(
   email: string,
@@ -13,69 +13,70 @@ export async function processPaymentAndCreateUser(
     const finalPassword =
       password || Math.random().toString(36).substring(2, 10);
 
-    console.log(`[SIMULATION] Creating user: ${email}`);
+    console.log(`[PAYMENT] Processing user creation for: ${email}`);
 
-    // Firebase Admin SDK required for server-side user creation
-    // Since we are migrating to client-side Firebase or need Admin SDK credentials
-    // this part is temporarily disabled/stubbed.
-
-    console.warn("Firebase Admin SDK not configured. User creation skipped.");
-    throw new Error(
-      "Firebase Admin SDK required for server-side user creation.",
-    );
-
-    /*
-    // 2. Create user in Supabase Auth via Admin API
-    const { data: userData, error: authError } =
-      await supabaseAdmin.auth.admin.createUser({
-        email,
-        password: finalPassword,
-        email_confirm: true,
-        user_metadata: { name, salonName },
-      });
-
-    if (authError) {
-      console.error("Error creating user:", authError);
-      return { success: false, error: authError.message };
+    if (!adminAuth || !adminDb) {
+      console.error("Firebase Admin SDK not initialized.");
+      return { success: false, error: "Serviço de autenticação indisponível." };
     }
 
-    // 3. Create profile entry
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .insert({
-        id: userData.user.id,
+    // 2. Check if user already exists
+    let userRecord;
+    try {
+      userRecord = await adminAuth.getUserByEmail(email);
+      console.log(`User already exists: ${userRecord.uid}`);
+      // Ideally, we might want to update the plan or just ensure profile exists
+    } catch (error: any) {
+      if (error.code === "auth/user-not-found") {
+        // Create new user
+        userRecord = await adminAuth.createUser({
+          email,
+          password: finalPassword,
+          displayName: name,
+          emailVerified: true,
+        });
+        console.log(`Created new user: ${userRecord.uid}`);
+      } else {
+        throw error;
+      }
+    }
+
+    // 3. Create or update profile entry in Firestore
+    const username =
+      email
+        .split("@")[0]
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "") + Math.floor(Math.random() * 1000);
+
+    await adminDb.collection("profiles").doc(userRecord.uid).set(
+      {
+        id: userRecord.uid,
         email,
         name,
         salon_name: salonName,
-        username:
-          email
-            .split("@")[0]
-            .toLowerCase()
-            .replace(/[^a-z0-9]/g, "") + Math.floor(Math.random() * 1000),
-        plan: "essencial",
+        username, // Default username
+        plan: "essencial", // Default plan, could be passed as arg
         status: "active",
-      });
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      },
+      { merge: true },
+    ); // Merge to avoid overwriting existing data if checking out again
 
-    if (profileError) {
-      console.error("Error creating profile:", profileError);
-      return { success: false, error: profileError.message };
-    }
-
-    // 4. Simulate sending welcome email
-    await simulateEmail(email, name);
+    // 4. Simulate sending welcome email (or integrate with real email service)
+    await simulateEmail(email, name, finalPassword);
 
     return { success: true };
-    */
-  } catch (err) {
-    console.error("Unexpected error:", err);
+  } catch (err: any) {
+    console.error("Error processing payment/user creation:", err);
     return {
       success: false,
-      error: "Erro interno no servidor (Firebase Admin missing)",
+      error: err.message || "Erro interno no servidor ao processar pagamento.",
     };
   }
 }
 
-async function simulateEmail(email: string, name: string) {
+async function simulateEmail(email: string, name: string, password?: string) {
   console.log(`
     -------------------------------------------
     ENVIANDO EMAIL PARA: ${email}
@@ -83,8 +84,10 @@ async function simulateEmail(email: string, name: string) {
     
     Olá ${name}, seu pagamento foi confirmado e sua conta está ativa!
     
-    Você já pode acessar o sistema com o e-mail e a senha que cadastrou.
-    URL: https://agendlyglow.com/login
+    Você já pode acessar o sistema com o e-mail: ${email}
+    ${password ? `Sua senha temporária é: ${password}` : ""}
+    
+    Acesse: https://agendlyglow.com/login
     
     Estamos felizes em ter você conosco!
     -------------------------------------------

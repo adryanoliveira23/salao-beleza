@@ -45,8 +45,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log("AuthContext: Auth state changed", firebaseUser?.uid);
-
       if (firebaseUser) {
         setUser(firebaseUser);
         // Set up real-time listener for profile
@@ -55,10 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           profileRef,
           (docSnap) => {
             if (docSnap.exists()) {
-              console.log("AuthContext: Profile updated");
               setProfile({ id: docSnap.id, ...docSnap.data() } as Profile);
             } else {
-              console.log("AuthContext: No profile found");
               setProfile(null);
             }
             setIsLoading(false);
@@ -68,16 +64,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setIsLoading(false);
           },
         );
-
-        // Return cleanup for profile listener?
-        // Logic gets a bit complex here with onAuthStateChanged inside useEffect.
-        // For simplicity and to avoid leaks, we might just fetch once or handle differently.
-        // But onAuthStateChanged itself is a listener.
-        // Let's just fetch once for now to match the structure, or keep it simple.
-        // If we use onSnapshot inside here, we need to make sure we unsubscribe when the user logs out or component unmounts.
-        // For now, let's just do a one-time fetch to ensure specific behavior matches previous implementation
-        // but real-time is better.
-
         return () => unsubscribeProfile();
       } else {
         setUser(null);

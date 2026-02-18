@@ -1,19 +1,30 @@
 "use client";
 
 import React, { useState } from "react";
-import { Link2, Copy, Check, ExternalLink } from "lucide-react";
+import {
+  Link2,
+  Copy,
+  Check,
+  ExternalLink,
+  AlertCircle,
+  ArrowRight,
+} from "lucide-react";
 import { Header } from "@/components/Header";
-
 import { useAuth } from "@/contexts/AuthContext";
+import Link from "next/link";
 
 export default function MeuLinkPage() {
   const [copied, setCopied] = useState(false);
   const { profile } = useAuth();
 
+  // Clean username logic
+  const username = profile?.username;
+  const isConfigured = !!username;
+
   const bookingUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/agendar${profile?.username ? `/${profile.username}` : ""}`
-      : "/agendar";
+      ? `${window.location.origin}/agendar/${username || ""}`
+      : `/agendar/${username || ""}`;
 
   const copyLink = async () => {
     try {
@@ -37,7 +48,7 @@ export default function MeuLinkPage() {
   };
 
   return (
-    <>
+    <div className="flex flex-col h-full bg-[#f5f5f5]">
       <Header title="Link de Agendamento" />
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-10">
@@ -57,55 +68,80 @@ export default function MeuLinkPage() {
               </div>
             </div>
 
-            <p className="text-[#666] mb-6">
-              Compartilhe este link com suas clientes para que elas agendem
-              online. Os agendamentos aparecerão automaticamente na sua agenda.
-            </p>
-
-            <div className="flex flex-col gap-4">
-              <div className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="text"
-                  readOnly
-                  value={bookingUrl}
-                  className="flex-1 p-3 border-2 border-[#f0f0f0] rounded-xl text-sm bg-[#fafafa] font-mono"
+            {!isConfigured ? (
+              <div className="bg-orange-50 border border-orange-200 rounded-xl p-6 text-center">
+                <AlertCircle
+                  size={48}
+                  className="text-orange-500 mx-auto mb-4"
                 />
-                <button
-                  type="button"
-                  onClick={copyLink}
-                  className="flex items-center justify-center gap-2 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all shrink-0"
+                <h3 className="text-lg font-bold text-orange-800 mb-2">
+                  Você precisa criar um @usuario
+                </h3>
+                <p className="text-orange-700 mb-6">
+                  Para gerar seu link de agendamento personalizado, você precisa
+                  definir um nome de usuário nas configurações.
+                </p>
+                <Link
+                  href="/configuracoes"
+                  className="inline-flex items-center gap-2 bg-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-orange-700 transition-colors"
                 >
-                  {copied ? (
-                    <>
-                      <Check size={18} />
-                      Copiado!
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={18} />
-                      Copiar link
-                    </>
-                  )}
-                </button>
+                  Criar meu @usuario agora <ArrowRight size={18} />
+                </Link>
               </div>
+            ) : (
+              <>
+                <p className="text-[#666] mb-6">
+                  Compartilhe este link com suas clientes para que elas agendem
+                  online. Os agendamentos aparecerão automaticamente na sua
+                  agenda.
+                </p>
 
-              <button
-                type="button"
-                onClick={openLink}
-                className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold border-2 border-[#FF6B9D] text-[#FF6B9D] hover:bg-[#FF6B9D]/5 transition-all"
-              >
-                <ExternalLink size={18} />
-                Abrir página de agendamento
-              </button>
-            </div>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input
+                      type="text"
+                      readOnly
+                      value={bookingUrl}
+                      className="flex-1 p-3 border-2 border-[#f0f0f0] rounded-xl text-sm bg-[#fafafa] font-mono text-gray-600"
+                    />
+                    <button
+                      type="button"
+                      onClick={copyLink}
+                      className="flex items-center justify-center gap-2 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all shrink-0 active:scale-95"
+                    >
+                      {copied ? (
+                        <>
+                          <Check size={18} />
+                          Copiado!
+                        </>
+                      ) : (
+                        <>
+                          <Copy size={18} />
+                          Copiar
+                        </>
+                      )}
+                    </button>
+                  </div>
 
-            <p className="text-xs text-[#999] mt-6">
-              Clique em &quot;Abrir página de agendamento&quot; para visualizar
-              como suas clientes verão o formulário.
-            </p>
+                  <button
+                    type="button"
+                    onClick={openLink}
+                    className="flex items-center justify-center gap-2 w-full py-3 rounded-xl font-semibold border-2 border-[#FF6B9D] text-[#FF6B9D] hover:bg-[#FF6B9D]/5 transition-all"
+                  >
+                    <ExternalLink size={18} />
+                    Testar meu link
+                  </button>
+                </div>
+
+                <p className="text-xs text-[#999] mt-6 text-center">
+                  Seu link é único:{" "}
+                  <strong>AGENDLY.COM/AGENDAR/{username?.toUpperCase()}</strong>
+                </p>
+              </>
+            )}
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
