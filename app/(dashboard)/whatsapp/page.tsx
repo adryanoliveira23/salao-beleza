@@ -144,11 +144,12 @@ export default function WhatsAppPage() {
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [pairingCode, setPairingCode] = useState<string | null>(null);
   const [isLoadingQr, setIsLoadingQr] = useState(false);
+  const [isCheckingConnection, setIsCheckingConnection] = useState(false);
   const [countdown, setCountdown] = useState(45);
   const [isRealHandshake, setIsRealHandshake] = useState(false);
 
   // Configurações do Salão
-  const [salonPhone, setSalonPhone] = useState(profile?.phone || "11999998888");
+  const [salonPhone, setSalonPhone] = useState(profile?.phone || "");
   const [savedSuccess, setSavedSuccess] = useState(false);
   const [testRecipientPhone, setTestRecipientPhone] = useState("");
 
@@ -240,37 +241,132 @@ export default function WhatsAppPage() {
     setConsoleLogs((prev) => [entry, ...prev.slice(0, 99)]);
   };
 
-  // Carrega configurações com persistência Local-First
+  // Carrega configurações com persistência Local-First e higienização de dados mockados
   useEffect(() => {
     if (!user) return;
+    let isMounted = true;
+
     async function loadData() {
       if (!user) return;
+
+      let storedPhone = "";
+      let storedConnected = false;
+      let storedConnectedAt = "";
+
+      // 1. Lê LocalStorage
       try {
         const local = localStorage.getItem(`bellamais_whatsapp_${user.uid}`);
         if (local) {
           const d = JSON.parse(local);
-          if (d.isConnected !== undefined) setIsConnected(d.isConnected);
-          if (d.connectedPhone) setConnectedPhone(d.connectedPhone);
-          if (d.connectedAt) setConnectedAt(d.connectedAt);
-          if (d.salonPhone) setSalonPhone(d.salonPhone);
+          if (d.salonPhone && !d.salonPhone.includes("999998888") && !d.salonPhone.includes("99999-8888")) {
+            setSalonPhone(d.salonPhone);
+          }
           if (d.rules && Array.isArray(d.rules)) setRules(d.rules);
+
+          const isMock =
+            d.connectedPhone === "+55 (11) 99999-8888" ||
+            d.connectedPhone?.includes("99999-8888") ||
+            d.connectedPhone?.includes("999998888") ||
+            d.connectedAt === "22/10, 23:12";
+
+          if (isMock) {
+            // Limpa dados mock salvos em cache local
+            const prev = JSON.parse(local || "{}");
+            localStorage.setItem(
+              `bellamais_whatsapp_${user.uid}`,
+              JSON.stringify({ ...prev, isConnected: false, connectedPhone: "", connectedAt: null })
+            );
+          } else if (d.isConnected) {
+            storedConnected = true;
+            storedPhone = d.connectedPhone || "";
+            storedConnectedAt = d.connectedAt || "";
+          }
         }
       } catch (e) {}
 
-      // Sincroniza nuvem de forma resiliente
+      // 2. Lê Firestore
       try {
         const snap = await getDoc(doc(db, "whatsapp_config", user.uid)).catch(() => null);
         if (snap && snap.exists()) {
           const d = snap.data();
-          if (d.isConnected !== undefined) setIsConnected(d.isConnected);
-          if (d.connectedPhone) setConnectedPhone(d.connectedPhone);
-          if (d.connectedAt) setConnectedAt(d.connectedAt);
-          if (d.salonPhone) setSalonPhone(d.salonPhone);
+          if (d.salonPhone && !d.salonPhone.includes("999998888") && !d.salonPhone.includes("99999-8888")) {
+            setSalonPhone(d.salonPhone);
+          }
           if (d.rules && Array.isArray(d.rules)) setRules(d.rules);
+
+          const isMock =
+            d.connectedPhone === "+55 (11) 99999-8888" ||
+            d.connectedPhone?.includes("99999-8888") ||
+            d.connectedPhone?.includes("999998888") ||
+            d.connectedAt === "22/10, 23:12";
+
+          if (isMock) {
+            // Remove dados mock no Firestore
+            storedConnected = false;
+            storedPhone = "";
+            storedConnectedAt = "";
+            setDoc(
+              doc(db, "whatsapp_config", user.uid),
+              { isConnected: false, connectedPhone: "", connectedAt: null },
+              { merge: true }
+            ).catch(() => {});
+            setDoc(
+              doc(db, "salon_extras", user.uid),
+              { whatsapp_config: { isConnected: false, connectedPhone: "", connectedAt: null } },
+              { merge: true }
+            ).catch(() => {});
+          } else if (d.isConnected !== undefined) {
+            storedConnected = Boolean(d.isConnected);
+            storedPhone = d.connectedPhone || "";
+            storedConnectedAt = d.connectedAt || "";
+          }
         }
       } catch (e) {}
+
+      // 3. Validação com status real do Baileys
+      // Se não houver socket ativo no backend, força desconectado!
+      try {
+        const res = await fetch("/api/whatsapp/connect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "status" }),
+        });
+        if (res.ok) {
+          const statusData = await res.json();
+          if (statusData.connected) {
+            storedConnected = true;
+            storedPhone = statusData.phoneNumber || storedPhone;
+          } else {
+            // Servidor não possui sessão aberta: desliga o status conectado para não haver falsos positivos
+            storedConnected = false;
+            storedPhone = "";
+            storedConnectedAt = "";
+            const prev = JSON.parse(localStorage.getItem(`bellamais_whatsapp_${user.uid}`) || "{}");
+            localStorage.setItem(
+              `bellamais_whatsapp_${user.uid}`,
+              JSON.stringify({ ...prev, isConnected: false, connectedPhone: "", connectedAt: null })
+            );
+          }
+        }
+      } catch (e) {
+        if (storedPhone.includes("99999-8888") || storedPhone.includes("999998888")) {
+          storedConnected = false;
+          storedPhone = "";
+          storedConnectedAt = "";
+        }
+      }
+
+      if (isMounted) {
+        setIsConnected(storedConnected);
+        setConnectedPhone(storedPhone);
+        setConnectedAt(storedConnectedAt);
+      }
     }
+
     loadData();
+    return () => {
+      isMounted = false;
+    };
   }, [user]);
 
   // Salva configurações com garantia Local-First
@@ -315,6 +411,71 @@ export default function WhatsAppPage() {
     }
   };
 
+  // Auto-gera QR Code ao abrir a aba de Conexão se estiver desconectado
+  useEffect(() => {
+    if (activeTab === "connection" && !isConnected && !qrCodeDataUrl && !isLoadingQr) {
+      generateBaileysQR();
+    }
+  }, [activeTab, isConnected, qrCodeDataUrl, isLoadingQr]);
+
+  // Timer de atualização do QR Code
+  useEffect(() => {
+    if (!qrCodeDataUrl || isConnected) return;
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          generateBaileysQR();
+          return 45;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [qrCodeDataUrl, isConnected]);
+
+  // Confirmar conexão após escanear QR Code (Validação Real)
+  const handleConfirmConnection = async () => {
+    setIsCheckingConnection(true);
+    logEvent("info", "CLIENT", "Verificando confirmação de leitura do QR Code no WhatsApp...");
+    try {
+      const res = await fetch("/api/whatsapp/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "confirm" }),
+      });
+      const data = await res.json();
+      if (data.connected) {
+        const phone = data.phoneNumber || salonPhone || "WhatsApp Oficial";
+        const at =
+          data.connectedAt ||
+          new Date().toLocaleString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+        setIsConnected(true);
+        setConnectedPhone(phone);
+        setConnectedAt(at);
+        saveConfig({ isConnected: true, connectedPhone: phone, connectedAt: at });
+        logEvent("success", "CLIENT", `WhatsApp conectado com sucesso para o número ${phone}!`);
+        alert(`WhatsApp conectado com sucesso para o número ${phone}!`);
+      } else {
+        setIsConnected(false);
+        logEvent("warn", "CLIENT", data.message || "Aparelho ainda não detectado.");
+        alert(
+          data.message ||
+            "Aparelho ainda não concluiu a conexão. Aponte a câmera do WhatsApp em 'Aparelhos Conectados' para o QR Code."
+        );
+      }
+    } catch (err: any) {
+      logEvent("error", "SERVER_API", "Erro ao verificar conexão com o WhatsApp");
+      alert("Não foi possível verificar a conexão no momento. Tente novamente.");
+    } finally {
+      setIsCheckingConnection(false);
+    }
+  };
+
   // Desconectar Sessão
   const handleDisconnect = async () => {
     if (!confirm("Tem certeza que deseja desconectar o WhatsApp da recepção?")) return;
@@ -323,12 +484,22 @@ export default function WhatsAppPage() {
     setConnectedAt("");
     setQrCodeDataUrl(null);
     setPairingCode(null);
+    setCountdown(45);
     saveConfig({ isConnected: false, connectedPhone: "", connectedAt: null });
-    fetch("/api/whatsapp/connect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "disconnect" }),
-    }).catch(() => {});
+    logEvent("info", "CLIENT", "Desconectando WhatsApp e limpando sessão...");
+
+    try {
+      await fetch("/api/whatsapp/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "disconnect" }),
+      });
+    } catch (e) {}
+
+    // Gera um novo QR code após desconectar
+    setTimeout(() => {
+      generateBaileysQR();
+    }, 400);
   };
 
   // Toggle de Regra de Ouro
@@ -352,7 +523,7 @@ export default function WhatsAppPage() {
       .replace(/{{data}}/g, queueDayFilter === "today" ? "Hoje" : "Amanhã")
       .replace(/{{hora}}/g, "14:30")
       .replace(/{{salao}}/g, salonName)
-      .replace(/{{pix}}/g, salonPhone || "11999998888")
+      .replace(/{{pix}}/g, salonPhone || "(Chave PIX do Salão)")
       .replace(/{{link_avaliacao}}/g, "g.page/r/bellamais");
   }, [currentSelectedRule, queueDayFilter, salonName, salonPhone]);
 
@@ -932,7 +1103,7 @@ export default function WhatsAppPage() {
                         WhatsApp do Salão Conectado
                       </h2>
                       <p className="text-xs md:text-sm text-[var(--muted)] mt-1">
-                        Número conectado: <strong className="text-[var(--foreground)]">{connectedPhone || salonPhone}</strong>
+                        Número conectado: <strong className="text-[var(--foreground)]">{connectedPhone || salonPhone || "WhatsApp Oficial"}</strong>
                         {connectedAt ? ` • Conectado em ${connectedAt}` : ""}
                       </p>
                       <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold mt-1.5 flex items-center gap-1">
@@ -943,7 +1114,7 @@ export default function WhatsAppPage() {
 
                   <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                     <button
-                      onClick={() => handleSendWhatsApp(salonPhone, simulatedMessageText)}
+                      onClick={() => handleSendWhatsApp(salonPhone || profile?.phone || "", simulatedMessageText)}
                       className="px-5 py-3 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-[#25D366]/25 transition cursor-pointer active:scale-[0.98]"
                     >
                       <MessageCircle size={17} />
@@ -977,14 +1148,19 @@ export default function WhatsAppPage() {
                       {isLoadingQr ? (
                         <div className="w-[220px] h-[220px] flex flex-col items-center justify-center text-zinc-400 gap-2">
                           <RefreshCw size={32} className="animate-spin text-[var(--primary)]" />
-                          <span className="text-xs font-bold">Gerando QR Code...</span>
+                          <span className="text-xs font-bold">Gerando QR Code oficial...</span>
                         </div>
                       ) : qrCodeDataUrl && countdown > 0 ? (
-                        <img
-                          src={qrCodeDataUrl}
-                          alt="QR Code WhatsApp"
-                          className="w-[220px] h-[220px] object-contain rounded-lg"
-                        />
+                        <div className="flex flex-col items-center">
+                          <img
+                            src={qrCodeDataUrl}
+                            alt="QR Code WhatsApp"
+                            className="w-[220px] h-[220px] object-contain rounded-lg"
+                          />
+                          <span className="text-[11px] font-semibold text-zinc-500 mt-2">
+                            Atualiza em <strong>{countdown}s</strong>
+                          </span>
+                        </div>
                       ) : (
                         <div className="w-[220px] h-[220px] flex flex-col items-center justify-center text-zinc-400 gap-3">
                           <AlertCircle size={32} className="text-amber-500" />
@@ -1002,22 +1178,30 @@ export default function WhatsAppPage() {
                     <div className="pt-4 flex flex-col gap-2 w-full max-w-[260px]">
                       <button
                         type="button"
-                        onClick={() => {
-                          setIsConnected(true);
-                          setConnectedPhone(salonPhone);
-                          saveConfig({ isConnected: true, connectedPhone: salonPhone });
-                        }}
-                        className="w-full py-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer active:scale-[0.99]"
+                        onClick={handleConfirmConnection}
+                        disabled={isCheckingConnection || isLoadingQr}
+                        className="w-full py-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer active:scale-[0.99] disabled:opacity-60"
                       >
-                        <Check size={16} /> Já apontei a câmera (Confirmar)
+                        {isCheckingConnection ? (
+                          <>
+                            <RefreshCw size={16} className="animate-spin" />
+                            <span>Verificando conexão...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check size={16} />
+                            <span>Já apontei a câmera (Confirmar)</span>
+                          </>
+                        )}
                       </button>
 
                       <button
                         type="button"
                         onClick={generateBaileysQR}
-                        className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] font-semibold flex items-center justify-center gap-1 py-1 cursor-pointer"
+                        disabled={isLoadingQr || isCheckingConnection}
+                        className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] font-semibold flex items-center justify-center gap-1 py-1 cursor-pointer disabled:opacity-50"
                       >
-                        <RefreshCw size={12} /> Gerar outro código
+                        <RefreshCw size={12} className={isLoadingQr ? "animate-spin" : ""} /> Gerar outro código
                       </button>
                     </div>
                   </div>

@@ -147,20 +147,12 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Se for confirmação manual do usuário
-      const cleanPhone = (phoneNumber || "").replace(/\D/g, "");
-      const formattedPhone = cleanPhone
-        ? cleanPhone.length <= 11
-          ? `+55 (${cleanPhone.slice(0, 2)}) ${cleanPhone.slice(2, 7)}-${cleanPhone.slice(7)}`
-          : `+${cleanPhone}`
-        : "+55 (11) 99999-8888";
-
+      // Se não houver socket real conectado, retorna falso! Zero dados fakes/simulados
       return NextResponse.json({
-        connected: true,
-        state: "open",
-        phoneNumber: formattedPhone,
-        connectedAt: new Date().toISOString(),
-        message: "WhatsApp sincronizado com sucesso!",
+        connected: false,
+        state: bStatus.connectionState || "disconnected",
+        message:
+          "O aparelho ainda não concluiu a leitura do QR Code. Aponte a câmera do WhatsApp em 'Aparelhos Conectados'.",
       });
     }
 
@@ -308,8 +300,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Se o Baileys ainda estiver estabelecendo a chave de criptografia, gera imagem de carregamento com aviso amigável
-    const cleanPhone = (phoneNumber || "11999998888").replace(/\D/g, "");
-    const sessionPayload = `BAILEYS-INIT-${cleanPhone}-${Date.now()}`;
+    const cleanPhone = (phoneNumber || "").replace(/\D/g, "");
+    const sessionPayload = `BAILEYS-INIT-${cleanPhone || "SALON"}-${Date.now()}`;
     const fallbackQr = await QRCode.toDataURL(sessionPayload, {
       width: 320,
       margin: 2,
