@@ -32,6 +32,17 @@ import {
   LogOut,
   AlertCircle,
   Copy,
+  Terminal,
+  Activity,
+  Trash2,
+  Radio,
+  Sliders,
+  Server,
+  ArrowRight,
+  ExternalLink as LinkIcon,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
@@ -47,6 +58,15 @@ export interface AutoMessageRule {
   enabled: boolean;
   hoursBefore?: number;
   template: string;
+}
+
+export interface ConsoleLogEntry {
+  id: string;
+  timestamp: string;
+  level: "info" | "success" | "warn" | "error" | "debug";
+  source: "CLIENT" | "SERVER_API" | "GATEWAY" | "DIAGNOSTICO" | "WHATSAPP_MOBILE";
+  message: string;
+  details?: any;
 }
 
 export const DEFAULT_AUTO_MESSAGES: AutoMessageRule[] = [
@@ -148,7 +168,9 @@ export default function WhatsAppPage() {
   const { user, profile } = useAuth();
   const { services, professionals, appointments } = useSalonData();
 
-  const [activeTab, setActiveTab] = useState<"connection" | "automation" | "inbox">("connection");
+  const [activeTab, setActiveTab] = useState<
+    "connection" | "gateway" | "console" | "automation" | "inbox"
+  >("connection");
 
   // Estado Real de Conexão com o WhatsApp
   const [isConnected, setIsConnected] = useState(false);
@@ -164,6 +186,18 @@ export default function WhatsAppPage() {
   const [countdown, setCountdown] = useState(45);
   const [copiedCode, setCopiedCode] = useState(false);
 
+  // Status de Handshake Real vs Demonstração
+  const [isRealHandshake, setIsRealHandshake] = useState(false);
+  const [gatewayWarning, setGatewayWarning] = useState<string | null>(null);
+
+  // Configurações do Gateway WhatsApp (Evolution API / Z-API / Meta)
+  const [providerMode, setProviderMode] = useState<"evolution" | "direct" | "meta">("direct");
+  const [gatewayUrl, setGatewayUrl] = useState("");
+  const [gatewayApiKey, setGatewayApiKey] = useState("");
+  const [instanceName, setInstanceName] = useState("salao-principal");
+  const [isTestingGateway, setIsTestingGateway] = useState(false);
+  const [gatewayStatusBadge, setGatewayStatusBadge] = useState<string | null>(null);
+
   // Configurações do Salão
   const [salonPhone, setSalonPhone] = useState(profile?.phone || "11999998888");
   const [testRecipientPhone, setTestRecipientPhone] = useState("");
@@ -175,13 +209,63 @@ export default function WhatsAppPage() {
   // Auto Messages State
   const [autoMessages, setAutoMessages] = useState<AutoMessageRule[]>(DEFAULT_AUTO_MESSAGES);
 
+  // CONSOLE DE LOGS EM TEMPO REAL
+  const [consoleLogs, setConsoleLogs] = useState<ConsoleLogEntry[]>([]);
+  const [logFilter, setLogFilter] = useState<"ALL" | "ERRORS" | "WARNS" | "API">("ALL");
+  const [isBottomConsoleOpen, setIsBottomConsoleOpen] = useState(false);
+  const [copiedLogs, setCopiedLogs] = useState(false);
+  const [isRunningDiagnostic, setIsRunningDiagnostic] = useState(false);
+
+  const consoleEndRef = useRef<HTMLDivElement>(null);
   const salonName = profile?.salon_name || "Meu Salão";
+
+  // Função central para adicionar log tanto na interface quanto no console do navegador (DevTools / F12)
+  const logEvent = (
+    level: "info" | "success" | "warn" | "error" | "debug",
+    source: "CLIENT" | "SERVER_API" | "GATEWAY" | "DIAGNOSTICO" | "WHATSAPP_MOBILE",
+    message: string,
+    details?: any
+  ) => {
+    const timestamp = new Date().toLocaleTimeString("pt-BR", { hour12: false });
+    const entry: ConsoleLogEntry = {
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      timestamp,
+      level,
+      source,
+      message,
+      details,
+    };
+
+    setConsoleLogs((prev) => [entry, ...prev.slice(0, 199)]);
+
+    // Mirror to browser DevTools console with rich CSS styling
+    if (typeof window !== "undefined") {
+      const badgeStyle =
+        level === "error"
+          ? "background: #ef4444; color: white; font-weight: bold; padding: 2px 6px; border-radius: 4px;"
+          : level === "warn"
+            ? "background: #f59e0b; color: black; font-weight: bold; padding: 2px 6px; border-radius: 4px;"
+            : level === "success"
+              ? "background: #10b981; color: white; font-weight: bold; padding: 2px 6px; border-radius: 4px;"
+              : "background: #6366f1; color: white; font-weight: bold; padding: 2px 6px; border-radius: 4px;";
+
+      const prefix = `%c[BellaMais WhatsApp ${level.toUpperCase()}] [${source}]%c ${message}`;
+      if (level === "error") {
+        console.error(prefix, badgeStyle, "color: inherit;", details || "");
+      } else if (level === "warn") {
+        console.warn(prefix, badgeStyle, "color: inherit;", details || "");
+      } else {
+        console.log(prefix, badgeStyle, "color: inherit;", details || "");
+      }
+    }
+  };
 
   // Carrega configurações salvas do Firestore
   useEffect(() => {
     if (!user) return;
     async function loadWhatsAppData() {
       if (!user) return;
+      logEvent("info", "CLIENT", "Carregando configurações de WhatsApp salvas no Firestore...");
       try {
         const ref = doc(db, "whatsapp_config", user.uid);
         const snap = await getDoc(ref);
@@ -191,12 +275,23 @@ export default function WhatsAppPage() {
           if (d.connectedPhone) setConnectedPhone(d.connectedPhone);
           if (d.connectedAt) setConnectedAt(d.connectedAt);
           if (d.salonPhone) setSalonPhone(d.salonPhone);
+          if (d.providerMode) setProviderMode(d.providerMode);
+          if (d.gatewayUrl) setGatewayUrl(d.gatewayUrl);
+          if (d.gatewayApiKey) setGatewayApiKey(d.gatewayApiKey);
+          if (d.instanceName) setInstanceName(d.instanceName);
           if (d.autoMessages && Array.isArray(d.autoMessages) && d.autoMessages.length > 0) {
             setAutoMessages(d.autoMessages);
           }
+          logEvent(
+            "success",
+            "CLIENT",
+            `Configurações carregadas com sucesso. Modo: "${d.providerMode || "direct"}", Gateway: ${d.gatewayUrl ? "Configurado" : "Nenhum"}`
+          );
+        } else {
+          logEvent("info", "CLIENT", "Nenhuma configuração prévia no Firestore. Usando padrões do BellaMais.");
         }
-      } catch (e) {
-        // Ignora silenciosamente
+      } catch (e: any) {
+        logEvent("error", "CLIENT", `Erro ao ler Firestore: ${e?.message || e}`);
       }
     }
     loadWhatsAppData();
@@ -205,39 +300,89 @@ export default function WhatsAppPage() {
   const saveWhatsAppData = async (updates: Record<string, any>) => {
     if (!user) return;
     try {
+      logEvent("info", "CLIENT", `Salvando ${Object.keys(updates).join(", ")} no Firestore...`);
       await setDoc(doc(db, "whatsapp_config", user.uid), updates, {
         merge: true,
       });
       setSavedSuccess(true);
+      logEvent("success", "CLIENT", "Configurações sincronizadas no banco de dados.");
       setTimeout(() => setSavedSuccess(false), 2500);
-    } catch (e) {
-      // Ignora silenciosamente
+    } catch (e: any) {
+      logEvent("error", "CLIENT", `Falha ao salvar no Firestore: ${e?.message || e}`);
     }
   };
 
-  // Gerador de QR Code / Código de Pareamento Real
+  // Gerador de QR Code / Código de Pareamento
   const generateConnectionCredentials = async () => {
     setIsLoadingQr(true);
     setCountdown(45);
+    logEvent(
+      "info",
+      "SERVER_API",
+      `Solicitando novo QR Code ao servidor... (Método: ${connectMethod}, Provedor: ${providerMode})`
+    );
+
     try {
       const res = await fetch("/api/whatsapp/connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action: "generate",
+          provider: providerMode === "evolution" ? "gateway" : "free_direct",
           connectionMethod: connectMethod,
           phoneNumber: salonPhone,
           salonName: salonName,
+          gatewayUrl: gatewayUrl.trim(),
+          apiKey: gatewayApiKey.trim(),
+          instanceName: instanceName.trim(),
         }),
       });
+
       const data = await res.json();
+      logEvent("info", "SERVER_API", `Resposta recebida do servidor: HTTP ${res.status}`, data);
+
       if (data.qrCodeBase64) {
         setQrCodeDataUrl(data.qrCodeBase64);
       }
       if (data.pairingCode) {
         setPairingCode(data.pairingCode);
       }
-    } catch (err) {
+
+      const isReal = Boolean(data.isRealWhatsAppHandshake);
+      setIsRealHandshake(isReal);
+
+      if (!isReal) {
+        setGatewayWarning(data.warning || "Modo de simulação ativo.");
+        logEvent(
+          "warn",
+          "WHATSAPP_MOBILE",
+          "⚠️ ATENÇÃO: QR Code gerado em MODO SIMULAÇÃO (Sem Evolution API ou Z-API)."
+        );
+        logEvent(
+          "error",
+          "WHATSAPP_MOBILE",
+          "📱 Ao escanear este QR code com o celular em 'Aparelhos Conectados', o WhatsApp exibirá: 'CÓDIGO QR INVÁLIDO'."
+        );
+        logEvent(
+          "info",
+          "DIAGNOSTICO",
+          "💡 MOTIVO TÉCNICO: O WhatsApp exige que o QR Code contenha o token criptográfico Noise Protocol gerado por um socket ativo (Evolution API / Baileys). Strings puras de texto são rejeitadas pelo app do WhatsApp."
+        );
+        logEvent(
+          "success",
+          "DIAGNOSTICO",
+          "✅ COMO RESOLVER: 1) Conecte sua Evolution API ou Z-API na aba 'Configurar Gateway', ou 2) Use o 'Modo Disparo Direto (WhatsApp Web)' que é 100% gratuito e não precisa de QR code!"
+        );
+      } else {
+        setGatewayWarning(null);
+        logEvent(
+          "success",
+          "GATEWAY",
+          "🟢 QR CODE REAL DO WHATSAPP GERADO COM SUCESSO! Pronto para escanear no celular sem erros."
+        );
+      }
+    } catch (err: any) {
+      logEvent("error", "SERVER_API", `Erro ao gerar credenciais: ${err?.message || err}`);
       console.error("Erro ao gerar credenciais:", err);
     } finally {
       setIsLoadingQr(false);
@@ -269,9 +414,77 @@ export default function WhatsAppPage() {
     }
   }, [isConnected, connectMethod]);
 
+  // Executar Diagnóstico Completo do WhatsApp
+  const handleRunDiagnostic = async () => {
+    setIsRunningDiagnostic(true);
+    logEvent("info", "DIAGNOSTICO", "=== INICIANDO DIAGNÓSTICO COMPLETO DO WHATSAPP ===");
+    try {
+      const res = await fetch("/api/whatsapp/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "diagnostic",
+          gatewayUrl: gatewayUrl.trim(),
+          apiKey: gatewayApiKey.trim(),
+          instanceName: instanceName.trim(),
+          phoneNumber: salonPhone,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.logs && Array.isArray(data.logs)) {
+        data.logs.forEach((l: any) => {
+          logEvent(l.level as any, "DIAGNOSTICO", l.message);
+        });
+      }
+
+      if (data.gatewayStatus === "reachable") {
+        setGatewayStatusBadge("online");
+        logEvent("success", "DIAGNOSTICO", "Gateway WhatsApp está ONLINE e respondendo normalmente!");
+      } else if (data.gatewayStatus === "unreachable" || data.gatewayStatus === "error_response") {
+        setGatewayStatusBadge("offline");
+        logEvent("error", "DIAGNOSTICO", `Gateway offline ou chave incorreta: status=${data.gatewayStatus}`);
+      } else {
+        setGatewayStatusBadge("none");
+      }
+      logEvent("info", "DIAGNOSTICO", "=== DIAGNÓSTICO FINALIZADO ===");
+    } catch (e: any) {
+      logEvent("error", "DIAGNOSTICO", `Falha no diagnóstico: ${e?.message || e}`);
+    } finally {
+      setIsRunningDiagnostic(false);
+    }
+  };
+
+  // Testar Conexão com o Gateway na aba de Gateway
+  const handleTestGateway = async () => {
+    if (!gatewayUrl.trim()) {
+      alert("Por favor, digite a URL da sua Evolution API ou Z-API.");
+      return;
+    }
+    setIsTestingGateway(true);
+    logEvent("info", "GATEWAY", `Testando conectividade com: ${gatewayUrl.trim()}...`);
+    try {
+      await handleRunDiagnostic();
+      await saveWhatsAppData({
+        gatewayUrl: gatewayUrl.trim(),
+        gatewayApiKey: gatewayApiKey.trim(),
+        instanceName: instanceName.trim(),
+        providerMode: "evolution",
+      });
+      // Se deu certo, regenera o QR Code oficial
+      setActiveTab("connection");
+      generateConnectionCredentials();
+    } catch (e: any) {
+      logEvent("error", "GATEWAY", `Erro no teste de gateway: ${e?.message || e}`);
+    } finally {
+      setIsTestingGateway(false);
+    }
+  };
+
   // Confirmar Conexão após leitura do QR Code ou digitação do código
   const handleConfirmConnection = async () => {
     setIsConfirming(true);
+    logEvent("info", "SERVER_API", "Verificando confirmação de leitura do QR Code...");
     try {
       const res = await fetch("/api/whatsapp/connect", {
         method: "POST",
@@ -297,6 +510,12 @@ export default function WhatsAppPage() {
         setQrCodeDataUrl(null);
         setPairingCode(null);
 
+        logEvent(
+          "success",
+          "CLIENT",
+          `WhatsApp conectado com sucesso para o número ${phoneFormatted} em ${timeNow}!`
+        );
+
         await saveWhatsAppData({
           isConnected: true,
           connectedPhone: phoneFormatted,
@@ -305,7 +524,8 @@ export default function WhatsAppPage() {
           salonPhone: salonPhone,
         });
       }
-    } catch (err) {
+    } catch (err: any) {
+      logEvent("error", "SERVER_API", `Erro ao confirmar conexão: ${err?.message || err}`);
       alert("Erro ao confirmar conexão. Tente novamente.");
     } finally {
       setIsConfirming(false);
@@ -314,9 +534,14 @@ export default function WhatsAppPage() {
 
   // Desconectar Sessão
   const handleDisconnect = async () => {
-    if (!confirm("Tem certeza que deseja desconectar o WhatsApp do salão? Os envios automáticos serão pausados.")) {
+    if (
+      !confirm(
+        "Tem certeza que deseja desconectar o WhatsApp do salão? Os envios automáticos serão pausados."
+      )
+    ) {
       return;
     }
+    logEvent("info", "SERVER_API", "Desconectando sessão do WhatsApp...");
     setIsConnected(false);
     setConnectedPhone("");
     setConnectedAt("");
@@ -327,7 +552,7 @@ export default function WhatsAppPage() {
       connectedPhone: "",
       connectedAt: null,
     });
-    // Gera novo QR code para poder reconectar
+    logEvent("warn", "CLIENT", "Sessão desconectada. Gerando novo QR Code...");
     setTimeout(() => {
       generateConnectionCredentials();
     }, 300);
@@ -360,14 +585,41 @@ export default function WhatsAppPage() {
     const num = clean.length <= 11 ? `55${clean}` : clean;
     const text = customText || simulatedMessageText;
     const encoded = encodeURIComponent(text);
-    window.open(`https://api.whatsapp.com/send?phone=${num}&text=${encoded}`, "_blank");
+    const waUrl = `https://api.whatsapp.com/send?phone=${num}&text=${encoded}`;
+
+    logEvent("info", "CLIENT", `Disparando mensagem direta para o WhatsApp: +${num}`);
+    logEvent("debug", "CLIENT", `URL de disparo gerada: ${waUrl}`);
+
+    window.open(waUrl, "_blank");
   };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setCopiedCode(true);
+    logEvent("info", "CLIENT", `Código copiado para a área de transferência: ${text}`);
     setTimeout(() => setCopiedCode(false), 2000);
   };
+
+  const handleCopyLogs = () => {
+    const text = consoleLogs
+      .map((l) => `[${l.timestamp}] [${l.level.toUpperCase()}] [${l.source}]: ${l.message}`)
+      .join("\n");
+    navigator.clipboard.writeText(text);
+    setCopiedLogs(true);
+    setTimeout(() => setCopiedLogs(false), 2000);
+  };
+
+  const handleClearLogs = () => {
+    setConsoleLogs([]);
+    logEvent("info", "CLIENT", "Console de logs limpo pelo usuário.");
+  };
+
+  const filteredLogs = useMemo(() => {
+    if (logFilter === "ERRORS") return consoleLogs.filter((l) => l.level === "error");
+    if (logFilter === "WARNS") return consoleLogs.filter((l) => l.level === "warn" || l.level === "error");
+    if (logFilter === "API") return consoleLogs.filter((l) => l.source === "SERVER_API" || l.source === "GATEWAY");
+    return consoleLogs;
+  }, [consoleLogs, logFilter]);
 
   return (
     <div className="flex flex-col min-h-full bg-[var(--background)] font-sans text-[var(--foreground)]">
@@ -384,6 +636,17 @@ export default function WhatsAppPage() {
                 icon: Smartphone,
               },
               {
+                id: "gateway",
+                label: "Configurar Gateway (Evolution / Z-API)",
+                icon: Server,
+              },
+              {
+                id: "console",
+                label: `Console de Logs (${consoleLogs.length})`,
+                icon: Terminal,
+                highlight: consoleLogs.some((l) => l.level === "error"),
+              },
+              {
                 id: "automation",
                 label: "Modelos das 10 Mensagens",
                 icon: BellRing,
@@ -397,7 +660,7 @@ export default function WhatsAppPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer ${
+                className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer relative ${
                   activeTab === tab.id
                     ? "bg-[var(--primary)] text-white shadow-xs"
                     : "bg-[var(--background)] text-[var(--muted)] hover:text-[var(--foreground)]"
@@ -405,12 +668,27 @@ export default function WhatsAppPage() {
               >
                 <tab.icon size={16} />
                 {tab.label}
+                {tab.highlight && activeTab !== tab.id && (
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping absolute -top-0.5 -right-0.5" />
+                )}
               </button>
             ))}
           </div>
 
           {/* Status Real da Conexão */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setIsBottomConsoleOpen(!isBottomConsoleOpen)}
+              className="px-3 py-2 rounded-xl text-xs font-bold bg-zinc-900 text-zinc-200 dark:bg-zinc-800 border border-zinc-700 flex items-center gap-1.5 hover:bg-zinc-800 transition cursor-pointer"
+              title="Alternar Console de Logs"
+            >
+              <Terminal size={14} className="text-emerald-400" />
+              <span>{isBottomConsoleOpen ? "Fechar Console" : "Exibir Console"}</span>
+              <span className="px-1.5 py-0.2 rounded-md bg-zinc-700 text-[10px] text-zinc-300">
+                {consoleLogs.length}
+              </span>
+            </button>
+
             {isConnected ? (
               <span className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/80 shadow-2xs">
                 <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -419,14 +697,14 @@ export default function WhatsAppPage() {
             ) : (
               <span className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/80 shadow-2xs">
                 <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                Aguardando Leitura do QR Code
+                {isRealHandshake ? "Aguardando Leitura do QR Code Oficial" : "Modo Direto / Simulação"}
               </span>
             )}
           </div>
         </div>
 
         {/* =========================================================================
-            ABA 1: CONEXÃO REAL DO APARELHO (QR CODE / CÓDIGO)
+            ABA 1: CONEXÃO DO APARELHO (QR CODE / PAREAMENTO)
             ========================================================================= */}
         {activeTab === "connection" && (
           <div className="space-y-6">
@@ -519,16 +797,60 @@ export default function WhatsAppPage() {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-rose-800 dark:text-rose-300 bg-rose-100 dark:bg-rose-950/80 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
                       <Sparkles size={13} />
-                      Conexão Oficial
+                      Conexão com Aparelho
                     </span>
                   </div>
                   <h2 className="text-xl md:text-2xl font-bold font-sans tracking-tight text-[var(--foreground)]">
                     Conectar WhatsApp do Salão
                   </h2>
                   <p className="text-xs md:text-sm text-[var(--muted)] mt-1 max-w-2xl leading-relaxed">
-                    Escaneie o QR Code abaixo com o celular da sua recepção para conectar o WhatsApp oficial ao BellaMais. É rápido, seguro e exatamente igual ao WhatsApp Web.
+                    Conecte o WhatsApp da sua recepção ao BellaMais para sincronizar confirmações e lembretes com as clientes.
                   </p>
                 </div>
+
+                {/* ALERTA EXPLICATIVO SOBRE "QR CODE INVÁLIDO" */}
+                {!isRealHandshake ? (
+                  <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-900/80 text-xs space-y-2">
+                    <div className="flex items-start gap-2.5 text-amber-900 dark:text-amber-200 font-bold">
+                      <AlertTriangle size={17} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span>Por que o WhatsApp no celular dá &quot;Código QR Inválido&quot;?</span>
+                        <p className="font-normal text-[11.5px] text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
+                          O aplicativo WhatsApp no celular (em <strong>Aparelhos Conectados</strong>) possui criptografia de ponta a ponta e <strong>só aceita QR Codes gerados por uma instância ativa da Evolution API ou Z-API</strong>. Códigos de demonstração são rejeitados pelo leitor do WhatsApp.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
+                      <button
+                        onClick={() => setActiveTab("gateway")}
+                        className="px-3 py-1.5 rounded-xl bg-amber-600 text-white font-bold text-[11px] hover:bg-amber-700 transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Server size={13} /> Configurar Gateway (Evolution API / Z-API)
+                      </button>
+                      <button
+                        onClick={() => setActiveTab("console")}
+                        className="px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-amber-300 text-amber-900 dark:text-amber-200 font-bold text-[11px] hover:bg-amber-100/50 transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Terminal size={13} /> Ver Detalhes no Console
+                      </button>
+                      <span className="text-[11px] text-amber-700 dark:text-amber-400">
+                        Ou use o <strong>Modo Disparo Direto</strong> abaixo para enviar mensagens sem precisar de servidor!
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-800 text-xs flex items-start gap-2.5">
+                    <CheckCircle2 size={17} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="font-bold text-emerald-900 dark:text-emerald-200">
+                        QR Code Oficial da Evolution API Gerado!
+                      </span>
+                      <p className="text-[11.5px] text-emerald-800 dark:text-emerald-300 mt-0.5">
+                        Aponte a câmera em <strong>Aparelhos Conectados</strong> no seu WhatsApp. A leitura será aceita com sucesso!
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {/* Seletor de Método de Conexão */}
                 <div className="flex items-center gap-2 border-b border-[var(--card-border)] pb-4">
@@ -545,7 +867,7 @@ export default function WhatsAppPage() {
                     }`}
                   >
                     <QrCode size={15} />
-                    Escanear QR Code (Recomendado)
+                    Escanear QR Code
                   </button>
 
                   <button
@@ -623,7 +945,7 @@ export default function WhatsAppPage() {
                           <button
                             type="button"
                             onClick={generateConnectionCredentials}
-                            className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] font-semibold flex items-center justify-center gap-1 py-1"
+                            className="text-xs text-[var(--muted)] hover:text-[var(--foreground)] font-semibold flex items-center justify-center gap-1 py-1 cursor-pointer"
                           >
                             <RefreshCw size={12} /> Gerar outro QR Code
                           </button>
@@ -696,7 +1018,7 @@ export default function WhatsAppPage() {
                             Abra o WhatsApp no celular do seu salão
                           </h4>
                           <p className="text-[11px] text-[var(--muted)] mt-0.5 leading-relaxed">
-                            Pode ser o WhatsApp normal ou o WhatsApp Business instalado no seu celular da recepção.
+                            Pode ser o WhatsApp normal ou o WhatsApp Business instalado no celular da sua recepção.
                           </p>
                         </div>
                       </div>
@@ -724,7 +1046,7 @@ export default function WhatsAppPage() {
                             Toque em &quot;Conectar um Aparelho&quot;
                           </h4>
                           <p className="text-[11px] text-[var(--muted)] mt-0.5 leading-relaxed">
-                            Aponte a câmera para o QR Code ao lado. A conexão é confirmada na hora e seu salão já fica pronto para disparar!
+                            Aponte a câmera para o QR Code ao lado. Caso utilize Evolution API ou Z-API, a conexão é concluída imediatamente!
                           </p>
                         </div>
                       </div>
@@ -733,7 +1055,7 @@ export default function WhatsAppPage() {
                     <div className="p-4 rounded-2xl bg-amber-50/70 dark:bg-amber-950/20 border border-amber-200/70 dark:border-amber-900/40 text-xs flex items-start gap-3">
                       <ShieldCheck size={18} className="text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
                       <p className="text-amber-900 dark:text-amber-200 text-[11px] leading-relaxed">
-                        <strong>Segurança total:</strong> O BellaMais utiliza a mesma criptografia de ponta a ponta do WhatsApp oficial. Nenhuma mensagem pessoal é lida ou armazenada.
+                        <strong>Segurança total:</strong> O BellaMais respeita a privacidade do seu salão. Nenhuma conversa pessoal é lida ou armazenada.
                       </p>
                     </div>
                   </div>
@@ -813,7 +1135,380 @@ export default function WhatsAppPage() {
         )}
 
         {/* =========================================================================
-            ABA 2: MENSAGENS AUTOMÁTICAS (10 REGRAS)
+            ABA 2: CONFIGURAR GATEWAY (EVOLUTION API / Z-API / META)
+            ========================================================================= */}
+        {activeTab === "gateway" && (
+          <div className="space-y-6">
+            <div className="bg-[var(--card-bg)] rounded-3xl p-6 md:p-8 border border-[var(--card-border)] shadow-xs space-y-6">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                    <Server size={13} />
+                    Configuração de API
+                  </span>
+                </div>
+                <h2 className="text-xl md:text-2xl font-bold font-sans tracking-tight text-[var(--foreground)]">
+                  Provedores de Conexão WhatsApp
+                </h2>
+                <p className="text-xs md:text-sm text-[var(--muted)] mt-1 max-w-3xl leading-relaxed">
+                  Escolha como o BellaMais se conectará ao WhatsApp do seu salão. Para habilitar o escaneamento real do celular sem &quot;Código QR Inválido&quot;, configure uma instância da Evolution API ou Z-API.
+                </p>
+              </div>
+
+              {/* Seletor de Modo */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div
+                  onClick={() => setProviderMode("direct")}
+                  className={`p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between gap-3 ${
+                    providerMode === "direct"
+                      ? "border-[var(--primary)] bg-[var(--primary-light)]/20"
+                      : "border-[var(--card-border)] bg-[var(--background)] hover:border-zinc-400"
+                  }`}
+                >
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 px-2 py-0.5 rounded-md inline-block mb-2">
+                      100% Gratuito & Sem Servidor
+                    </span>
+                    <h3 className="font-bold text-sm text-[var(--foreground)] flex items-center gap-2">
+                      <Zap size={16} className="text-amber-500" />
+                      Modo Disparo Direto (WhatsApp Web)
+                    </h3>
+                    <p className="text-xs text-[var(--muted)] mt-1.5 leading-relaxed">
+                      Não precisa de servidor, QR Code nem chaves de API. Ao clicar para enviar confirmação ou lembrete, abre o WhatsApp Web ou aplicativo no seu computador/celular com o texto pronto!
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-[var(--primary)] flex items-center gap-1">
+                    {providerMode === "direct" ? "✓ Selecionado" : "Selecionar"}
+                  </span>
+                </div>
+
+                <div
+                  onClick={() => setProviderMode("evolution")}
+                  className={`p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between gap-3 ${
+                    providerMode === "evolution"
+                      ? "border-[var(--primary)] bg-[var(--primary-light)]/20"
+                      : "border-[var(--card-border)] bg-[var(--background)] hover:border-zinc-400"
+                  }`}
+                >
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-800 bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 px-2 py-0.5 rounded-md inline-block mb-2">
+                      Recomendado para Automação Real
+                    </span>
+                    <h3 className="font-bold text-sm text-[var(--foreground)] flex items-center gap-2">
+                      <Server size={16} className="text-indigo-500" />
+                      Evolution API / Z-API (Baileys)
+                    </h3>
+                    <p className="text-xs text-[var(--muted)] mt-1.5 leading-relaxed">
+                      Gera o QR Code oficial criptografado que é 100% aceito pela câmera do WhatsApp em &quot;Aparelhos Conectados&quot;. Envia em background 24h por dia.
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-[var(--primary)] flex items-center gap-1">
+                    {providerMode === "evolution" ? "✓ Selecionado" : "Selecionar"}
+                  </span>
+                </div>
+
+                <div
+                  onClick={() => setProviderMode("meta")}
+                  className={`p-5 rounded-2xl border-2 cursor-pointer transition flex flex-col justify-between gap-3 ${
+                    providerMode === "meta"
+                      ? "border-[var(--primary)] bg-[var(--primary-light)]/20"
+                      : "border-[var(--card-border)] bg-[var(--background)] hover:border-zinc-400"
+                  }`}
+                >
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-blue-800 bg-blue-100 dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-md inline-block mb-2">
+                      Corporativo Oficial
+                    </span>
+                    <h3 className="font-bold text-sm text-[var(--foreground)] flex items-center gap-2">
+                      <ShieldCheck size={16} className="text-blue-500" />
+                      API Oficial da Meta (Cloud API)
+                    </h3>
+                    <p className="text-xs text-[var(--muted)] mt-1.5 leading-relaxed">
+                      Conexão pelo WhatsApp Business Platform com selo de verificação oficial da Meta. Requer conta comercial no Meta for Developers.
+                    </p>
+                  </div>
+                  <span className="text-[11px] font-bold text-[var(--primary)] flex items-center gap-1">
+                    {providerMode === "meta" ? "✓ Selecionado" : "Selecionar"}
+                  </span>
+                </div>
+              </div>
+
+              {/* FORMULÁRIO DO PROVEDOR EVOLUTION / Z-API */}
+              {providerMode === "evolution" && (
+                <div className="p-6 rounded-2xl bg-[var(--background)]/70 border border-[var(--card-border)] space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[var(--card-border)]">
+                    <div>
+                      <h4 className="font-bold text-sm text-[var(--foreground)]">
+                        Credenciais da Evolution API ou Z-API
+                      </h4>
+                      <p className="text-xs text-[var(--muted)] mt-0.5">
+                        Informe o endereço do seu servidor de WebSocket para gerar QR codes reais
+                      </p>
+                    </div>
+
+                    {gatewayStatusBadge && (
+                      <span
+                        className={`px-3 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 ${
+                          gatewayStatusBadge === "online"
+                            ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+                            : "bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300"
+                        }`}
+                      >
+                        {gatewayStatusBadge === "online" ? (
+                          <>
+                            <CheckCircle size={14} /> Gateway Online
+                          </>
+                        ) : (
+                          <>
+                            <XCircle size={14} /> Gateway Offline
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs font-bold text-[var(--foreground)] block mb-1.5">
+                        URL da API (Evolution API ou Z-API)
+                      </label>
+                      <input
+                        type="url"
+                        value={gatewayUrl}
+                        onChange={(e) => setGatewayUrl(e.target.value)}
+                        placeholder="Ex: https://sua-evolution-api.railway.app ou https://api.z-api.io"
+                        className="w-full p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] text-xs font-mono outline-none focus:border-[var(--primary)]"
+                      />
+                      <span className="text-[11px] text-[var(--muted)] mt-1 block">
+                        Pode ser hospedado no Railway, Render, VPS ou Docker local
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-[var(--foreground)] block mb-1.5">
+                        Chave API / Token de Autenticação
+                      </label>
+                      <input
+                        type="password"
+                        value={gatewayApiKey}
+                        onChange={(e) => setGatewayApiKey(e.target.value)}
+                        placeholder="Ex: 4296084C-887F-4B7E-A27D-..."
+                        className="w-full p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] text-xs font-mono outline-none focus:border-[var(--primary)]"
+                      />
+                      <span className="text-[11px] text-[var(--muted)] mt-1 block">
+                        A `apikey` definida no seu arquivo `.env` da Evolution API
+                      </span>
+                    </div>
+
+                    <div>
+                      <label className="text-xs font-bold text-[var(--foreground)] block mb-1.5">
+                        Nome da Instância
+                      </label>
+                      <input
+                        type="text"
+                        value={instanceName}
+                        onChange={(e) => setInstanceName(e.target.value)}
+                        placeholder="Ex: salao-principal"
+                        className="w-full p-3.5 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] text-xs font-bold outline-none focus:border-[var(--primary)]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-3 pt-3">
+                    <button
+                      type="button"
+                      disabled={isTestingGateway}
+                      onClick={handleTestGateway}
+                      className="px-5 py-3 rounded-xl bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-dark)] transition cursor-pointer flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {isTestingGateway ? (
+                        <>
+                          <RefreshCw size={15} className="animate-spin" /> Testando & Salvando...
+                        </>
+                      ) : (
+                        <>
+                          <Check size={16} /> Salvar & Testar Conexão com Gateway
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRunDiagnostic()}
+                      className="px-4 py-3 rounded-xl bg-white dark:bg-zinc-800 border border-[var(--card-border)] text-xs font-bold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition cursor-pointer flex items-center gap-2"
+                    >
+                      <Activity size={15} className="text-indigo-500" /> Executar Diagnóstico de Ping
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* MODO DIRETO EXPLICADO */}
+              {providerMode === "direct" && (
+                <div className="p-6 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/80 dark:border-emerald-900/40 space-y-3">
+                  <h4 className="font-bold text-sm text-emerald-900 dark:text-emerald-300 flex items-center gap-2">
+                    <CheckCircle2 size={18} className="text-emerald-600" />
+                    Modo Disparo Direto Selecionado (Pronto para Uso!)
+                  </h4>
+                  <p className="text-xs text-[var(--foreground)] leading-relaxed">
+                    Neste modo, o BellaMais gera os links oficiais do WhatsApp Web (<code>https://wa.me/...</code>) com as variáveis da cliente e serviço já preenchidas.
+                  </p>
+                  <ul className="text-xs text-[var(--muted)] space-y-1 list-disc list-inside">
+                    <li>Não precisa escanear QR Code e nunca dará erro de &quot;Código QR Inválido&quot;.</li>
+                    <li>Funciona diretamente no WhatsApp Web do seu navegador ou no aplicativo do celular.</li>
+                    <li>Sem custos de API ou hospedagem externa de servidores.</li>
+                  </ul>
+                  <button
+                    onClick={() => {
+                      saveWhatsAppData({ providerMode: "direct" });
+                      setActiveTab("connection");
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-700 transition cursor-pointer"
+                  >
+                    Confirmar Modo Direto Gratuito
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            ABA 3: CONSOLE DE LOGS EM TEMPO REAL & DIAGNÓSTICO
+            ========================================================================= */}
+        {activeTab === "console" && (
+          <div className="space-y-4">
+            <div className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] shadow-xs space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                      <Terminal size={13} />
+                      Console & DevTools
+                    </span>
+                  </div>
+                  <h3 className="text-lg md:text-xl font-bold font-sans tracking-tight text-[var(--foreground)]">
+                    Terminal de Diagnóstico em Tempo Real
+                  </h3>
+                  <p className="text-xs text-[var(--muted)]">
+                    Todos os eventos, chamadas de API e respostas de conexões do WhatsApp são registrados aqui e no <code>console.log</code> do navegador (F12).
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleRunDiagnostic}
+                    disabled={isRunningDiagnostic}
+                    className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-dark)] transition cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    <Activity size={14} className={isRunningDiagnostic ? "animate-spin" : ""} />
+                    {isRunningDiagnostic ? "Executando..." : "Executar Diagnóstico"}
+                  </button>
+                  <button
+                    onClick={handleCopyLogs}
+                    className="px-3.5 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-[var(--card-border)] text-xs font-bold hover:bg-zinc-100 dark:hover:bg-zinc-700 transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    {copiedLogs ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                    {copiedLogs ? "Copiado!" : "Copiar Logs"}
+                  </button>
+                  <button
+                    onClick={handleClearLogs}
+                    className="px-3.5 py-2 rounded-xl bg-white dark:bg-zinc-800 border border-[var(--card-border)] text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Trash2 size={14} /> Limpar
+                  </button>
+                </div>
+              </div>
+
+              {/* Filtros de Logs */}
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-[var(--card-border)]">
+                <span className="text-[11px] font-bold text-[var(--muted)] mr-1">Filtrar:</span>
+                {[
+                  { id: "ALL", label: `Todos (${consoleLogs.length})` },
+                  { id: "ERRORS", label: `Erros (${consoleLogs.filter((l) => l.level === "error").length})` },
+                  { id: "WARNS", label: `Avisos (${consoleLogs.filter((l) => l.level === "warn").length})` },
+                  { id: "API", label: `API & Gateway (${consoleLogs.filter((l) => l.source === "SERVER_API" || l.source === "GATEWAY").length})` },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    onClick={() => setLogFilter(f.id as any)}
+                    className={`px-3 py-1 rounded-lg text-xs font-bold transition cursor-pointer ${
+                      logFilter === f.id
+                        ? "bg-zinc-900 text-white dark:bg-zinc-200 dark:text-zinc-900"
+                        : "bg-[var(--background)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Terminal View */}
+              <div className="bg-[#0b0f19] text-zinc-200 font-mono text-xs rounded-2xl p-4 md:p-5 border border-zinc-800/80 shadow-2xl max-h-[520px] overflow-y-auto space-y-2">
+                <div className="flex items-center justify-between pb-3 border-b border-zinc-800 text-[11px] text-zinc-400">
+                  <div className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>bellamais-whatsapp-engine v2.0 • Porta: 3000 / Next.js Serverless</span>
+                  </div>
+                  <span>{filteredLogs.length} eventos exibidos</span>
+                </div>
+
+                {filteredLogs.length === 0 ? (
+                  <div className="py-12 text-center text-zinc-500">
+                    Nenhum log registrado para este filtro. Execute um diagnóstico ou gere um novo QR Code.
+                  </div>
+                ) : (
+                  filteredLogs.map((log) => (
+                    <div
+                      key={log.id}
+                      className="flex items-start gap-2.5 py-1 px-1.5 rounded-md hover:bg-zinc-900/60 transition group font-mono text-[11.5px] leading-relaxed"
+                    >
+                      <span className="text-zinc-500 select-none shrink-0 font-normal">[{log.timestamp}]</span>
+                      <span
+                        className={`px-1.5 py-0.2 rounded text-[10px] font-extrabold uppercase shrink-0 ${
+                          log.level === "error"
+                            ? "bg-rose-950 text-rose-400 border border-rose-800"
+                            : log.level === "warn"
+                              ? "bg-amber-950 text-amber-300 border border-amber-800"
+                              : log.level === "success"
+                                ? "bg-emerald-950 text-emerald-300 border border-emerald-800"
+                                : log.level === "debug"
+                                  ? "bg-purple-950 text-purple-300 border border-purple-800"
+                                  : "bg-blue-950 text-blue-300 border border-blue-800"
+                        }`}
+                      >
+                        {log.level}
+                      </span>
+                      <span className="text-zinc-400 select-none shrink-0 font-bold">[{log.source}]</span>
+                      <span
+                        className={`flex-1 break-all ${
+                          log.level === "error"
+                            ? "text-rose-300 font-semibold"
+                            : log.level === "warn"
+                              ? "text-amber-200"
+                              : log.level === "success"
+                                ? "text-emerald-300"
+                                : "text-zinc-200"
+                        }`}
+                      >
+                        {log.message}
+                        {log.details && (
+                          <pre className="mt-1 p-2 rounded-lg bg-black/60 text-[10px] text-zinc-400 overflow-x-auto">
+                            {JSON.stringify(log.details, null, 2)}
+                          </pre>
+                        )}
+                      </span>
+                    </div>
+                  ))
+                )}
+                <div ref={consoleEndRef} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            ABA 4: MENSAGENS AUTOMÁTICAS (10 REGRAS)
             ========================================================================= */}
         {activeTab === "automation" && (
           <div className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] shadow-xs space-y-6">
@@ -878,7 +1573,7 @@ export default function WhatsAppPage() {
                       value={rule.template}
                       onChange={(e) => {
                         const updated = autoMessages.map((r) =>
-                          r.id === rule.id ? { ...r, template: e.target.value } : r,
+                          r.id === rule.id ? { ...r, template: e.target.value } : r
                         );
                         setAutoMessages(updated);
                       }}
@@ -899,7 +1594,7 @@ export default function WhatsAppPage() {
                               .replace(/{{hora}}/g, "14:30")
                               .replace(/{{salao}}/g, salonName)
                               .replace(/{{pix}}/g, salonPhone || "11999998888")
-                              .replace(/{{link_avaliacao}}/g, "g.page/r/bellamais"),
+                              .replace(/{{link_avaliacao}}/g, "g.page/r/bellamais")
                           )
                         }
                         className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
@@ -915,7 +1610,7 @@ export default function WhatsAppPage() {
         )}
 
         {/* =========================================================================
-            ABA 3: CENTRAL DE DISPARO RÁPIDO
+            ABA 5: CENTRAL DE DISPARO RÁPIDO
             ========================================================================= */}
         {activeTab === "inbox" && (
           <div className="bg-[var(--card-bg)] rounded-3xl border border-[var(--card-border)] shadow-xs p-6 space-y-4">
@@ -951,6 +1646,60 @@ export default function WhatsAppPage() {
                 Ao clicar no botão de WhatsApp em qualquer agendamento ou cliente,
                 o sistema monta a mensagem formatada e abre o seu WhatsApp Web ou aplicativo com 1 clique.
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* =========================================================================
+            DRAWER / PAINEL FLUTUANTE INFERIOR DO CONSOLE (QUICK VIEW)
+            ========================================================================= */}
+        {isBottomConsoleOpen && activeTab !== "console" && (
+          <div className="fixed bottom-0 left-0 right-0 z-50 bg-[#0d1117] text-zinc-100 border-t-2 border-emerald-500/60 shadow-2xl transition-all max-h-[340px] flex flex-col">
+            <div className="px-4 py-2.5 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Terminal size={15} className="text-emerald-400" />
+                <span className="font-mono text-xs font-bold">Terminal de Logs em Tempo Real ({consoleLogs.length} eventos)</span>
+                <span className="text-[10px] text-zinc-400">• Espelhado no Console F12</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCopyLogs}
+                  className="px-2.5 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-[11px] font-bold text-zinc-300 transition cursor-pointer flex items-center gap-1"
+                >
+                  <Copy size={12} /> {copiedLogs ? "Copiado!" : "Copiar"}
+                </button>
+                <button
+                  onClick={() => setIsBottomConsoleOpen(false)}
+                  className="px-2 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-[11px] font-bold text-zinc-400 hover:text-white transition cursor-pointer"
+                >
+                  ✕ Fechar
+                </button>
+              </div>
+            </div>
+
+            <div className="p-3 overflow-y-auto space-y-1.5 font-mono text-[11px] flex-1">
+              {consoleLogs.slice(0, 30).map((l) => (
+                <div key={l.id} className="flex items-start gap-2">
+                  <span className="text-zinc-500 shrink-0">[{l.timestamp}]</span>
+                  <span
+                    className={`px-1 rounded text-[9px] font-bold shrink-0 ${
+                      l.level === "error"
+                        ? "bg-rose-900 text-rose-300"
+                        : l.level === "warn"
+                          ? "bg-amber-900 text-amber-300"
+                          : l.level === "success"
+                            ? "bg-emerald-900 text-emerald-300"
+                            : "bg-blue-900 text-blue-300"
+                    }`}
+                  >
+                    {l.level}
+                  </span>
+                  <span className="text-zinc-400 shrink-0">[{l.source}]</span>
+                  <span className={l.level === "error" ? "text-rose-300 font-bold" : "text-zinc-200"}>
+                    {l.message}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}
