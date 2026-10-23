@@ -15,6 +15,7 @@ import {
   Zap,
   Smartphone,
   Check,
+  CheckCheck,
   Info,
   QrCode,
   RefreshCw,
@@ -38,7 +39,10 @@ import {
   Activity,
   Phone,
   Cake,
-  Sliders,
+  Lightbulb,
+  Signal,
+  Wifi,
+  Battery,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
@@ -77,7 +81,7 @@ export const SALON_BEAUTY_RULES: AutoMessageRule[] = [
     enabled: true,
     iconType: "clock",
     template:
-      "Olá {{cliente}}! ✨ Passando com carinho para confirmar seu horário amanhã ({{data}}) às *{{hora}}* para *{{servico}}* com *{{profissional}}* no {{salao}}. Podemos confirmar sua presença? Responda SIM! Mal podemos esperar para cuidar de você! 💖",
+      "Olá {{cliente}}! Passando com carinho para confirmar seu horário amanhã ({{data}}) às *{{hora}}* para *{{servico}}* com *{{profissional}}* no {{salao}}. Podemos confirmar sua presença? Responda SIM! Mal podemos esperar para cuidar de você.",
   },
   {
     id: "reminder_2h",
@@ -89,7 +93,7 @@ export const SALON_BEAUTY_RULES: AutoMessageRule[] = [
     enabled: true,
     iconType: "sparkles",
     template:
-      "Oi {{cliente}}! Passando para te lembrar que seu horário de *{{servico}}* é hoje às *{{hora}}*. Nossa equipe já está te esperando com a bancada pronta no {{salao}}. Até logo! 🌸✨",
+      "Oi {{cliente}}! Passando para te lembrar que seu horário de *{{servico}}* é hoje às *{{hora}}*. Nossa equipe já está te esperando com a bancada pronta no {{salao}}. Até logo!",
   },
   {
     id: "deposit_pix",
@@ -101,7 +105,7 @@ export const SALON_BEAUTY_RULES: AutoMessageRule[] = [
     enabled: true,
     iconType: "shield",
     template:
-      "Olá {{cliente}}! Para garantir a reserva exclusiva da sua cadeira para *{{servico}}* no dia {{data}} às {{hora}}, solicitamos o sinal de garantia via PIX. Chave: *{{pix}}*. O valor será abatido no final do seu atendimento. Por favor, nos envie o comprovante! ✨",
+      "Olá {{cliente}}! Para garantir a reserva exclusiva da sua cadeira para *{{servico}}* no dia {{data}} às {{hora}}, solicitamos o sinal de garantia via PIX. Chave: *{{pix}}*. O valor será abatido no final do seu atendimento. Por favor, nos envie o comprovante!",
   },
   {
     id: "google_review",
@@ -113,7 +117,7 @@ export const SALON_BEAUTY_RULES: AutoMessageRule[] = [
     enabled: true,
     iconType: "star",
     template:
-      "Oi {{cliente}}! Foi um prazer imenso cuidar da sua beleza hoje no {{salao}}! Ficou ainda mais maravilhosa! ✨ Se você puder nos presentear com uma avaliação de 5 estrelinhas no Google, nos ajuda muito: {{link_avaliacao}} 💖",
+      "Oi {{cliente}}! Foi um prazer imenso cuidar da sua beleza hoje no {{salao}}! Ficou ainda mais maravilhosa. Se você puder nos presentear com uma avaliação no Google, nos ajuda muito: {{link_avaliacao}}",
   },
   {
     id: "inactive_return",
@@ -125,7 +129,7 @@ export const SALON_BEAUTY_RULES: AutoMessageRule[] = [
     enabled: true,
     iconType: "gift",
     template:
-      "Oi {{cliente}}, estamos com tanta saudade de você aqui no {{salao}}! 💖 Que tal tirar um momento só pra você esta semana? Preparamos um mimo especial para o seu retorno. Me responda aqui para escolhermos o melhor dia pra você! ✨",
+      "Oi {{cliente}}, estamos com tanta saudade de você aqui no {{salao}}! Que tal tirar um momento só para você esta semana? Preparamos um mimo especial para o seu retorno. Me responda aqui para escolhermos o melhor dia para você!",
   },
   {
     id: "birthday_gift",
@@ -137,7 +141,7 @@ export const SALON_BEAUTY_RULES: AutoMessageRule[] = [
     enabled: true,
     iconType: "cake",
     template:
-      "Parabéns, {{cliente}}! 🎂✨ Desejamos que seu novo ciclo seja iluminado e cheio de realizações! Preparamos um mimo especial de aniversário para você comemorar aqui no {{salao}}. Que tal agendar seu horário com a gente esta semana?",
+      "Parabéns, {{cliente}}! Desejamos que seu novo ciclo seja iluminado e cheio de realizações! Preparamos um presente especial de aniversário para você comemorar aqui no {{salao}}. Que tal agendar seu horário com a gente esta semana?",
   },
 ];
 
@@ -469,7 +473,7 @@ export default function WhatsAppPage() {
         setConnectedAt(at);
         saveConfig({ isConnected: true, connectedPhone: phone, connectedAt: at });
         logEvent("success", "CLIENT", `WhatsApp conectado com sucesso para o número ${phone}!`);
-        alert(`🎉 Parabéns! WhatsApp do salão conectado com sucesso para o número ${phone}!`);
+        alert(`WhatsApp do salão conectado com sucesso para o número ${phone}!`);
       } else {
         setIsConnected(false);
         logEvent("warn", "CLIENT", data.message || "Aparelho ainda não detectado.");
@@ -536,7 +540,7 @@ export default function WhatsAppPage() {
       .replace(/{{link_avaliacao}}/g, googleReviewLink || "g.page/r/bellamais");
   }, [currentSelectedRule, queueDayFilter, salonName, pixKey, salonPhone, googleReviewLink]);
 
-  // Disparo de Mensagem (1 Clique Direto)
+  // Disparo de Mensagem (1 Toque Direto)
   const handleSendWhatsApp = (
     phone: string,
     text: string,
@@ -612,7 +616,7 @@ export default function WhatsAppPage() {
         </div>
 
         {/* =========================================================================
-            MENU DE NAVEGAÇÃO REFINADO (5 ABAS COM IDENTIDADE DE BELEZA)
+            MENU DE NAVEGAÇÃO REFINADO (5 ABAS COM ÍCONES LUCIDE)
             ========================================================================= */}
         <div className="bg-[var(--card-bg)] rounded-2xl p-2 shadow-xs border border-[var(--card-border)] flex flex-wrap gap-1.5">
           {[
@@ -775,6 +779,19 @@ export default function WhatsAppPage() {
                   <div className="space-y-3 pt-1">
                     {rules.map((rule) => {
                       const isSelected = selectedRuleId === rule.id;
+                      const RuleIcon =
+                        rule.iconType === "clock"
+                          ? Clock
+                          : rule.iconType === "sparkles"
+                          ? Sparkles
+                          : rule.iconType === "shield"
+                          ? ShieldCheck
+                          : rule.iconType === "star"
+                          ? Star
+                          : rule.iconType === "gift"
+                          ? Gift
+                          : Cake;
+
                       return (
                         <div
                           key={rule.id}
@@ -788,6 +805,7 @@ export default function WhatsAppPage() {
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex flex-wrap items-center gap-2">
+                                <RuleIcon size={16} className="text-[var(--primary)] shrink-0" />
                                 <h4 className="font-bold text-xs md:text-sm text-[var(--foreground)]">
                                   {rule.title}
                                 </h4>
@@ -889,11 +907,17 @@ export default function WhatsAppPage() {
                     </span>
                   </div>
 
-                  {/* Moldura Elegante de iPhone */}
+                  {/* Moldura Elegante de iPhone com Ícones Lucide */}
                   <div className="w-full max-w-[340px] mx-auto rounded-[42px] bg-[#1a1318] p-3 shadow-2xl border-4 border-rose-200/50 text-zinc-100 font-sans relative">
-                    {/* Dynamic Island */}
-                    <div className="w-24 h-4 bg-black rounded-full mx-auto mb-2 flex items-center justify-end px-2">
-                      <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
+                    {/* Barra Superior do iPhone com Ícones Lucide */}
+                    <div className="flex items-center justify-between px-3 py-1 text-[10px] text-zinc-400 mb-1">
+                      <span className="font-semibold">09:41</span>
+                      <div className="w-20 h-3.5 bg-black rounded-full mx-auto" />
+                      <div className="flex items-center gap-1.5 text-zinc-400">
+                        <Signal size={11} />
+                        <Wifi size={11} />
+                        <Battery size={13} />
+                      </div>
                     </div>
 
                     {/* Topo do WhatsApp com Foto do Salão */}
@@ -921,9 +945,9 @@ export default function WhatsAppPage() {
                         <p className="whitespace-pre-wrap text-[11.5px] leading-relaxed">
                           {simulatedMessageText}
                         </p>
-                        <div className="flex items-center justify-end gap-1 text-[9px] text-emerald-200 pt-0.5">
+                        <div className="flex items-center justify-end gap-1.5 text-[9px] text-emerald-200 pt-0.5">
                           <span>09:42</span>
-                          <span className="text-cyan-300 font-bold">✓✓</span>
+                          <CheckCheck size={13} className="text-cyan-300" />
                         </div>
                       </div>
                     </div>
@@ -967,7 +991,7 @@ export default function WhatsAppPage() {
                     Confirmação de Horários com 1 Toque
                   </h3>
                   <p className="text-xs text-[var(--muted)] mt-1">
-                    Ao clicar em <strong>Enviar Confirmação</strong>, a mensagem é enviada e o agendamento já fica marcado como <strong>Confirmado</strong> na Agenda!
+                    Ao clicar em <strong>Confirmar no Zap</strong>, a mensagem é enviada e o agendamento já fica marcado como <strong>Confirmado</strong> na Agenda!
                   </p>
                 </div>
 
@@ -1023,9 +1047,9 @@ export default function WhatsAppPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {queueAppointments.map((apt) => {
                     const isConfirmed = apt.status === "confirmed";
-                    const confirmMsg = `Olá ${apt.clientName}! ✨ Passando com carinho para confirmar seu horário ${
+                    const confirmMsg = `Olá ${apt.clientName}! Passando com carinho para confirmar seu horário ${
                       queueDayFilter === "today" ? "hoje" : "amanhã"
-                    } às *${apt.time}* para *${apt.serviceName}* com *${apt.professionalName}* no ${salonName}. Podemos confirmar sua presença? Responda SIM! 💖`;
+                    } às *${apt.time}* para *${apt.serviceName}* com *${apt.professionalName}* no ${salonName}. Podemos confirmar sua presença? Responda SIM!`;
 
                     return (
                       <div
@@ -1052,13 +1076,21 @@ export default function WhatsAppPage() {
                           </div>
 
                           <span
-                            className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
+                            className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase shrink-0 flex items-center gap-1 ${
                               isConfirmed
                                 ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                                 : "bg-amber-100 text-amber-800 border border-amber-200"
                             }`}
                           >
-                            {isConfirmed ? "✓ Confirmado" : "Pendente"}
+                            {isConfirmed ? (
+                              <>
+                                <Check size={12} /> Confirmado
+                              </>
+                            ) : (
+                              <>
+                                <Clock size={12} /> Pendente
+                              </>
+                            )}
                           </span>
                         </div>
 
@@ -1095,7 +1127,7 @@ export default function WhatsAppPage() {
                 <div>
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 text-pink-800 text-[11px] font-bold uppercase tracking-wider mb-1">
                     <Heart size={13} />
-                    <span>Fidelidade & Amor às Clientes</span>
+                    <span>Fidelidade & Cuidado às Clientes</span>
                   </div>
                   <h3 className="font-serif text-xl md:text-2xl font-bold tracking-tight text-[var(--foreground)]">
                     Resgate de Clientes Ausentes (+30 Dias)
@@ -1106,7 +1138,7 @@ export default function WhatsAppPage() {
                 </div>
 
                 <span className="px-4 py-2 rounded-2xl bg-pink-50 text-pink-700 border border-pink-200 text-xs font-bold shrink-0">
-                  {inactiveClients.length} Clientes para Encantar
+                  {inactiveClients.length} Clientes para Resgatar
                 </span>
               </div>
 
@@ -1126,7 +1158,7 @@ export default function WhatsAppPage() {
                     const daysAgo = Math.floor(
                       (Date.now() - new Date(client.lastVisit).getTime()) / (1000 * 60 * 60 * 24)
                     );
-                    const recoveryMsg = `Oi ${client.name}, tudo bem? Estamos com saudades de você aqui no ${salonName}! 💖 Que tal renovar seus cuidados esta semana? Preparamos um mimo especial para você na sua próxima visita. Responda aqui para garantir seu horário! ✨`;
+                    const recoveryMsg = `Oi ${client.name}, tudo bem? Estamos com saudades de você aqui no ${salonName}! Que tal renovar seus cuidados esta semana? Preparamos um mimo especial para você na sua próxima visita. Responda aqui para garantir seu horário!`;
 
                     return (
                       <div
@@ -1326,8 +1358,11 @@ export default function WhatsAppPage() {
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 leading-relaxed">
-                      💡 <strong>Dica de Praticidade:</strong> Mesmo antes de conectar o aparelho, todos os botões de envio na <strong>Agenda</strong> e nos <strong>Clientes</strong> sempre funcionam com 1 toque direto pelo navegador do seu computador ou celular!
+                    <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 leading-relaxed flex items-start gap-2.5">
+                      <Lightbulb size={16} className="text-amber-700 shrink-0 mt-0.5" />
+                      <div>
+                        <strong>Dica de Praticidade:</strong> Mesmo antes de conectar o aparelho, todos os botões de envio na <strong>Agenda</strong> e nos <strong>Clientes</strong> sempre funcionam com 1 toque direto pelo navegador do seu computador ou celular!
+                      </div>
                     </div>
                   </div>
                 </div>
