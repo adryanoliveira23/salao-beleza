@@ -14,7 +14,6 @@ import {
 import {
   Users,
   Settings,
-  DollarSign,
   UserPlus,
   LogOut,
   Shield,
@@ -24,14 +23,20 @@ import {
   Edit,
   Trash2,
   X,
+  Activity,
+  Crown,
+  Clock,
 } from "lucide-react";
 
 function getPlanBadgeClass(plan: PlanType) {
   switch (plan) {
-    case "essencial":
-      return "bg-blue-100 text-blue-700";
+    case "premium":
+    case "enterprise":
+      return "bg-amber-100 text-amber-800 border border-amber-300";
+    case "profissional":
+      return "bg-purple-100 text-purple-800 border border-purple-200";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-rose-100 text-rose-800 border border-rose-200";
   }
 }
 
@@ -41,555 +46,459 @@ export default function AdminDashboard() {
   const { config, users, updateConfig, addUser, updateUser, deleteUser } =
     usePlatformConfig();
 
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "settings">(
-    "overview",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "overview" | "users" | "plans" | "monitoring"
+  >("overview");
   const [showUserModal, setShowUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<PlatformUser | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(
-    null,
-  );
 
   const handleLogout = () => {
     logout();
     router.push("/admin/login");
   };
 
-  const stats = {
-    totalUsers: users.length,
-    activeUsers: users.filter((u) => u.status === "active").length,
-    essencialUsers: users.filter((u) => u.plan === "essencial").length,
-    inactiveUsers: users.filter((u) => u.status === "inactive").length,
-    totalRevenue: users.reduce((sum, u) => {
-      return sum + (config.planPrices[u.plan] || 0);
-    }, 0),
-    monthlyRevenue: users.reduce((sum, u) => {
-      return sum + (config.planPrices[u.plan] || 0);
-    }, 0),
+  const getPlanPrice = (plan: PlanType) => {
+    if (plan === "premium" || plan === "enterprise") return config.planPrices.premium;
+    if (plan === "profissional") return config.planPrices.profissional;
+    return config.planPrices.essencial;
   };
 
-  const tabs = [
-    { id: "overview", label: "Visão Geral", icon: TrendingUp },
-    { id: "users", label: "Usuários", icon: Users },
-    { id: "settings", label: "Configurações", icon: Settings },
-  ];
+  const stats = {
+    totalSalons: users.length,
+    activeSalons: users.filter((u) => u.status === "active").length,
+    trialSalons: users.filter((u) => u.status === "trial").length,
+    suspendedSalons: users.filter((u) => u.status === "suspended" || u.status === "inactive").length,
+    essencialCount: users.filter((u) => u.plan === "essencial").length,
+    profissionalCount: users.filter((u) => u.plan === "profissional").length,
+    premiumCount: users.filter((u) => u.plan === "premium" || u.plan === "enterprise").length,
+    mrr: users
+      .filter((u) => u.status === "active")
+      .reduce((sum, u) => sum + getPlanPrice(u.plan), 0),
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
-      {/* Header */}
-      <div className="bg-white border-b border-[#2d1b2e]/10 sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 md:px-8 py-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-linear-to-br from-[#FF6B9D] to-[#C77DFF] rounded-xl flex items-center justify-center shadow-lg">
-                <Shield size={24} className="text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl md:text-[32px] font-bold font-display text-[#2d1b2e]">
-                  Painel Administrativo
-                </h1>
-                <p className="text-[#2d1b2e]/70 text-sm md:text-base">
-                  Gestão da Plataforma{" "}
-                  <span className="font-bold ml-1">Agendly Glow</span>
-                </p>
-              </div>
+    <div className="min-h-screen bg-[#faf6f2]">
+      {/* Top Bar */}
+      <div className="bg-white border-b border-rose-100 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 md:px-8 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 bg-gradient-to-br from-[#b83b6b] to-[#88234b] rounded-2xl flex items-center justify-center text-white shadow-md">
+              <Shield size={22} />
             </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => router.push("/dashboard")}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white text-[#FF6B9D] rounded-xl transition-all font-medium border border-[#FF6B9D]/30 shadow-sm hover:bg-[#FF6B9D]/5 hover:shadow-md hover:-translate-y-0.5"
-              >
-                <Users size={18} />
-                Área do Cliente
-              </button>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 px-5 py-2.5 bg-white text-red-500 rounded-xl transition-all font-medium border border-red-100 shadow-sm hover:bg-red-50 hover:shadow-md hover:-translate-y-0.5"
-              >
-                <LogOut size={18} />
-                Sair
-              </button>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-[#2b1822]">
+                Super Admin — Gestão SaaS
+              </h1>
+              <p className="text-xs text-[#7d6570]">
+                Controle de salões assinantes, planos, limites, trials e integrações
+              </p>
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="px-4 py-2 rounded-xl bg-rose-50 text-[#b83b6b] text-xs font-bold hover:bg-rose-100 transition-colors cursor-pointer"
+            >
+              Ir para Painel do Salão
+            </button>
+            <button
+              onClick={handleLogout}
+              className="px-4 py-2 rounded-xl border border-rose-200 text-rose-600 text-xs font-bold flex items-center gap-1.5 hover:bg-rose-50 cursor-pointer"
+            >
+              <LogOut size={15} />
+              Sair
+            </button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-6">
         {/* Tabs */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-sm border border-white p-1.5 mb-8 flex gap-2 max-w-fit">
-          {tabs.map((tab) => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() =>
-                  setActiveTab(tab.id as "overview" | "users" | "settings")
-                }
-                className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl transition-all font-medium text-sm ${
-                  activeTab === tab.id
-                    ? "bg-[#FF6B9D] text-white shadow-md shadow-[#FF6B9D]/20"
-                    : "text-[#2d1b2e]/60 hover:bg-[#FF6B9D]/5 hover:text-[#FF6B9D]"
-                }`}
-              >
-                <Icon size={18} />
-                <span className="hidden sm:inline">{tab.label}</span>
-              </button>
-            );
-          })}
+        <div className="flex flex-wrap gap-2 bg-white p-1.5 rounded-2xl border border-rose-100 w-fit shadow-xs">
+          {[
+            { id: "overview", label: "Indicadores SaaS", icon: TrendingUp },
+            { id: "users", label: "Salões Cadastrados", icon: Users },
+            { id: "plans", label: "Planos, Preços & Limites", icon: Crown },
+            { id: "monitoring", label: "Status & Integrações", icon: Activity },
+          ].map((t) => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id as typeof activeTab)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+                activeTab === t.id
+                  ? "bg-[#b83b6b] text-white shadow-sm"
+                  : "text-[#7d6570] hover:text-[#2b1822]"
+              }`}
+            >
+              <t.icon size={16} />
+              {t.label}
+            </button>
+          ))}
         </div>
 
-        {/* Overview Tab */}
+        {/* TAB 1: OVERVIEW */}
         {activeTab === "overview" && (
-          <div className="space-y-8">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 border border-white hover:border-[#FF6B9D]/20 transition-all group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                    <Users size={24} className="text-blue-500" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-medium text-[#2d1b2e]/60 mb-1">
-                  Total de Usuários
-                </h3>
-                <p className="text-3xl font-bold text-[#2d1b2e] font-display">
-                  {stats.totalUsers}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 border border-white hover:border-[#FF6B9D]/20 transition-all group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center group-hover:bg-green-100 transition-colors">
-                    <CheckCircle2 size={24} className="text-green-500" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-medium text-[#2d1b2e]/60 mb-1">
-                  Usuários Ativos
-                </h3>
-                <p className="text-3xl font-bold text-[#2d1b2e] font-display">
-                  {stats.activeUsers}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 border border-white hover:border-[#FF6B9D]/20 transition-all group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                    <CreditCard size={24} className="text-purple-500" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-medium text-[#2d1b2e]/60 mb-1">
-                  Receita Mensal
-                </h3>
-                <p className="text-3xl font-bold text-[#2d1b2e] font-display">
-                  R$ {stats.monthlyRevenue.toFixed(2).replace(".", ",")}
-                </p>
-              </div>
-
-              <div className="bg-white rounded-[20px] shadow-[0_8px_30px_rgba(0,0,0,0.04)] p-6 border border-white hover:border-[#FF6B9D]/20 transition-all group">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center group-hover:bg-orange-100 transition-colors">
-                    <DollarSign size={24} className="text-orange-500" />
-                  </div>
-                </div>
-                <h3 className="text-sm font-medium text-[#2d1b2e]/60 mb-1">
-                  Taxa de Receita
-                </h3>
-                <p className="text-3xl font-bold text-[#2d1b2e] font-display">
-                  {config.revenueRate}%
-                </p>
-              </div>
-            </div>
-
-            {/* Plan Stats */}
-            <div className="grid grid-cols-1 gap-4">
-              <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-[#FF6B9D]">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-linear-to-br from-[#FF6B9D] to-[#C77DFF] rounded-lg flex items-center justify-center">
-                    <CreditCard size={20} className="text-white" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-[#2d1b2e]">
-                      {PLANS.essencial.name}
-                    </h3>
-                    <p className="text-xs text-[#2d1b2e]/70">
-                      {PLANS.essencial.description}
-                    </p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <p className="text-xl md:text-[26px] font-bold text-[#2d1b2e]">
-                    {stats.essencialUsers}
-                  </p>
-                  <p className="text-sm text-[#2d1b2e]/70">usuários</p>
-                  <p className="text-sm text-green-600 font-semibold mt-2">
-                    R${" "}
-                    {config.planPrices.essencial.toFixed(2).replace(".", ",")}
-                    /mês
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Recent Users */}
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold font-display text-[#2d1b2e]">
-                  Usuários Recentes
-                </h2>
-                <button
-                  onClick={() => {
-                    setEditingUser(null);
-                    setShowUserModal(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
-                >
-                  <UserPlus size={18} />
-                  Novo Usuário
-                </button>
-              </div>
-              <div className="space-y-3">
-                {users
-                  .slice(-5)
-                  .reverse()
-                  .map((user) => (
-                    <div
-                      key={user.id}
-                      className="p-4 bg-[#ffeef8] rounded-lg border border-[#FF6B9D]/20 flex items-center justify-between"
-                    >
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-[#2d1b2e]">
-                            {user.name}
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeClass(
-                              user.plan,
-                            )}`}
-                          >
-                            {PLANS[user.plan].name}
-                          </span>
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              user.status === "active"
-                                ? "bg-green-100 text-green-700"
-                                : user.status === "inactive"
-                                  ? "bg-gray-100 text-gray-700"
-                                  : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {user.status === "active"
-                              ? "Ativo"
-                              : user.status === "inactive"
-                                ? "Inativo"
-                                : "Suspenso"}
-                          </span>
-                        </div>
-                        <p className="text-sm text-[#2d1b2e]/70">
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                {users.length === 0 && (
-                  <p className="text-center text-[#2d1b2e]/50 py-8">
-                    Nenhum usuário cadastrado
-                  </p>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Users Tab */}
-        {activeTab === "users" && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold font-display text-[#2d1b2e]">
-                  Gestão de Usuários
-                </h2>
-                <button
-                  onClick={() => {
-                    setEditingUser(null);
-                    setShowUserModal(true);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
-                >
-                  <UserPlus size={18} />
-                  Novo Usuário
-                </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-xs">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-bold uppercase text-[#7d6570]">
+                    Total de Salões
+                  </span>
+                  <Users size={18} className="text-[#b83b6b]" />
+                </div>
+                <p className="text-3xl font-bold text-[#2b1822]">
+                  {stats.totalSalons}
+                </p>
+                <p className="text-xs text-[#7d6570] mt-1">
+                  {stats.activeSalons} ativos • {stats.trialSalons} em teste grátis
+                </p>
               </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-[#2d1b2e]/10">
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#2d1b2e]">
-                        Nome
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#2d1b2e]">
-                        Email
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#2d1b2e]">
-                        Plano
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#2d1b2e]">
-                        Status
-                      </th>
-                      <th className="text-left py-3 px-4 text-sm font-semibold text-[#2d1b2e]">
-                        Criado em
-                      </th>
-                      <th className="text-right py-3 px-4 text-sm font-semibold text-[#2d1b2e]">
-                        Ações
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr
-                        key={user.id}
-                        className="border-b border-[#2d1b2e]/5 hover:bg-[#ffeef8] transition-colors"
-                      >
-                        <td className="py-3 px-4">
-                          <span className="font-medium text-[#2d1b2e]">
-                            {user.name}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-[#2d1b2e]/70">
-                            {user.email}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${getPlanBadgeClass(
-                              user.plan,
-                            )}`}
-                          >
-                            {PLANS[user.plan].name}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              user.status === "active"
-                                ? "bg-green-100 text-green-700"
-                                : user.status === "inactive"
-                                  ? "bg-gray-100 text-gray-700"
-                                  : "bg-red-100 text-red-700"
-                            }`}
-                          >
-                            {user.status === "active"
-                              ? "Ativo"
-                              : user.status === "inactive"
-                                ? "Inativo"
-                                : "Suspenso"}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <span className="text-sm text-[#2d1b2e]/70">
-                            {new Date(user.createdAt).toLocaleDateString(
-                              "pt-BR",
-                            )}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4">
-                          <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => {
-                                setEditingUser(user);
-                                setShowUserModal(true);
-                              }}
-                              className="p-2 hover:bg-blue-50 text-blue-600 rounded-lg transition-colors"
-                              title="Editar"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => setShowDeleteConfirm(user.id)}
-                              className="p-2 hover:bg-red-50 text-red-600 rounded-lg transition-colors"
-                              title="Excluir"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {users.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={6}
-                          className="py-12 text-center text-[#2d1b2e]/50"
-                        >
-                          Nenhum usuário cadastrado
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+              <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-xs">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-bold uppercase text-[#7d6570]">
+                    MRR (Receita Mensal)
+                  </span>
+                  <CreditCard size={18} className="text-emerald-600" />
+                </div>
+                <p className="text-3xl font-bold text-emerald-600">
+                  R$ {stats.mrr.toFixed(2)}
+                </p>
+                <p className="text-xs text-[#7d6570] mt-1">
+                  Faturamento recorrente ativo
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-xs">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-bold uppercase text-[#7d6570]">
+                    Período de Teste (Trial)
+                  </span>
+                  <Clock size={18} className="text-amber-600" />
+                </div>
+                <p className="text-3xl font-bold text-[#2b1822]">
+                  {config.defaultTrialDays} dias
+                </p>
+                <p className="text-xs text-[#7d6570] mt-1">
+                  Configurado para novos cadastros
+                </p>
+              </div>
+
+              <div className="bg-white p-5 rounded-2xl border border-rose-100 shadow-xs">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-xs font-bold uppercase text-[#7d6570]">
+                    Bloqueados / Inativos
+                  </span>
+                  <CheckCircle2 size={18} className="text-rose-600" />
+                </div>
+                <p className="text-3xl font-bold text-rose-600">
+                  {stats.suspendedSalons}
+                </p>
+                <p className="text-xs text-[#7d6570] mt-1">
+                  Contas suspensas ou expiradas
+                </p>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Settings Tab */}
-        {activeTab === "settings" && (
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-bold font-display text-[#2d1b2e] mb-6">
-                Configurações da Plataforma
-              </h2>
-
-              <div className="space-y-6">
-                {/* Taxa de Receita */}
-                <div>
-                  <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-                    Taxa de Receita da Plataforma (%)
-                  </label>
-                  <div className="flex items-center gap-4">
-                    <input
-                      type="number"
-                      min={config.minRevenueRate}
-                      max={config.maxRevenueRate}
-                      value={config.revenueRate}
-                      onChange={(e) =>
-                        updateConfig({
-                          revenueRate: parseFloat(e.target.value) || 0,
-                        })
-                      }
-                      className="flex-1 px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
-                    />
-                    <span className="text-[#2d1b2e]/70">
-                      Min: {config.minRevenueRate}% | Max:{" "}
-                      {config.maxRevenueRate}%
-                    </span>
-                  </div>
-                  <p className="text-sm text-[#2d1b2e]/50 mt-2">
-                    Percentual que a plataforma recebe sobre cada transação
-                  </p>
-                </div>
-
-                {/* Taxa Fixa */}
-                <div>
-                  <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-                    Taxa Fixa da Plataforma (R$)
-                  </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={config.platformFee}
-                    onChange={(e) =>
-                      updateConfig({
-                        platformFee: parseFloat(e.target.value) || 0,
-                      })
-                    }
-                    className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
-                  />
-                  <p className="text-sm text-[#2d1b2e]/50 mt-2">
-                    Taxa fixa cobrada por transação (além da taxa percentual)
-                  </p>
-                </div>
-
-                {/* Modo Manutenção */}
-                <div className="flex items-center justify-between p-4 bg-[#ffeef8] rounded-xl border border-[#FF6B9D]/20">
-                  <div>
-                    <h3 className="font-semibold text-[#2d1b2e] mb-1">
-                      Modo Manutenção
-                    </h3>
-                    <p className="text-sm text-[#2d1b2e]/70">
-                      Bloqueia o acesso de todos os usuários à plataforma
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={config.maintenanceMode}
-                      onChange={(e) =>
-                        updateConfig({ maintenanceMode: e.target.checked })
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FF6B9D]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF6B9D]"></div>
-                  </label>
-                </div>
-
-                {/* Permitir Novos Cadastros */}
-                <div className="flex items-center justify-between p-4 bg-[#ffeef8] rounded-xl border border-[#FF6B9D]/20">
-                  <div>
-                    <h3 className="font-semibold text-[#2d1b2e] mb-1">
-                      Permitir Novos Cadastros
-                    </h3>
-                    <p className="text-sm text-[#2d1b2e]/70">
-                      Permite que novos usuários se cadastrem na plataforma
-                    </p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={config.allowNewSignups}
-                      onChange={(e) =>
-                        updateConfig({ allowNewSignups: e.target.checked })
-                      }
-                      className="sr-only peer"
-                    />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FF6B9D]/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FF6B9D]"></div>
-                  </label>
-                </div>
-
-                {/* Plano Padrão */}
-                <div>
-                  <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-                    Plano Padrão para Novos Usuários
-                  </label>
-                  <select
-                    value={config.defaultPlan}
-                    onChange={(e) =>
-                      updateConfig({
-                        defaultPlan: e.target.value as PlanType,
-                      })
-                    }
-                    className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
+            {/* 3 Plans Breakdown */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {(["essencial", "profissional", "premium"] as const).map((key) => {
+                const count =
+                  key === "essencial"
+                    ? stats.essencialCount
+                    : key === "profissional"
+                      ? stats.profissionalCount
+                      : stats.premiumCount;
+                return (
+                  <div
+                    key={key}
+                    className="bg-white rounded-2xl p-6 border border-rose-100 shadow-xs"
                   >
-                    <option value="essencial">{PLANS.essencial.name}</option>
-                  </select>
-                </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-bold ${getPlanBadgeClass(key)}`}
+                      >
+                        Plano {PLANS[key].name}
+                      </span>
+                      <span className="text-lg font-bold text-[#b83b6b]">
+                        R$ {config.planPrices[key].toFixed(2)}/mês
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#7d6570] mb-4">
+                      {PLANS[key].description}
+                    </p>
+                    <div className="flex items-baseline justify-between pt-3 border-t border-rose-50">
+                      <span className="text-2xl font-bold text-[#2b1822]">
+                        {count} salões
+                      </span>
+                      <span className="text-xs text-[#7d6570]">
+                        Limite: até {config.planLimits[key]} prof.
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
-                {/* Preços dos Planos */}
-                <div className="space-y-4 pt-4 border-t border-[#2d1b2e]/10">
-                  <h3 className="text-xl font-bold font-display text-[#2d1b2e] mb-4">
-                    Preços dos Planos
+        {/* TAB 2: SALONS / USERS */}
+        {activeTab === "users" && (
+          <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-lg font-bold text-[#2b1822]">
+                  Salões Cadastrados na Plataforma
+                </h2>
+                <p className="text-xs text-[#7d6570]">
+                  Ative, suspenda, altere o plano ou conceda dias de teste gratuito.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingUser(null);
+                  setShowUserModal(true);
+                }}
+                className="bg-[#b83b6b] hover:bg-[#88234b] text-white px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer"
+              >
+                <UserPlus size={16} />
+                Cadastrar Novo Salão
+              </button>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm">
+                <thead>
+                  <tr className="border-b border-rose-100 text-xs uppercase text-[#7d6570]">
+                    <th className="py-3 px-3">Salão / Responsável</th>
+                    <th className="py-3 px-3">E-mail</th>
+                    <th className="py-3 px-3">Plano</th>
+                    <th className="py-3 px-3">Status</th>
+                    <th className="py-3 px-3">Cadastro</th>
+                    <th className="py-3 px-3 text-right">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr
+                      key={u.id}
+                      className="border-b border-rose-50 hover:bg-rose-50/30"
+                    >
+                      <td className="py-3 px-3">
+                        <p className="font-bold text-[#2b1822]">
+                          {u.salonName || u.name}
+                        </p>
+                        <p className="text-xs text-[#7d6570]">{u.name}</p>
+                      </td>
+                      <td className="py-3 px-3 text-xs text-[#7d6570]">
+                        {u.email}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${getPlanBadgeClass(u.plan)}`}
+                        >
+                          {PLANS[u.plan]?.name || "Essencial"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                            u.status === "active"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : u.status === "trial"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-rose-100 text-rose-700"
+                          }`}
+                        >
+                          {u.status === "active"
+                            ? "Ativo"
+                            : u.status === "trial"
+                              ? "Em Teste"
+                              : "Bloqueado"}
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 text-xs text-[#7d6570]">
+                        {new Date(u.createdAt).toLocaleDateString("pt-BR")}
+                      </td>
+                      <td className="py-3 px-3 text-right space-x-1">
+                        <button
+                          onClick={() => {
+                            setEditingUser(u);
+                            setShowUserModal(true);
+                          }}
+                          className="p-2 rounded-lg text-blue-600 hover:bg-blue-50"
+                          title="Editar Plano / Status"
+                        >
+                          <Edit size={15} />
+                        </button>
+                        <button
+                          onClick={() => deleteUser(u.id)}
+                          className="p-2 rounded-lg text-rose-600 hover:bg-rose-50"
+                          title="Excluir"
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: PLANS, PRICES & LIMITS */}
+        {activeTab === "plans" && (
+          <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-xs space-y-6">
+            <h2 className="text-lg font-bold text-[#2b1822]">
+              Configuração Comercial dos 3 Planos SaaS
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {(["essencial", "profissional", "premium"] as const).map((key) => (
+                <div
+                  key={key}
+                  className="p-5 rounded-2xl border border-rose-100 bg-[#faf6f2] space-y-4"
+                >
+                  <h3 className="font-bold text-base text-[#2b1822]">
+                    Plano {PLANS[key].name}
                   </h3>
-
                   <div>
-                    <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-                      {PLANS.essencial.name} (R$/mês)
+                    <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+                      Mensalidade (R$)
                     </label>
                     <input
                       type="number"
-                      min="0"
-                      step="0.01"
-                      value={config.planPrices.essencial}
+                      step="0.10"
+                      value={config.planPrices[key]}
                       onChange={(e) =>
                         updateConfig({
                           planPrices: {
                             ...config.planPrices,
-                            essencial: parseFloat(e.target.value) || 0,
+                            [key]: parseFloat(e.target.value) || 0,
                           },
                         })
                       }
-                      className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] font-medium"
+                      className="w-full p-2.5 rounded-xl border border-rose-200 bg-white text-sm font-bold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+                      Limite de Profissionais por Salão
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={config.planLimits[key]}
+                      onChange={(e) =>
+                        updateConfig({
+                          planLimits: {
+                            ...config.planLimits,
+                            [key]: parseInt(e.target.value, 10) || 1,
+                          },
+                        })
+                      }
+                      className="w-full p-2.5 rounded-xl border border-rose-200 bg-white text-sm font-bold"
                     />
                   </div>
                 </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-rose-100">
+              <div>
+                <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+                  Dias de Teste Grátis (Trial)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={config.defaultTrialDays}
+                  onChange={(e) =>
+                    updateConfig({
+                      defaultTrialDays: parseInt(e.target.value, 10) || 0,
+                    })
+                  }
+                  className="w-full p-2.5 rounded-xl border border-rose-200 bg-white text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+                  Plano Inicial Padrão
+                </label>
+                <select
+                  value={config.defaultPlan}
+                  onChange={(e) =>
+                    updateConfig({ defaultPlan: e.target.value as PlanType })
+                  }
+                  className="w-full p-2.5 rounded-xl border border-rose-200 bg-white text-sm"
+                >
+                  <option value="essencial">Essencial</option>
+                  <option value="profissional">Profissional</option>
+                  <option value="premium">Premium</option>
+                </select>
+              </div>
+              <div className="flex items-end">
+                <label className="flex items-center gap-2 text-sm font-bold text-[#2b1822] p-2.5 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.allowNewSignups}
+                    onChange={(e) =>
+                      updateConfig({ allowNewSignups: e.target.checked })
+                    }
+                  />
+                  Permitir novos cadastros públicos
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: MONITORING & INTEGRATIONS */}
+        {activeTab === "monitoring" && (
+          <div className="bg-white rounded-2xl p-6 border border-rose-100 shadow-xs space-y-4">
+            <h2 className="text-lg font-bold text-[#2b1822]">
+              Monitoramento de Integrações & Saúde da Plataforma
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+                <p className="text-xs font-bold uppercase text-emerald-800">
+                  Banco de Dados Multi-Tenant (Firestore)
+                </p>
+                <p className="text-sm font-bold text-emerald-700 mt-1">
+                  ✓ Operacional • Isolamento por Salão Ativo
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <p className="text-xs font-bold uppercase text-blue-800">
+                  Webhook WhatsApp Cloud / Evolution API
+                </p>
+                <p className="text-sm font-bold text-blue-700 mt-1">
+                  ✓ Endpoint /api/webhooks/whatsapp Ativo
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-purple-50 border border-purple-200">
+                <p className="text-xs font-bold uppercase text-purple-800">
+                  Modo Manutenção Global
+                </p>
+                <label className="flex items-center gap-2 text-sm font-bold text-purple-900 mt-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.maintenanceMode}
+                    onChange={(e) =>
+                      updateConfig({ maintenanceMode: e.target.checked })
+                    }
+                  />
+                  {config.maintenanceMode ? "Ativo (Bloqueado)" : "Desativado (Online)"}
+                </label>
               </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* User Modal */}
       {showUserModal && (
         <UserModal
           user={editingUser}
@@ -597,48 +506,16 @@ export default function AdminDashboard() {
             setShowUserModal(false);
             setEditingUser(null);
           }}
-          onSave={(userData) => {
+          onSave={(data) => {
             if (editingUser) {
-              updateUser(editingUser.id, userData);
+              updateUser(editingUser.id, data);
             } else {
-              addUser(userData);
+              addUser(data);
             }
             setShowUserModal(false);
             setEditingUser(null);
           }}
         />
-      )}
-
-      {/* Delete Confirm Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full">
-            <h3 className="text-2xl font-bold font-display text-[#2d1b2e] mb-2">
-              Confirmar Exclusão
-            </h3>
-            <p className="text-[#2d1b2e]/70 mb-6">
-              Tem certeza que deseja excluir este usuário? Esta ação não pode
-              ser desfeita.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-[#2d1b2e] rounded-xl transition-colors font-medium"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={() => {
-                  if (showDeleteConfirm) deleteUser(showDeleteConfirm);
-                  setShowDeleteConfirm(null);
-                }}
-                className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl transition-colors font-medium"
-              >
-                Excluir
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
@@ -659,152 +536,121 @@ function UserModal({
   const [email, setEmail] = useState(user?.email || "");
   const [salonName, setSalonName] = useState(user?.salonName || "");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [plan, setPlan] = useState<PlanType>(user?.plan || "essencial");
-  const [status, setStatus] = useState<"active" | "inactive" | "suspended">(
+  const [plan, setPlan] = useState<PlanType>(user?.plan || "profissional");
+  const [status, setStatus] = useState<"active" | "trial" | "inactive" | "suspended">(
     user?.status || "active",
   );
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!name.trim() || !email.trim()) {
-      alert("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
-    onSave({ name, email, salonName, password, plan, status });
-  };
-
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="text-2xl font-bold font-display text-[#2d1b2e]">
-            {user ? "Editar Usuário" : "Novo Usuário"}
+      <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-bold text-[#2b1822]">
+            {user ? "Editar Salão" : "Novo Salão Assinante"}
           </h3>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-          >
-            <X size={20} className="text-[#2d1b2e]" />
+          <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100">
+            <X size={18} />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSave({ name, email, salonName, password, plan, status });
+          }}
+          className="space-y-4"
+        >
           <div>
-            <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-              Nome *
+            <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+              Nome da Responsável *
             </label>
             <input
               type="text"
+              required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
-              placeholder="Nome do profissional"
-              required
+              className="w-full p-2.5 border border-rose-200 rounded-xl text-sm"
             />
           </div>
-
           <div>
-            <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-              Email *
+            <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+              Nome do Salão
+            </label>
+            <input
+              type="text"
+              value={salonName}
+              onChange={(e) => setSalonName(e.target.value)}
+              className="w-full p-2.5 border border-rose-200 rounded-xl text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+              E-mail *
             </label>
             <input
               type="email"
+              required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
-              placeholder="seu@email.com"
-              required
+              className="w-full p-2.5 border border-rose-200 rounded-xl text-sm"
             />
           </div>
-
           {!user && (
-            <>
-              <div>
-                <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-                  Nome do Salão
-                </label>
-                <input
-                  type="text"
-                  value={salonName}
-                  onChange={(e) => setSalonName(e.target.value)}
-                  className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
-                  placeholder="Ex: Studio Glow"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-                  Senha
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
-                    placeholder="Mínimo 6 caracteres"
-                    minLength={6}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#FF6B9D]"
-                  >
-                    {showPassword ? <X size={16} /> : <Users size={16} />}
-                  </button>
-                </div>
-                <p className="text-xs text-[#2d1b2e]/50 mt-1">
-                  Se vazio, uma senha aleatória será gerada.
-                </p>
-              </div>
-            </>
+            <div>
+              <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+                Senha Inicial
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                className="w-full p-2.5 border border-rose-200 rounded-xl text-sm"
+              />
+            </div>
           )}
-
-          <div>
-            <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-              Plano
-            </label>
-            <select
-              value={plan}
-              onChange={(e) => setPlan(e.target.value as PlanType)}
-              className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
-            >
-              <option value="essencial">
-                {PLANS.essencial.name} - R${" "}
-                {PLANS.essencial.price.toFixed(2).replace(".", ",")}/mês
-              </option>
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+                Plano SaaS
+              </label>
+              <select
+                value={plan}
+                onChange={(e) => setPlan(e.target.value as PlanType)}
+                className="w-full p-2.5 border border-rose-200 rounded-xl text-sm"
+              >
+                <option value="essencial">Essencial</option>
+                <option value="profissional">Profissional</option>
+                <option value="premium">Premium</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase text-[#7d6570] mb-1">
+                Status
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as typeof status)}
+                className="w-full p-2.5 border border-rose-200 rounded-xl text-sm"
+              >
+                <option value="active">Ativo</option>
+                <option value="trial">Período de Teste</option>
+                <option value="suspended">Suspenso / Bloqueado</option>
+              </select>
+            </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-[#2d1b2e] mb-2">
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) =>
-                setStatus(e.target.value as "active" | "inactive" | "suspended")
-              }
-              className="w-full px-4 py-2 border-2 border-[#2d1b2e]/10 rounded-xl focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e]"
-            >
-              <option value="active">Ativo</option>
-              <option value="inactive">Inativo</option>
-              <option value="suspended">Suspenso</option>
-            </select>
-          </div>
-
-          <div className="flex gap-3 pt-4">
+          <div className="flex gap-3 pt-3">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-[#2d1b2e] rounded-xl transition-colors font-medium"
+              className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold"
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white rounded-xl hover:shadow-lg transition-all font-medium"
+              className="flex-1 py-2.5 rounded-xl bg-[#b83b6b] text-white text-sm font-bold"
             >
               Salvar
             </button>

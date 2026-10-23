@@ -80,14 +80,14 @@ async function simulateEmail(email: string, name: string, password?: string) {
   console.log(`
     -------------------------------------------
     ENVIANDO EMAIL PARA: ${email}
-    ASSUNTO: Bem-vindo ao Agendly Glow! 🚀
+    ASSUNTO: Bem-vindo ao BellaMais! 🚀
     
     Olá ${name}, seu pagamento foi confirmado e sua conta está ativa!
     
     Você já pode acessar o sistema com o e-mail: ${email}
     ${password ? `Sua senha temporária é: ${password}` : ""}
     
-    Acesse: https://agendlyglow.com/login
+    Acesse: https://bellamais.com/login
     
     Estamos felizes em ter você conosco!
     -------------------------------------------

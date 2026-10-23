@@ -1,29 +1,23 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { CheckCircle2, Timer, TrendingUp, Users } from "lucide-react";
+import { CheckCircle2, Timer, Sparkles, Crown, ShieldCheck } from "lucide-react";
+import { PLANS } from "@/contexts/PlatformConfigContext";
 
 export default function ChoosePlanPage() {
-  const [timeLeft, setTimeLeft] = useState(900); // 15 minutes
-  const [paymentUrl, setPaymentUrl] = useState(
-    "https://pay.cakto.com.br/4j8q5du_754033",
-  );
+  const [timeLeft, setTimeLeft] = useState(900);
+  const [baseParams, setBaseParams] = useState("");
 
   useEffect(() => {
-    // Attempt to get user registration data to pass to Cakto
     const registrationData = localStorage.getItem("user_registration");
     if (registrationData) {
       try {
         const { email, name, salonName } = JSON.parse(registrationData);
-        // Build dynamic URL with metadata
-        // Note: Cakto often uses query params like ?email=...&name=...
-        const baseUrl = "https://pay.cakto.com.br/4j8q5du_754033";
         const params = new URLSearchParams();
         if (email) params.append("email", email);
         if (name) params.append("name", name);
         if (salonName) params.append("metadata[salonName]", salonName);
-
-        setPaymentUrl(`${baseUrl}?${params.toString()}`);
+        setBaseParams(params.toString() ? `?${params.toString()}` : "");
       } catch (e) {
         console.error("Error parsing registration data", e);
       }
@@ -44,129 +38,127 @@ export default function ChoosePlanPage() {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  const planCards = [
+    {
+      key: "essencial" as const,
+      plan: PLANS.essencial,
+      popular: false,
+      badge: "Para Autônomas",
+    },
+    {
+      key: "profissional" as const,
+      plan: PLANS.profissional,
+      popular: true,
+      badge: "Mais Escolhido",
+    },
+    {
+      key: "premium" as const,
+      plan: PLANS.premium,
+      popular: false,
+      badge: "Salão Completo + IA",
+    },
+  ];
+
   return (
-    <div className="min-h-screen bg-linear-to-br from-[#fff5f7] to-[#ffffff] py-12 px-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-[#faf6f2] py-12 px-4">
+      <div className="max-w-6xl mx-auto">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 bg-[#FF6B9D]/10 text-[#FF6B9D] px-4 py-2 rounded-full font-bold mb-6 animate-pulse">
-            <Timer size={20} />
-            CONDIÇÃO ESPECIAL EXPIRA EM: {formatTime(timeLeft)}
+          <div className="inline-flex items-center gap-2 bg-[#f5e1ea] text-[#b83b6b] px-4 py-2 rounded-full font-bold text-xs sm:text-sm mb-4">
+            <Timer size={18} />
+            TESTE GRÁTIS INCLUSO • CONDIÇÃO ESPECIAL EXPIRA EM: {formatTime(timeLeft)}
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-[#2d1b2e] mb-4">
-            Escolha o melhor plano para o seu{" "}
-            <span className="text-[#FF6B9D]">sucesso</span>
+          <h1 className="text-3xl md:text-5xl font-bold text-[#2b1822] mb-3 font-serif">
+            Escolha o plano ideal para o seu{" "}
+            <span className="text-[#b83b6b]">Salão de Beleza</span>
           </h1>
-          <p className="text-[#2d1b2e]/70 text-lg">
-            Aumente seu faturamento e organize sua agenda com a tecnologia líder
-            do mercado.
+          <p className="text-[#7d6570] text-base max-w-2xl mx-auto">
+            Organize sua agenda, automatize o WhatsApp com Inteligência Artificial, controle comissões e aumente o lucro do seu espaço.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 items-start">
-          <div className="bg-white rounded-3xl p-8 shadow-2xl border-2 border-[#FF6B9D] relative overflow-hidden">
-            <div className="absolute top-0 right-0 bg-[#FF6B9D] text-white px-6 py-1 rounded-bl-2xl text-sm font-bold uppercase">
-              Mais Vendido
-            </div>
-            <h2
-              className="text-2xl font-normal text-[#2d1b2e] mb-2 font-montserrat"
-              style={{ fontFamily: "var(--font-montserrat)" }}
-            >
-              Agendly Glow
-            </h2>
-            <p className="text-[#2d1b2e]/60 mb-6 font-sans">
-              Tudo o que seu salão precisa para crescer
-            </p>
-
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+          {planCards.map(({ key, plan, popular, badge }) => (
             <div
-              className="text-5xl font-black text-[#FF6B9D] mb-6 flex items-baseline gap-1 font-montserrat tracking-tight"
-              style={{ fontFamily: "var(--font-montserrat)" }}
+              key={key}
+              className={`bg-white rounded-3xl p-7 flex flex-col justify-between relative transition-all ${
+                popular
+                  ? "border-2 border-[#b83b6b] shadow-xl scale-[1.02]"
+                  : "border border-rose-100 shadow-md"
+              }`}
             >
-              <span className="text-2xl font-sans font-medium text-[#FF6B9D]/80">
-                R$
-              </span>
-              35,90
-              <span className="text-base font-normal font-sans text-gray-400 ml-1">
-                /mês
-              </span>
-            </div>
-
-            <ul className="space-y-4 mb-8">
-              {[
-                "Agenda Online Inteligente",
-                "Gestão Completa de Clientes",
-                "Financeiro e Comissões",
-                "Lembretes via WhatsApp",
-                "Relatórios de Performance",
-                "Suporte Premium",
-              ].map((feature, i) => (
-                <li key={i} className="flex items-center gap-3 text-gray-600">
-                  <CheckCircle2 size={20} className="text-[#FF6B9D]" />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            <a
-              href={paymentUrl}
-              className="block w-full text-center bg-linear-to-r from-[#FF6B9D] to-[#C77DFF] text-white font-bold py-4 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all"
-            >
-              ADQUIRIR AGORA
-            </a>
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-[#FF6B9D]/10">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center text-[#FF6B9D]">
-                  <TrendingUp size={24} />
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span
+                    className={`text-[11px] font-bold uppercase px-3 py-1 rounded-full ${
+                      popular
+                        ? "bg-[#b83b6b] text-white"
+                        : "bg-[#f5e1ea] text-[#88234b]"
+                    }`}
+                  >
+                    {badge}
+                  </span>
+                  {key === "premium" ? (
+                    <Crown size={20} className="text-[#c59b27]" />
+                  ) : (
+                    <Sparkles size={20} className="text-[#b83b6b]" />
+                  )}
                 </div>
-                <div>
-                  <h3 className="font-bold text-[#2d1b2e]">Crescimento Real</h3>
-                  <p className="text-sm text-gray-500">
-                    Média de +40% no faturamento
-                  </p>
+
+                <h2 className="text-2xl font-bold text-[#2b1822] mb-1">
+                  Plano {plan.name}
+                </h2>
+                <p className="text-xs text-[#7d6570] mb-6 min-h-[34px]">
+                  {plan.description}
+                </p>
+
+                <div className="flex items-baseline gap-1 mb-6">
+                  <span className="text-lg font-semibold text-[#b83b6b]">R$</span>
+                  <span className="text-4xl font-black text-[#2b1822]">
+                    {plan.price.toFixed(2).replace(".", ",")}
+                  </span>
+                  <span className="text-xs text-[#7d6570]">/mês</span>
                 </div>
+
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((feat, i) => (
+                    <li key={i} className="flex items-start gap-2.5 text-sm text-[#2b1822]">
+                      <CheckCircle2
+                        size={18}
+                        className="text-[#b83b6b] shrink-0 mt-0.5"
+                      />
+                      <span>{feat}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p className="text-gray-600 text-sm">
-                Salões que utilizam o Agendly Glow registram um crescimento
-                significativo na retenção de clientes logo no primeiro
-                trimestre.
-              </p>
-            </div>
 
-            <div className="bg-white/50 backdrop-blur-sm rounded-2xl p-6 border border-[#FF6B9D]/10">
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-[#C77DFF]">
-                  <Users size={24} />
-                </div>
-                <div>
-                  <h3 className="font-bold text-[#2d1b2e]">Comunidade Ativa</h3>
-                  <p className="text-sm text-gray-500">
-                    Mais de 8.500 parceiros
-                  </p>
-                </div>
-              </div>
-              <p className="text-gray-600 text-sm">
-                Junte-se a uma rede de empreendedores de sucesso que confiam sua
-                gestão em nossa plataforma.
-              </p>
+              <a
+                href={`https://pay.cakto.com.br/4j8q5du_754033${baseParams}`}
+                className={`block w-full text-center font-bold py-3.5 rounded-xl transition-all text-sm ${
+                  popular
+                    ? "bg-gradient-to-r from-[#b83b6b] to-[#88234b] text-white shadow-lg hover:opacity-95"
+                    : "bg-[#f5e1ea] text-[#88234b] hover:bg-[#b83b6b] hover:text-white"
+                }`}
+              >
+                Assinar Plano {plan.name}
+              </a>
             </div>
+          ))}
+        </div>
 
-            <div className="p-6 text-center">
-              <div className="flex flex-wrap justify-center gap-2 mb-4">
-                <CheckCircle2 size={16} className="text-green-500" />{" "}
-                <span className="text-sm font-medium">Cancelamento grátis</span>
-                <CheckCircle2 size={16} className="text-green-500" />{" "}
-                <span className="text-sm font-medium">Sem fidelidade</span>
-                <CheckCircle2 size={16} className="text-green-500" />{" "}
-                <span className="text-sm font-medium">Setup instantâneo</span>
-              </div>
-              <p className="text-xs text-gray-400">
-                Após o pagamento, você receberá seus dados de acesso por e-mail
-                em até 2 minutos.
-              </p>
-            </div>
-          </div>
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-6 text-xs text-[#7d6570]">
+          <span className="flex items-center gap-1.5 font-semibold">
+            <ShieldCheck size={16} className="text-emerald-600" />
+            Dados protegidos conforme LGPD
+          </span>
+          <span className="flex items-center gap-1.5 font-semibold">
+            <CheckCircle2 size={16} className="text-emerald-600" />
+            Sem fidelidade • Cancele quando quiser
+          </span>
+          <span className="flex items-center gap-1.5 font-semibold">
+            <CheckCircle2 size={16} className="text-emerald-600" />
+            Liberação imediata após confirmação
+          </span>
         </div>
       </div>
     </div>

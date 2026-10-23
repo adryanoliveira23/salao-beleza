@@ -7,7 +7,7 @@ const faqs = [
   {
     question: "Preciso instalar algum programa no computador?",
     answer:
-      "Não! O Agendly Glow é 100% online. Você pode acessar de qualquer lugar, seja pelo computador, tablet ou celular, sem precisar baixar nada.",
+      "Não! O BellaMais é 100% online. Você pode acessar de qualquer lugar, seja pelo computador, tablet ou celular, sem precisar baixar nada.",
   },
   {
     question: "Posso testar antes de assinar?",
@@ -22,7 +22,7 @@ const faqs = [
   {
     question: "Serve para barbearias ou clínicas de estética?",
     answer:
-      "Com certeza! O Agendly Glow é flexível e atende salões de beleza, barbearias, esmalterias, clínicas de estética, spas e profissionais autônomos.",
+      "Com certeza! O BellaMais é flexível e atende salões de beleza, barbearias, esmalterias, clínicas de estética, spas e profissionais autônomos.",
   },
   {
     question: "É seguro colocar os dados dos meus clientes?",
@@ -46,7 +46,7 @@ export function FAQSection() {
           <span className="inline-block py-1 px-3 rounded-full bg-[#FF6B9D]/10 text-[#FF6B9D] font-semibold text-sm mb-4">
             Tira-Dúvidas
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-[#2d1b2e] mb-6 font-serif">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#2d1b2e] mb-6 font-sans tracking-tight">
             Perguntas Frequentes
           </h2>
           <p className="text-[#666] max-w-2xl mx-auto">

@@ -8,8 +8,10 @@ import {
   Inter,
 } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 import { SalonDataProvider } from "@/contexts/SalonDataContext";
 import { FinanceProvider } from "@/contexts/FinanceContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import { SuppressHydrationWarning } from "./suppress-hydration-warning";
 
 const fontInter = Inter({
@@ -46,8 +48,9 @@ const fontCormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Agendly Glow - Revolução na Gestão de Salões de Beleza",
-  description: "Gerenciamento de Salão de Beleza",
+  title: "BellaMais — Plataforma Completa de Gestão para Salões de Beleza",
+  description:
+    "Sistema SaaS profissional para salões de beleza, manicures, cabeleireiras, esteticistas, designers de sobrancelhas e maquiadoras com integração ao WhatsApp.",
 };
 
 export const viewport: Viewport = {
@@ -62,7 +65,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" suppressHydrationWarning>
+    <html lang="pt-BR" suppressHydrationWarning style={{ colorScheme: "light" }}>
       <body
         className={`${fontInter.variable} ${fontOutfit.variable} ${fontPlayfair.variable} ${fontMontserrat.variable} ${fontGreatVibes.variable} ${fontCormorant.variable} antialiased`}
         suppressHydrationWarning
@@ -72,6 +75,16 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
+                  var saved = localStorage.getItem('bellamais_theme_mode') || localStorage.getItem('agendly_theme_mode');
+                  if (saved === 'dark') {
+                    document.documentElement.classList.add('dark');
+                    document.documentElement.setAttribute('data-theme', 'dark');
+                    document.documentElement.style.colorScheme = 'dark';
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                    document.documentElement.setAttribute('data-theme', 'light');
+                    document.documentElement.style.colorScheme = 'light';
+                  }
                   if (typeof document !== 'undefined' && document.body) {
                     const body = document.body;
                     if (body.hasAttribute('cz-shortcut-listen')) {
@@ -84,9 +97,13 @@ export default function RootLayout({
           }}
         />
         <SuppressHydrationWarning />
-        <SalonDataProvider>
-          <FinanceProvider>{children}</FinanceProvider>
-        </SalonDataProvider>
+        <AuthProvider>
+          <NotificationProvider>
+            <SalonDataProvider>
+              <FinanceProvider>{children}</FinanceProvider>
+            </SalonDataProvider>
+          </NotificationProvider>
+        </AuthProvider>
       </body>
     </html>
   );

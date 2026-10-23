@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import React, { useState, useEffect } from "react";
 import {
   User,
@@ -8,8 +10,6 @@ import {
   Palette,
   Shield,
   Trash2,
-  LogOut,
-  Upload,
   Loader2,
   Save,
   DollarSign,
@@ -17,23 +17,42 @@ import {
   Copy,
   Sun,
   Moon,
+  Clock,
+  CalendarCheck,
+  Lock,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useSalonData } from "@/contexts/SalonDataContext";
-import { useAuth } from "@/contexts/AuthContext";
+import {
+  useAuth,
+  BusinessDayHours,
+  BookingRules,
+  DEFAULT_BUSINESS_HOURS,
+  DEFAULT_BOOKING_RULES,
+} from "@/contexts/AuthContext";
 import { useNotifications } from "@/contexts/NotificationContext";
-import { storage, db } from "@/app/lib/firebase";
+import { storage, db, auth } from "@/app/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc } from "firebase/firestore";
+import { sendPasswordResetEmail, updatePassword } from "firebase/auth";
 import { useFinance, NeighborhoodType } from "@/contexts/FinanceContext";
+
+const DAY_LABELS: { key: string; label: string }[] = [
+  { key: "monday", label: "Segunda-feira" },
+  { key: "tuesday", label: "Terça-feira" },
+  { key: "wednesday", label: "Quarta-feira" },
+  { key: "thursday", label: "Quinta-feira" },
+  { key: "friday", label: "Sexta-feira" },
+  { key: "saturday", label: "Sábado" },
+  { key: "sunday", label: "Domingo" },
+];
 
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
-  const [theme, setTheme] = useState("light");
   const [copied, setCopied] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
   const { clearAllData } = useSalonData();
-  const { user, profile, refreshProfile } = useAuth();
+  const { user, profile, themeMode, refreshProfile, updateProfileData } = useAuth();
   const { notifications, markAsRead, clearNotifications } = useNotifications();
   const { settings, updateSettings } = useFinance();
 
@@ -44,9 +63,19 @@ export default function Settings() {
     salon_name: "",
     username: "",
     avatar_url: "",
+    address: "",
+    instagram: "",
+    cnpj: "",
   });
 
-  // Finance Form State
+  const [businessHours, setBusinessHours] = useState<
+    Record<string, BusinessDayHours>
+  >(DEFAULT_BUSINESS_HOURS);
+  const [holidaysText, setHolidaysText] = useState("");
+  const [bookingRules, setBookingRules] = useState<BookingRules>(
+    DEFAULT_BOOKING_RULES,
+  );
+
   const [financeForm, setFinanceForm] = useState({
     neighborhood: "media" as NeighborhoodType,
     chairs: 2,
@@ -58,7 +87,9 @@ export default function Settings() {
     ownerSalaryPercent: 0,
   });
 
+  const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -69,11 +100,29 @@ export default function Settings() {
       setFormData({
         name: profile.name || "",
         email: profile.email || "",
-        phone: "",
+        phone: profile.phone || "",
         salon_name: profile.salon_name || "",
         username: profile.username || "",
         avatar_url: profile.avatar_url || "",
+        address: profile.address || "",
+        instagram: profile.instagram || "",
+        cnpj: profile.cnpj || "",
       });
+      if (profile.businessHours) {
+        setBusinessHours({
+          ...DEFAULT_BUSINESS_HOURS,
+          ...profile.businessHours,
+        });
+      }
+      if (profile.holidays) {
+        setHolidaysText(profile.holidays.map((h) => h.date).join(", "));
+      }
+      if (profile.bookingRules) {
+        setBookingRules({
+          ...DEFAULT_BOOKING_RULES,
+          ...profile.bookingRules,
+        });
+      }
     }
   }, [profile]);
 
@@ -92,19 +141,13 @@ export default function Settings() {
     }
   }, [settings]);
 
-  const [uploading, setUploading] = useState(false);
-
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
-
-      if (!event.target.files || event.target.files.length === 0) {
-        throw new Error("You must select an image to upload.");
-      }
-
+      if (!event.target.files || event.target.files.length === 0) return;
       const file = event.target.files[0];
       const fileExt = file.name.split(".").pop();
-      const fileName = `${user?.uid}-${Math.random()}.${fileExt}`;
+      const fileName = `${user?.uid}-${Date.now()}.${fileExt}`;
       const storageRef = ref(storage, `avatars/${fileName}`);
 
       await uploadBytes(storageRef, file);
@@ -112,15 +155,14 @@ export default function Settings() {
 
       setFormData((prev) => ({ ...prev, avatar_url: publicUrl }));
 
-      // Auto-save the new avatar URL to profile immediately
       if (user) {
         const userRef = doc(db, "profiles", user.uid);
-        await updateDoc(userRef, {
-          avatar_url: publicUrl,
-          // created_at or updated_at logic if needed
-        });
+        await updateDoc(userRef, { avatar_url: publicUrl });
         await refreshProfile();
-        setMessage({ type: "success", text: "Foto de perfil atualizada!" });
+        setMessage({
+          type: "success",
+          text: "Logo / Foto atualizada com sucesso!",
+        });
       }
     } catch (error) {
       console.error("Error uploading avatar:", error);
@@ -141,14 +183,7 @@ export default function Settings() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      const input = document.createElement("input");
-      input.value = bookingUrl;
-      document.body.appendChild(input);
-      input.select();
-      document.execCommand("copy");
-      document.body.removeChild(input);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -157,29 +192,54 @@ export default function Settings() {
     if (!user) return;
     setLoading(true);
     setMessage(null);
-
     try {
-      const userRef = doc(db, "profiles", user.uid);
-      await setDoc(
-        userRef,
-        {
-          id: user.uid,
-          name: formData.name,
-          email: formData.email, // Ensure email is kept
-          salon_name: formData.salon_name,
-          username: formData.username,
-          avatar_url: formData.avatar_url,
-          plan: profile?.plan || "essencial", // Preserve plan
-          status: profile?.status || "active", // Preserve status
-        },
-        { merge: true },
-      );
-
-      await refreshProfile();
-      setMessage({ type: "success", text: "Perfil atualizado com sucesso!" });
-    } catch (error) {
-      console.error("Error updating profile:", error);
+      await updateProfileData({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+        salon_name: formData.salon_name,
+        username: formData.username,
+        avatar_url: formData.avatar_url,
+        address: formData.address,
+        instagram: formData.instagram,
+        cnpj: formData.cnpj,
+      });
+      setMessage({
+        type: "success",
+        text: "Dados do salão salvos com sucesso!",
+      });
+    } catch {
       setMessage({ type: "error", text: "Erro ao atualizar perfil." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveHoursAndRules = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
+    try {
+      const holidays = holidaysText
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
+        .map((dateStr, i) => ({
+          id: `hol-${i}`,
+          date: dateStr,
+          name: "Feriado",
+        }));
+      await updateProfileData({
+        businessHours,
+        holidays,
+        bookingRules,
+      });
+      setMessage({
+        type: "success",
+        text: "Horários de funcionamento e políticas de agendamento salvos!",
+      });
+    } catch {
+      setMessage({ type: "error", text: "Erro ao salvar regras." });
     } finally {
       setLoading(false);
     }
@@ -195,73 +255,134 @@ export default function Settings() {
         type: "success",
         text: "Configurações financeiras salvas!",
       });
-    } catch (error) {
-      console.error("Error updating finance settings:", error);
+    } catch {
       setMessage({ type: "error", text: "Erro ao salvar configurações." });
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <>
-      <Header title="Configurações" />
+  const handleThemeChange = async (mode: "light" | "dark") => {
+    if (typeof document !== "undefined") {
+      document.documentElement.classList.toggle("dark", mode === "dark");
+    }
+    await updateProfileData({ themeMode: mode });
+  };
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-10 flex flex-col gap-4 md:gap-6">
-        <div className="bg-white rounded-[16px] md:rounded-[20px] shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-[#FF6B9D]/10 overflow-hidden flex flex-col md:flex-row min-h-[400px] md:min-h-[600px]">
-          {/* Settings Navigation */}
-          <div className="w-full md:w-[260px] bg-[#fafafa] border-b md:border-b-0 md:border-r border-[#f0f0f0] p-4 flex flex-row md:flex-col gap-2 overflow-x-auto md:overflow-x-visible shrink-0">
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!auth.currentUser || newPassword.length < 6) return;
+    setLoading(true);
+    setMessage(null);
+    try {
+      await updatePassword(auth.currentUser, newPassword);
+      setNewPassword("");
+      setMessage({ type: "success", text: "Senha alterada com sucesso!" });
+    } catch {
+      setMessage({
+        type: "error",
+        text: "Para alterar a senha diretamente, faça login novamente ou use o botão de enviar e-mail de redefinição abaixo.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendResetEmail = async () => {
+    if (!formData.email) return;
+    try {
+      await sendPasswordResetEmail(auth, formData.email);
+      setMessage({
+        type: "success",
+        text: `E-mail de redefinição de senha enviado para ${formData.email}!`,
+      });
+    } catch {
+      setMessage({
+        type: "error",
+        text: "Erro ao enviar e-mail de redefinição.",
+      });
+    }
+  };
+
+  return (
+    <div className="flex flex-col h-full bg-[var(--background)]">
+      <Header title="Configurações do Salão" />
+
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-10">
+        <div className="bg-[var(--card-bg)] rounded-3xl shadow-xs border border-[var(--card-border)] overflow-hidden flex flex-col md:flex-row min-h-[600px]">
+          {/* Sidebar Tabs */}
+          <div className="w-full md:w-[260px] bg-[var(--background)]/60 border-b md:border-b-0 md:border-r border-[var(--card-border)] p-3 sm:p-4 flex flex-row md:flex-col gap-1.5 overflow-x-auto shrink-0 no-scrollbar">
             {[
-              { id: "profile", label: "Perfil", icon: User },
-              { id: "financial", label: "Financeiro", icon: DollarSign },
+              { id: "profile", label: "Identidade & Salão", icon: User },
+              { id: "hours", label: "Horários & Políticas", icon: Clock },
+              {
+                id: "financial",
+                label: "Estrutura Financeira",
+                icon: DollarSign,
+              },
               { id: "booking", label: "Link de Agendamento", icon: Link2 },
               { id: "notifications", label: "Notificações", icon: Bell },
-              { id: "appearance", label: "Aparência", icon: Palette },
-              { id: "security", label: "Segurança", icon: Shield },
-              { id: "data", label: "Dados", icon: Trash2 },
+              { id: "appearance", label: "Modo Claro / Escuro", icon: Palette },
+              { id: "security", label: "Segurança & Acesso", icon: Shield },
+              { id: "data", label: "Dados & LGPD", icon: Trash2 },
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm text-left shrink-0
-                ${
+                onClick={() => {
+                  setActiveTab(tab.id);
+                  setMessage(null);
+                }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-semibold text-xs sm:text-sm text-left shrink-0 cursor-pointer ${
                   activeTab === tab.id
-                    ? "bg-white text-[#FF6B9D] shadow-sm font-semibold"
-                    : "text-[#666] hover:bg-[#eaeaea]"
+                    ? "bg-[var(--primary)] text-white shadow-xs"
+                    : "text-[var(--muted)] hover:bg-[var(--primary-light)]/40 hover:text-[var(--foreground)]"
                 }`}
               >
-                <tab.icon size={18} />
+                <tab.icon size={17} />
                 {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Settings Content */}
-          <div className="flex-1 p-4 md:p-6 lg:p-8 min-w-0">
+          {/* Content Area */}
+          <div className="flex-1 p-5 sm:p-6 lg:p-8 min-w-0">
+            {message && (
+              <div
+                className={`mb-6 p-3.5 rounded-xl text-sm font-medium ${
+                  message.type === "success"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : "bg-rose-50 text-rose-700 border border-rose-200"
+                }`}
+              >
+                {message.text}
+              </div>
+            )}
+
+            {/* TAB: PROFILE & VISUAL IDENTITY */}
             {activeTab === "profile" && (
-              <div className="max-w-[600px] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold font-serif text-[#2d1b2e] mb-6">
-                  Informações do Perfil
+              <div className="max-w-2xl space-y-6">
+                <h3 className="text-xl font-bold text-[var(--foreground)]">
+                  Identidade Visual, Endereço & Contato
                 </h3>
 
-                <div className="flex items-center gap-6 mb-8">
-                  <div className="relative w-[100px] h-[100px] rounded-full overflow-hidden shadow-lg border-2 border-white">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
+                  <div className="relative w-24 h-24 rounded-full overflow-hidden shadow-md border-2 border-[var(--primary)] shrink-0">
                     {formData.avatar_url ? (
                       <img
                         src={formData.avatar_url}
-                        alt="Profile"
+                        alt="Logo do Salão"
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-linear-to-br from-[#FF6B9D] to-[#C73866] flex items-center justify-center text-white font-bold text-3xl">
-                        {profile?.name?.substring(0, 2).toUpperCase() || "US"}
+                      <div className="w-full h-full bg-gradient-to-br from-[#b83b6b] to-[#88234b] flex items-center justify-center text-white font-bold text-2xl">
+                        {formData.salon_name?.slice(0, 2).toUpperCase() || "SB"}
                       </div>
                     )}
                     {uploading && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-10">
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <Loader2
                           className="animate-spin text-white"
-                          size={24}
+                          size={22}
                         />
                       </div>
                     )}
@@ -277,55 +398,57 @@ export default function Settings() {
                     />
                     <label
                       htmlFor="avatar-upload"
-                      className={`inline-block bg-white border-2 border-[#f0f0f0] text-[#2d1b2e] px-4 py-2 rounded-xl font-semibold text-sm hover:border-[#FF6B9D] hover:text-[#FF6B9D] transition-colors mb-2 cursor-pointer ${uploading ? "opacity-50 cursor-not-allowed" : ""}`}
+                      className="inline-block bg-[var(--background)] border border-[var(--card-border)] text-[var(--foreground)] px-4 py-2.5 rounded-xl font-semibold text-xs hover:border-[var(--primary)] cursor-pointer"
                     >
-                      {uploading ? "Enviando..." : "Alterar Foto"}
+                      {uploading
+                        ? "Enviando..."
+                        : "Alterar Logo / Foto do Salão"}
                     </label>
-                    <p className="text-xs text-[#999]">JPG ou PNG. Max 2MB.</p>
+                    <p className="text-xs text-[var(--muted)] mt-1">
+                      Exibida no painel e na página pública de agendamento online.
+                    </p>
                   </div>
                 </div>
 
-                <form
-                  onSubmit={handleSaveProfile}
-                  className="flex flex-col gap-5"
-                >
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-[#2d1b2e] text-sm">
-                      Nome Completo
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] transition-all"
-                    />
+                <form onSubmit={handleSaveProfile} className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        Nome da Proprietária / Responsável
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        Nome do Salão / Studio
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.salon_name}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            salon_name: e.target.value,
+                          })
+                        }
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                        placeholder="Ex: Studio Glow Beleza"
+                      />
+                    </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-[#2d1b2e] text-sm">
-                      Nome do Salão
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.salon_name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, salon_name: e.target.value })
-                      }
-                      className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] transition-all"
-                      placeholder="Ex: Studio Glow"
-                    />
-                  </div>
-
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-[#2d1b2e] text-sm">
-                      Nome de Usuário (para link)
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-3 text-[#999] text-sm">
-                        @
-                      </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        Usuário para Link (@slug)
+                      </label>
                       <input
                         type="text"
                         value={formData.username}
@@ -337,178 +460,405 @@ export default function Settings() {
                               .replace(/[^a-z0-9_]/g, ""),
                           })
                         }
-                        className="pl-8 p-3 w-full border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] transition-all"
-                        placeholder="nome_usuario"
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                        placeholder="studioglow"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        WhatsApp / Telefone Comercial
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                        placeholder="(11) 99999-9999"
                       />
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-[#2d1b2e] text-sm">
-                      Email
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                      Endereço Completo do Salão
                     </label>
                     <input
-                      type="email"
-                      value={formData.email}
-                      disabled
-                      className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm bg-[#fafafa] text-[#999]"
+                      type="text"
+                      value={formData.address}
+                      onChange={(e) =>
+                        setFormData({ ...formData, address: e.target.value })
+                      }
+                      className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                      placeholder="Rua das Flores, 123 - Sala 2, Centro"
                     />
                   </div>
 
-                  {message && (
-                    <div
-                      className={`p-3 rounded-xl text-sm ${message.type === "success" ? "bg-green-50 text-green-600 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}
-                    >
-                      {message.text}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        Instagram (@perfil)
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.instagram}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            instagram: e.target.value,
+                          })
+                        }
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                        placeholder="@studioglow"
+                      />
                     </div>
-                  )}
-
-                  <div className="pt-4">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="flex items-center gap-2 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-50"
-                    >
-                      {loading ? (
-                        <Loader2 className="animate-spin" size={18} />
-                      ) : (
-                        <Save size={18} />
-                      )}
-                      Salvar Alterações
-                    </button>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        CNPJ / CPF Comercial
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.cnpj}
+                        onChange={(e) =>
+                          setFormData({ ...formData, cnpj: e.target.value })
+                        }
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                        placeholder="00.000.000/0001-00"
+                      />
+                    </div>
                   </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex items-center justify-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-dark)] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-sm cursor-pointer w-full sm:w-auto"
+                  >
+                    {loading ? (
+                      <Loader2 className="animate-spin" size={18} />
+                    ) : (
+                      <Save size={18} />
+                    )}
+                    Salvar Identidade do Salão
+                  </button>
                 </form>
               </div>
             )}
 
-            {activeTab === "financial" && (
-              <div className="max-w-[600px] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold font-serif text-[#2d1b2e] mb-6">
-                  Configurações Financeiras
-                </h3>
+            {/* TAB: OPERATING HOURS & POLICIES */}
+            {activeTab === "hours" && (
+              <form
+                onSubmit={handleSaveHoursAndRules}
+                className="max-w-2xl space-y-6"
+              >
+                <div>
+                  <h3 className="text-xl font-bold text-[var(--foreground)] mb-1">
+                    Horários de Funcionamento & Feriados
+                  </h3>
+                  <p className="text-xs text-[var(--muted)] mb-4">
+                    Estes horários são respeitados pela Agenda Inteligente, pelo Agendamento Online e pela IA do WhatsApp.
+                  </p>
 
-                <form
-                  onSubmit={handleSaveFinance}
-                  className="flex flex-col gap-5"
-                >
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col gap-2">
-                      <label className="font-semibold text-[#2d1b2e] text-sm">
-                        Bairro
-                      </label>
-                      <select
-                        value={financeForm.neighborhood}
-                        onChange={(e) =>
-                          setFinanceForm({
-                            ...financeForm,
-                            neighborhood: e.target.value as NeighborhoodType,
-                          })
-                        }
-                        className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] bg-white"
-                      >
-                        <option value="simples">Simples (Popular)</option>
-                        <option value="media">Bairro Médio</option>
-                        <option value="rica">Bairro Nobre</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <label className="font-semibold text-[#2d1b2e] text-sm">
-                        Nº Cadeiras
+                  <div className="space-y-2.5">
+                    {DAY_LABELS.map(({ key, label }) => {
+                      const bh =
+                        businessHours[key] || DEFAULT_BUSINESS_HOURS[key];
+                      return (
+                        <div
+                          key={key}
+                          className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-[var(--background)] border border-[var(--card-border)]"
+                        >
+                          <span className="font-semibold text-sm w-36 text-[var(--foreground)]">
+                            {label}
+                          </span>
+                          <label className="flex items-center gap-2 text-xs font-medium cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={bh.open}
+                              onChange={(e) => {
+                                setBusinessHours((prev) => ({
+                                  ...prev,
+                                  [key]: { ...bh, open: e.target.checked },
+                                }));
+                              }}
+                            />
+                            {bh.open ? "Aberto" : "Fechado"}
+                          </label>
+                          {bh.open && (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="time"
+                                value={bh.start}
+                                onChange={(e) => {
+                                  setBusinessHours((prev) => ({
+                                    ...prev,
+                                    [key]: { ...bh, start: e.target.value },
+                                  }));
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-xs"
+                              />
+                              <span className="text-xs text-[var(--muted)]">
+                                às
+                              </span>
+                              <input
+                                type="time"
+                                value={bh.end}
+                                onChange={(e) => {
+                                  setBusinessHours((prev) => ({
+                                    ...prev,
+                                    [key]: { ...bh, end: e.target.value },
+                                  }));
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] text-xs"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                    Feriados / Datas Fechadas (Separados por vírgula: AAAA-MM-DD)
+                  </label>
+                  <input
+                    type="text"
+                    value={holidaysText}
+                    onChange={(e) => setHolidaysText(e.target.value)}
+                    placeholder="Ex: 2026-12-25, 2027-01-01"
+                    className="w-full p-3 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
+                  />
+                </div>
+
+                <div className="pt-4 border-t border-[var(--card-border)] space-y-4">
+                  <h4 className="font-bold text-base text-[var(--foreground)] flex items-center gap-2">
+                    <CalendarCheck
+                      size={18}
+                      className="text-[var(--primary)]"
+                    />
+                    Regras de Cancelamento, Antecedência e Sinal
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        Antecedência Mínima (h)
                       </label>
                       <input
                         type="number"
-                        min="1"
-                        value={financeForm.chairs}
+                        min="0"
+                        value={bookingRules.minAdvanceHours}
                         onChange={(e) =>
-                          setFinanceForm({
-                            ...financeForm,
-                            chairs: Number(e.target.value),
+                          setBookingRules({
+                            ...bookingRules,
+                            minAdvanceHours: Number(e.target.value),
                           })
                         }
-                        className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+                        className="w-full p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        Aviso Cancelamento (h)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={bookingRules.cancellationHours}
+                        onChange={(e) =>
+                          setBookingRules({
+                            ...bookingRules,
+                            cancellationHours: Number(e.target.value),
+                          })
+                        }
+                        className="w-full p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                        Tolerância Atraso (min)
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={bookingRules.lateToleranceMinutes}
+                        onChange={(e) =>
+                          setBookingRules({
+                            ...bookingRules,
+                            lateToleranceMinutes: Number(e.target.value),
+                          })
+                        }
+                        className="w-full p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
                       />
                     </div>
                   </div>
 
-                  <div className="p-4 bg-gray-50 rounded-xl space-y-4">
-                    <h4 className="font-bold text-[#2d1b2e] text-sm">
-                      Custos Fixos Mensais (Estimativa)
-                    </h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="text-xs text-gray-500 mb-1 block">
-                          Aluguel
-                        </label>
-                        <input
-                          type="number"
-                          value={financeForm.rentCost}
-                          onChange={(e) =>
-                            setFinanceForm({
-                              ...financeForm,
-                              rentCost: Number(e.target.value),
-                            })
-                          }
-                          className="w-full p-2 rounded-lg border border-gray-200 text-sm"
-                          placeholder="R$ 0,00"
-                        />
+                  <div className="p-4 rounded-2xl bg-[var(--background)] border border-[var(--card-border)] space-y-3">
+                    <label className="flex items-center gap-2 font-semibold text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={bookingRules.requireDeposit}
+                        onChange={(e) =>
+                          setBookingRules({
+                            ...bookingRules,
+                            requireDeposit: e.target.checked,
+                          })
+                        }
+                      />
+                      Solicitar pagamento de Sinal (PIX) no Agendamento Online
+                    </label>
+                    {bookingRules.requireDeposit && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                        <div>
+                          <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                            Percentual do Sinal (%)
+                          </label>
+                          <input
+                            type="number"
+                            min="5"
+                            max="100"
+                            value={bookingRules.depositPercent}
+                            onChange={(e) =>
+                              setBookingRules({
+                                ...bookingRules,
+                                depositPercent: Number(e.target.value),
+                              })
+                            }
+                            className="w-full p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                            Chave PIX do Salão para Sinal
+                          </label>
+                          <input
+                            type="text"
+                            value={bookingRules.pixKey || ""}
+                            onChange={(e) =>
+                              setBookingRules({
+                                ...bookingRules,
+                                pixKey: e.target.value,
+                              })
+                            }
+                            placeholder="CNPJ, E-mail ou Telefone"
+                            className="w-full p-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] text-sm"
+                          />
+                        </div>
                       </div>
-                      <div>
-                        <label className="text-xs text-gray-500 mb-1 block">
-                          Energia
-                        </label>
-                        <input
-                          type="number"
-                          value={financeForm.energyCost}
-                          onChange={(e) =>
-                            setFinanceForm({
-                              ...financeForm,
-                              energyCost: Number(e.target.value),
-                            })
-                          }
-                          className="w-full p-2 rounded-lg border border-gray-200 text-sm"
-                          placeholder="R$ 0,00"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500 mb-1 block">
-                          Internet
-                        </label>
-                        <input
-                          type="number"
-                          value={financeForm.internetCost}
-                          onChange={(e) =>
-                            setFinanceForm({
-                              ...financeForm,
-                              internetCost: Number(e.target.value),
-                            })
-                          }
-                          className="w-full p-2 rounded-lg border border-gray-200 text-sm"
-                          placeholder="R$ 0,00"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-xs text-gray-500 mb-1 block">
-                          Sistema
-                        </label>
-                        <input
-                          type="number"
-                          value={financeForm.systemCost}
-                          onChange={(e) =>
-                            setFinanceForm({
-                              ...financeForm,
-                              systemCost: Number(e.target.value),
-                            })
-                          }
-                          className="w-full p-2 rounded-lg border border-gray-200 text-sm"
-                          placeholder="R$ 0,00"
-                        />
-                      </div>
-                    </div>
+                    )}
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-[#2d1b2e] text-sm">
-                      Meta de Faturamento Mensal
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex items-center justify-center gap-2 bg-[var(--primary)] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-sm cursor-pointer w-full sm:w-auto"
+                >
+                  <Save size={18} />
+                  Salvar Horários e Regras
+                </button>
+              </form>
+            )}
+
+            {/* TAB: FINANCIAL */}
+            {activeTab === "financial" && (
+              <form onSubmit={handleSaveFinance} className="max-w-xl space-y-5">
+                <h3 className="text-xl font-bold text-[var(--foreground)]">
+                  Estrutura Financeira & Custos Fixos Base
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                      Perfil do Bairro
+                    </label>
+                    <select
+                      value={financeForm.neighborhood}
+                      onChange={(e) =>
+                        setFinanceForm({
+                          ...financeForm,
+                          neighborhood: e.target.value as NeighborhoodType,
+                        })
+                      }
+                      className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                    >
+                      <option value="simples">Popular</option>
+                      <option value="media">Bairro Médio</option>
+                      <option value="rica">Bairro Nobre</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                      Cadeiras / Estações
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={financeForm.chairs}
+                      onChange={(e) =>
+                        setFinanceForm({
+                          ...financeForm,
+                          chairs: Number(e.target.value),
+                        })
+                      }
+                      className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                      Aluguel (R$)
+                    </label>
+                    <input
+                      type="number"
+                      value={financeForm.rentCost}
+                      onChange={(e) =>
+                        setFinanceForm({
+                          ...financeForm,
+                          rentCost: Number(e.target.value),
+                        })
+                      }
+                      className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                      Energia & Água (R$)
+                    </label>
+                    <input
+                      type="number"
+                      value={financeForm.energyCost}
+                      onChange={(e) =>
+                        setFinanceForm({
+                          ...financeForm,
+                          energyCost: Number(e.target.value),
+                        })
+                      }
+                      className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                      Internet (R$)
+                    </label>
+                    <input
+                      type="number"
+                      value={financeForm.internetCost}
+                      onChange={(e) =>
+                        setFinanceForm({
+                          ...financeForm,
+                          internetCost: Number(e.target.value),
+                        })
+                      }
+                      className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                      Meta Mensal do Salão (R$)
                     </label>
                     <input
                       type="number"
@@ -519,141 +869,84 @@ export default function Settings() {
                           monthlyGoal: Number(e.target.value),
                         })
                       }
-                      className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
-                      placeholder="R$ 20.000,00"
+                      className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
                     />
                   </div>
+                </div>
 
-                  <div className="flex flex-col gap-2">
-                    <label className="font-semibold text-[#2d1b2e] text-sm">
-                      Percentual do Dono (% Lucro)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      value={financeForm.ownerSalaryPercent}
-                      onChange={(e) =>
-                        setFinanceForm({
-                          ...financeForm,
-                          ownerSalaryPercent: Number(e.target.value),
-                        })
-                      }
-                      className="p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
-                      placeholder="20%"
-                    />
-                    <p className="text-xs text-gray-400">
-                      Quanto do lucro líquido você retira como pró-labore
-                      variável.
-                    </p>
-                  </div>
-
-                  {message && (
-                    <div
-                      className={`p-3 rounded-xl text-sm ${message.type === "success" ? "bg-green-50 text-green-600 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}
-                    >
-                      {message.text}
-                    </div>
-                  )}
-
-                  <div className="pt-4">
-                    <button
-                      type="submit"
-                      disabled={loading}
-                      className="flex items-center gap-2 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all disabled:opacity-50"
-                    >
-                      {loading ? (
-                        <Loader2 className="animate-spin" size={18} />
-                      ) : (
-                        <Save size={18} />
-                      )}
-                      Salvar Configurações
-                    </button>
-                  </div>
-                </form>
-              </div>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex items-center justify-center gap-2 bg-[var(--primary)] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-sm cursor-pointer w-full sm:w-auto"
+                >
+                  <Save size={18} />
+                  Salvar Configurações Financeiras
+                </button>
+              </form>
             )}
 
+            {/* TAB: BOOKING LINK */}
             {activeTab === "booking" && (
-              <div className="max-w-[600px] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold font-serif text-[#2d1b2e] mb-6">
-                  Link de Agendamento
+              <div className="max-w-xl space-y-4">
+                <h3 className="text-xl font-bold text-[var(--foreground)]">
+                  Link Público de Agendamento Online
                 </h3>
-                <p className="text-[#666] mb-6">
-                  Compartilhe este link com suas clientes para que elas agendem
-                  online. Os agendamentos aparecerão automaticamente na sua
-                  agenda.
+                <p className="text-sm text-[var(--muted)]">
+                  Coloque este link na bio do Instagram e no WhatsApp. Suas clientes escolhem o serviço, a profissional e reservam apenas horários livres em tempo real.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
                     readOnly
                     value={bookingUrl}
-                    className="flex-1 p-3 border-2 border-[#f0f0f0] rounded-xl text-sm bg-[#fafafa]"
+                    className="flex-1 p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
                   />
                   <button
                     type="button"
                     onClick={copyLink}
-                    className="flex items-center justify-center gap-2 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all shrink-0"
+                    className="flex items-center justify-center gap-2 bg-[var(--primary)] text-white px-6 py-3 rounded-xl font-bold text-sm cursor-pointer"
                   >
-                    {copied ? (
-                      <>
-                        <Check size={18} />
-                        Copiado!
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={18} />
-                        Copiar link
-                      </>
-                    )}
+                    {copied ? <Check size={18} /> : <Copy size={18} />}
+                    {copied ? "Copiado!" : "Copiar Link"}
                   </button>
                 </div>
               </div>
             )}
 
+            {/* TAB: NOTIFICATIONS */}
             {activeTab === "notifications" && (
-              <div className="max-w-[600px] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold font-serif text-[#2d1b2e]">
-                    Notificações
+              <div className="max-w-xl space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-[var(--foreground)]">
+                    Central de Notificações
                   </h3>
                   {notifications.length > 0 && (
                     <button
                       onClick={clearNotifications}
-                      className="text-xs text-[#FF6B9D] hover:underline"
+                      className="text-xs font-bold text-[var(--primary)] hover:underline cursor-pointer"
                     >
                       Limpar todas
                     </button>
                   )}
                 </div>
-
                 {notifications.length === 0 ? (
-                  <div className="text-center py-10 text-[#999]">
-                    <Bell size={48} className="mx-auto mb-4 opacity-20" />
-                    <p>Nenhuma notificação no momento.</p>
-                  </div>
+                  <p className="text-sm text-[var(--muted)] py-8">
+                    Nenhuma notificação pendente.
+                  </p>
                 ) : (
-                  <div className="flex flex-col gap-3">
-                    {notifications.map((notif) => (
+                  <div className="space-y-2.5">
+                    {notifications.map((n) => (
                       <div
-                        key={notif.id}
-                        className={`p-4 rounded-xl border border-[#f0f0f0] ${
-                          !notif.read
-                            ? "bg-white shadow-sm border-l-4 border-l-[#FF6B9D]"
-                            : "bg-[#fafafa]"
-                        }`}
-                        onClick={() => markAsRead(notif.id)}
+                        key={n.id}
+                        onClick={() => markAsRead(n.id)}
+                        className="p-4 rounded-xl border border-[var(--card-border)] bg-[var(--background)] cursor-pointer"
                       >
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className="font-semibold text-[#2d1b2e] text-sm">
-                            {notif.title}
-                          </h4>
-                          <span className="text-xs text-[#999]">
-                            {new Date(notif.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="text-sm text-[#666]">{notif.message}</p>
+                        <p className="font-bold text-sm text-[var(--foreground)]">
+                          {n.title}
+                        </p>
+                        <p className="text-xs text-[var(--muted)]">
+                          {n.message}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -661,69 +954,111 @@ export default function Settings() {
               </div>
             )}
 
+            {/* TAB: APPEARANCE (WORKING LIGHT/DARK) */}
             {activeTab === "appearance" && (
-              <div className="max-w-[600px] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold font-serif text-[#2d1b2e] mb-6">
-                  Aparência do Sistema
+              <div className="max-w-xl space-y-6">
+                <h3 className="text-xl font-bold text-[var(--foreground)]">
+                  Aparência do Sistema (Modo Claro e Escuro)
                 </h3>
-
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <button
-                    onClick={() => setTheme("light")}
-                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all
-                      ${theme === "light" ? "border-[#FF6B9D] bg-[#fff0f5]" : "border-[#f0f0f0] hover:border-[#FF6B9D]/50"}`}
+                    type="button"
+                    onClick={() => handleThemeChange("light")}
+                    className={`p-5 rounded-2xl border-2 flex flex-col items-center gap-3 cursor-pointer transition-all ${
+                      themeMode !== "dark"
+                        ? "border-[var(--primary)] bg-[var(--primary-light)]/30"
+                        : "border-[var(--card-border)]"
+                    }`}
                   >
-                    <div className="w-full h-[120px] bg-white rounded-lg border border-[#f0f0f0] relative overflow-hidden shadow-sm">
-                      <div className="absolute top-0 left-0 w-[20%] h-full bg-[#f8f8f8] border-r border-[#eee]"></div>
-                      <div className="absolute top-3 left-[25%] right-3 h-4 bg-[#f0f0f0] rounded"></div>
-                    </div>
-                    <div className="flex items-center gap-2 font-semibold text-[#2d1b2e]">
-                      <Sun size={18} />
-                      Claro (Padrão)
-                    </div>
+                    <Sun size={28} className="text-amber-500" />
+                    <span className="font-bold text-sm text-[var(--foreground)]">
+                      Modo Claro Rosé (Padrão)
+                    </span>
                   </button>
 
                   <button
-                    onClick={() => setTheme("dark")}
-                    className={`p-4 rounded-2xl border-2 flex flex-col items-center gap-3 transition-all
-                      ${theme === "dark" ? "border-[#FF6B9D] bg-[#2d1b2e]/5" : "border-[#f0f0f0] hover:border-[#FF6B9D]/50"}`}
+                    type="button"
+                    onClick={() => handleThemeChange("dark")}
+                    className={`p-5 rounded-2xl border-2 flex flex-col items-center gap-3 cursor-pointer transition-all ${
+                      themeMode === "dark"
+                        ? "border-[var(--primary)] bg-[var(--primary-light)]/30"
+                        : "border-[var(--card-border)]"
+                    }`}
                   >
-                    <div className="w-full h-[120px] bg-[#1a1a1a] rounded-lg border border-[#333] relative overflow-hidden shadow-sm">
-                      <div className="absolute top-0 left-0 w-[20%] h-full bg-[#2a2a2a] border-r border-[#333]"></div>
-                      <div className="absolute top-3 left-[25%] right-3 h-4 bg-[#333] rounded"></div>
-                    </div>
-                    <div className="flex items-center gap-2 font-semibold text-[#2d1b2e]">
-                      <Moon size={18} />
-                      Escuro (Em breve)
-                    </div>
+                    <Moon size={28} className="text-purple-400" />
+                    <span className="font-bold text-sm text-[var(--foreground)]">
+                      Modo Escuro Elegante (Ativo)
+                    </span>
                   </button>
                 </div>
               </div>
             )}
 
-            {activeTab === "data" && (
-              <div className="max-w-[600px] animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <h3 className="text-xl font-bold font-serif text-[#2d1b2e] mb-6">
-                  Gerenciar Dados
+            {/* TAB: SECURITY */}
+            {activeTab === "security" && (
+              <div className="max-w-xl space-y-6">
+                <h3 className="text-xl font-bold text-[var(--foreground)] flex items-center gap-2">
+                  <Lock size={20} className="text-[var(--primary)]" />
+                  Segurança da Conta & Senha
                 </h3>
-                <p className="text-[#666] mb-6">
-                  Limpar todos os dados do sistema (clientes, serviços,
-                  profissionais e agendamentos). Esta ação não pode ser
-                  desfeita.
+
+                <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
+                      Nova Senha de Acesso (Mínimo 6 caracteres)
+                    </label>
+                    <input
+                      type="password"
+                      minLength={6}
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Digite a nova senha"
+                      className="w-full p-3 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="bg-[var(--primary)] text-white px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm cursor-pointer"
+                    >
+                      Atualizar Senha Agora
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSendResetEmail}
+                      className="border border-[var(--card-border)] bg-[var(--background)] px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm cursor-pointer"
+                    >
+                      Enviar Link de Redefinição por E-mail
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* TAB: DATA & LGPD */}
+            {activeTab === "data" && (
+              <div className="max-w-xl space-y-4">
+                <h3 className="text-xl font-bold text-[var(--foreground)]">
+                  Privacidade, LGPD e Limpeza de Dados
+                </h3>
+                <p className="text-sm text-[var(--muted)]">
+                  Todos os dados das suas clientes são isolados por salão (multi-tenant). Caso deseje reiniciar sua conta do zero, você pode limpar os cadastros abaixo.
                 </p>
                 {!confirmClear ? (
                   <button
                     type="button"
                     onClick={() => setConfirmClear(true)}
-                    className="flex items-center gap-2 bg-[#dc2626] hover:bg-[#b91c1c] text-white px-6 py-3 rounded-xl font-semibold shadow-lg hover:-translate-y-0.5 transition-all"
+                    className="flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-6 py-3 rounded-xl font-bold text-sm cursor-pointer"
                   >
                     <Trash2 size={18} />
-                    Limpar todos os dados
+                    Limpar Todos os Dados do Salão
                   </button>
                 ) : (
-                  <div className="flex flex-col gap-3">
-                    <p className="text-[#dc2626] font-semibold">
-                      Tem certeza? Todos os dados serão perdidos.
+                  <div className="space-y-3 p-4 rounded-2xl bg-rose-50 border border-rose-200">
+                    <p className="text-rose-700 font-bold text-sm">
+                      Confirma a exclusão permanente de clientes, agendamentos e serviços?
                     </p>
                     <div className="flex gap-3">
                       <button
@@ -732,14 +1067,14 @@ export default function Settings() {
                           clearAllData();
                           setConfirmClear(false);
                         }}
-                        className="flex items-center gap-2 bg-[#dc2626] hover:bg-[#b91c1c] text-white px-6 py-3 rounded-xl font-semibold"
+                        className="bg-rose-600 text-white px-4 py-2 rounded-xl text-xs font-bold cursor-pointer"
                       >
                         Sim, excluir tudo
                       </button>
                       <button
                         type="button"
                         onClick={() => setConfirmClear(false)}
-                        className="bg-white border-2 border-[#f0f0f0] text-[#666] px-6 py-3 rounded-xl font-semibold hover:border-[#FF6B9D] hover:text-[#FF6B9D]"
+                        className="bg-white border px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer"
                       >
                         Cancelar
                       </button>
@@ -748,16 +1083,9 @@ export default function Settings() {
                 )}
               </div>
             )}
-
-            {activeTab === "security" && (
-              <div className="flex flex-col items-center justify-center h-full text-[#999] animate-in fade-in zoom-in duration-300">
-                <Shield size={48} className="mb-4 opacity-20" />
-                <p>Configurações de segurança em desenvolvimento...</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }

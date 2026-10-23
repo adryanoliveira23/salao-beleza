@@ -14,26 +14,61 @@ import {
   doc,
   setDoc,
   onSnapshot,
-  updateDoc,
   DocumentSnapshot,
   DocumentData,
 } from "firebase/firestore";
 
-// Types
 export interface FixedCost {
   id: string;
-  name: string; // e.g., Aluguel, Internet, Sistema
+  name: string;
   amount: number;
-  dayDue: number; // Day of month to pay
+  dayDue: number;
   paid: boolean;
+  category?: string;
 }
 
 export interface VariableCost {
   id: string;
-  name: string; // e.g., Produtos, Manutenção
+  name: string;
   amount: number;
   date: string;
   category: "product" | "maintenance" | "marketing" | "tax" | "other";
+  paid?: boolean;
+}
+
+export interface FinancialTransaction {
+  id: string;
+  type: "income" | "expense";
+  description: string;
+  category: string;
+  amount: number;
+  discount?: number;
+  depositAmount?: number;
+  paymentMethod: "pix" | "dinheiro" | "cartao_credito" | "cartao_debito" | "outro";
+  status: "paid" | "pending" | "partial" | "refunded";
+  date: string;
+  dueDate?: string;
+  professionalId?: string;
+  professionalName?: string;
+  clientName?: string;
+  appointmentId?: string;
+}
+
+export interface DailyClosing {
+  id: string;
+  date: string;
+  totalIncome: number;
+  totalExpense: number;
+  netBalance: number;
+  byMethod: {
+    pix: number;
+    dinheiro: number;
+    cartao_credito: number;
+    cartao_debito: number;
+    outro: number;
+  };
+  notes?: string;
+  closedAt: string;
 }
 
 export type NeighborhoodType = "simples" | "media" | "rica";
@@ -55,13 +90,12 @@ export interface ChecklistItem {
 
 export interface FinanceSettings {
   monthlyGoal: number;
-  taxRate: number; // % (e.g., 6% SIMPLES)
-  cardFeeRate: number; // % average
-  reinvestmentRate: number; // % for upgrades/depreciation -> Now mapped to 'Manutenção' fund default
-  emergencyFundRate: number; // % for safety net -> Now mapped to 'Emergência' fund default
-  ownerSalaryFixed: number; // Fixed draw
-  ownerSalaryPercent: number; // % profit share
-  // New Fields
+  taxRate: number;
+  cardFeeRate: number;
+  reinvestmentRate: number;
+  emergencyFundRate: number;
+  ownerSalaryFixed: number;
+  ownerSalaryPercent: number;
   chairs: number;
   neighborhood: NeighborhoodType;
   rentCost: number;
@@ -73,26 +107,28 @@ export interface FinanceSettings {
 
 export interface FinancialHealth {
   dailyRevenue: number;
+  weeklyRevenue: number;
   monthlyRevenue: number;
   projectedRevenue: number;
   totalFixedCosts: number;
   totalVariableCosts: number;
+  totalProductCosts: number;
+  totalCommissionsPending: number;
+  totalCommissionsPaid: number;
+  estimatedNetProfit: number;
+  expensesPaidToday: number;
+  accountsReceivable: number;
   billsDueToday: number;
   billsDueThisWeek: number;
   safeToWithdraw: number;
-  // maintenanceFundAccumulated: number; // Deprecated, use funds map
-  // emergencyFundAccumulated: number; // Deprecated, use funds map
-  fundsAccumulated: Record<string, number>; // id -> amount
+  fundsAccumulated: Record<string, number>;
   dailyGoalStatus: "behind" | "on_track" | "ahead";
   gapToDailyGoal: number;
   averageTicket: number;
-  // Growth & Targets
   previousMonthRevenue: number;
   growthGoalReached: boolean;
   targetDailyForNextMonth: number;
-  // Account Separation
   mustSaveForFixedCosts: number;
-  // New
   advice?: string;
   suggestedCombo?: {
     name: string;
@@ -101,7 +137,6 @@ export interface FinancialHealth {
   };
 }
 
-// Default Settings
 const DEFAULT_SETTINGS: FinanceSettings = {
   monthlyGoal: 20000,
   taxRate: 6,
@@ -126,7 +161,7 @@ const DEFAULT_SETTINGS: FinanceSettings = {
     },
     {
       id: "maintenance",
-      name: "Manutenção / Equipamentos",
+      name: "Manutenção e Equipamentos",
       percentage: 10,
       color: "orange",
       enabled: true,
@@ -137,43 +172,43 @@ const DEFAULT_SETTINGS: FinanceSettings = {
 const DEFAULT_CHECKLIST: ChecklistItem[] = [
   {
     id: "1",
-    text: "Abrir o salão e ligar luzes/ar",
+    text: "Abrir o salão e ligar climatização/iluminação",
     completed: false,
     category: "morning",
   },
   {
     id: "2",
-    text: "Verificar agenda do dia",
+    text: "Verificar agenda do dia e confirmações do WhatsApp",
     completed: false,
     category: "morning",
   },
   {
     id: "3",
-    text: "Organizar bancadas e materiais",
+    text: "Organizar bancadas, toalhas e materiais esterilizados",
     completed: false,
     category: "morning",
   },
   {
     id: "4",
-    text: "Limpeza rápida entre atendimentos",
+    text: "Higienização rápida entre atendimentos",
     completed: false,
     category: "maintenance",
   },
   {
     id: "5",
-    text: "Repor produtos de uso frequente",
+    text: "Repor produtos de uso frequente nas bancadas",
     completed: false,
     category: "afternoon",
   },
   {
     id: "6",
-    text: "Fechar caixa e conferir valores",
+    text: "Fechar caixa diário e conferir Pix/Cartão/Dinheiro",
     completed: false,
     category: "evening",
   },
   {
     id: "7",
-    text: "Limpeza geral e organização para amanhã",
+    text: "Limpeza geral e preparação para o dia seguinte",
     completed: false,
     category: "evening",
   },
@@ -184,17 +219,32 @@ interface FinanceContextType {
   updateSettings: (settings: Partial<FinanceSettings>) => Promise<void>;
   fixedCosts: FixedCost[];
   addFixedCost: (cost: Omit<FixedCost, "id" | "paid">) => Promise<void>;
+  deleteFixedCost: (id: string) => Promise<void>;
   toggleFixedCostPaid: (id: string, paid: boolean) => Promise<void>;
   variableCosts: VariableCost[];
   addVariableCost: (cost: Omit<VariableCost, "id">) => Promise<void>;
+  deleteVariableCost: (id: string) => Promise<void>;
+  transactions: FinancialTransaction[];
+  addTransaction: (tx: Omit<FinancialTransaction, "id">) => Promise<void>;
+  updateTransaction: (
+    id: string,
+    updates: Partial<FinancialTransaction>,
+  ) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
+  dailyClosings: DailyClosing[];
+  closeDailyCash: (closing: Omit<DailyClosing, "id" | "closedAt">) => Promise<void>;
   financialHealth: FinancialHealth;
   isLoading: boolean;
   addCustomFund: (fund: Omit<CustomFund, "id">) => Promise<void>;
   removeCustomFund: (id: string) => Promise<void>;
   updateCustomFund: (id: string, updates: Partial<CustomFund>) => Promise<void>;
-  // Checklist
   checklist: ChecklistItem[];
   toggleChecklistItem: (id: string) => Promise<void>;
+  addChecklistItem: (
+    text: string,
+    category: ChecklistItem["category"],
+  ) => Promise<void>;
+  deleteChecklistItem: (id: string) => Promise<void>;
   resetDailyChecklist: () => Promise<void>;
 }
 
@@ -202,21 +252,24 @@ const FinanceContext = createContext<FinanceContextType | undefined>(undefined);
 
 export function FinanceProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const { appointments, realizedRevenueByDate, services } = useSalonData();
+  const { appointments, services, professionals } = useSalonData();
 
-  // State
   const [settings, setSettings] = useState<FinanceSettings>(DEFAULT_SETTINGS);
   const [fixedCosts, setFixedCosts] = useState<FixedCost[]>([]);
   const [variableCosts, setVariableCosts] = useState<VariableCost[]>([]);
-  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
+  const [dailyClosings, setDailyClosings] = useState<DailyClosing[]>([]);
+  const [checklist, setChecklist] = useState<ChecklistItem[]>(DEFAULT_CHECKLIST);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Firestore Sync
   useEffect(() => {
     if (!user) {
       setSettings(DEFAULT_SETTINGS);
       setFixedCosts([]);
       setVariableCosts([]);
+      setTransactions([]);
+      setDailyClosings([]);
+      setChecklist(DEFAULT_CHECKLIST);
       setIsLoading(false);
       return;
     }
@@ -227,19 +280,27 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       (docSnap: DocumentSnapshot<DocumentData>) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
-          // Merge defaults for new fields like customFunds
           setSettings({ ...DEFAULT_SETTINGS, ...data.settings });
           setFixedCosts(data.fixedCosts || []);
           setVariableCosts(data.variableCosts || []);
-          setChecklist(data.checklist || []);
+          setTransactions(data.transactions || []);
+          setDailyClosings(data.dailyClosings || []);
+          setChecklist(data.checklist || DEFAULT_CHECKLIST);
         } else {
-          // Init doc if not exists
           setDoc(docRef, {
             settings: DEFAULT_SETTINGS,
             fixedCosts: [],
             variableCosts: [],
+            transactions: [],
+            dailyClosings: [],
             checklist: DEFAULT_CHECKLIST,
-          });
+          }).catch(() => {});
+        }
+        setIsLoading(false);
+      },
+      (err) => {
+        if (err?.code !== "permission-denied") {
+          console.warn("FinanceContext snapshot notice:", err);
         }
         setIsLoading(false);
       },
@@ -248,18 +309,19 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     return () => unsubscribe();
   }, [user]);
 
-  // Actions
   const saveToFirestore = async (
     data: Partial<{
       settings: FinanceSettings;
       fixedCosts: FixedCost[];
       variableCosts: VariableCost[];
+      transactions: FinancialTransaction[];
+      dailyClosings: DailyClosing[];
       checklist: ChecklistItem[];
     }>,
   ) => {
     if (!user) return;
     const docRef = doc(db, "salon_finance", user.uid);
-    await updateDoc(docRef, data);
+    await setDoc(docRef, data, { merge: true });
   };
 
   const updateSettings = async (newSettings: Partial<FinanceSettings>) => {
@@ -279,6 +341,12 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     await saveToFirestore({ fixedCosts: updated });
   };
 
+  const deleteFixedCost = async (id: string) => {
+    const updated = fixedCosts.filter((c) => c.id !== id);
+    setFixedCosts(updated);
+    await saveToFirestore({ fixedCosts: updated });
+  };
+
   const toggleFixedCostPaid = async (id: string, paid: boolean) => {
     const updated = fixedCosts.map((c) => (c.id === id ? { ...c, paid } : c));
     setFixedCosts(updated);
@@ -290,9 +358,56 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       ...cost,
       id: crypto.randomUUID(),
     };
-    const updated = [...variableCosts, newCost];
+    const updated = [newCost, ...variableCosts];
     setVariableCosts(updated);
     await saveToFirestore({ variableCosts: updated });
+  };
+
+  const deleteVariableCost = async (id: string) => {
+    const updated = variableCosts.filter((c) => c.id !== id);
+    setVariableCosts(updated);
+    await saveToFirestore({ variableCosts: updated });
+  };
+
+  const addTransaction = async (tx: Omit<FinancialTransaction, "id">) => {
+    const newTx: FinancialTransaction = {
+      ...tx,
+      id: crypto.randomUUID(),
+    };
+    const updated = [newTx, ...transactions];
+    setTransactions(updated);
+    await saveToFirestore({ transactions: updated });
+  };
+
+  const updateTransaction = async (
+    id: string,
+    updates: Partial<FinancialTransaction>,
+  ) => {
+    const updated = transactions.map((t) =>
+      t.id === id ? { ...t, ...updates } : t,
+    );
+    setTransactions(updated);
+    await saveToFirestore({ transactions: updated });
+  };
+
+  const deleteTransaction = async (id: string) => {
+    const updated = transactions.filter((t) => t.id !== id);
+    setTransactions(updated);
+    await saveToFirestore({ transactions: updated });
+  };
+
+  const closeDailyCash = async (
+    closing: Omit<DailyClosing, "id" | "closedAt">,
+  ) => {
+    const newClosing: DailyClosing = {
+      ...closing,
+      id: crypto.randomUUID(),
+      closedAt: new Date().toISOString(),
+    };
+    const filtered = dailyClosings.filter((c) => c.date !== closing.date);
+    const updated = [newClosing, ...filtered];
+    setDailyClosings(updated);
+    await saveToFirestore({ dailyClosings: updated });
   };
 
   const addCustomFund = async (fund: Omit<CustomFund, "id">) => {
@@ -321,53 +436,148 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     await saveToFirestore({ checklist: updated });
   };
 
+  const addChecklistItem = async (
+    text: string,
+    category: ChecklistItem["category"],
+  ) => {
+    const newItem: ChecklistItem = {
+      id: crypto.randomUUID(),
+      text,
+      completed: false,
+      category,
+    };
+    const updated = [...checklist, newItem];
+    setChecklist(updated);
+    await saveToFirestore({ checklist: updated });
+  };
+
+  const deleteChecklistItem = async (id: string) => {
+    const updated = checklist.filter((i) => i.id !== id);
+    setChecklist(updated);
+    await saveToFirestore({ checklist: updated });
+  };
+
   const resetDailyChecklist = async () => {
     const updated = checklist.map((item) => ({ ...item, completed: false }));
     setChecklist(updated);
     await saveToFirestore({ checklist: updated });
   };
 
-  // Calculations
   const financialHealth = useMemo(() => {
-    const today = new Date().toISOString().split("T")[0];
-    const currentMonth = new Date().getMonth();
-    const currentYear = new Date().getFullYear();
+    const now = new Date();
+    const today = now.toISOString().split("T")[0];
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
-    // 1. Revenue
-    const dailyRevenue = realizedRevenueByDate?.[today] || 0;
+    // Start of week (last 7 days)
+    const sevenDaysAgo = new Date(now);
+    sevenDaysAgo.setDate(now.getDate() - 7);
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split("T")[0];
 
-    // Calculate Monthly Revenue
+    let dailyRevenue = 0;
+    let weeklyRevenue = 0;
     let monthlyRevenue = 0;
     let totalAppointmentsCount = 0;
+    let totalProductCosts = 0;
+    let totalCommissionsPending = 0;
+    let totalCommissionsPaid = 0;
+    let accountsReceivable = 0;
 
     appointments.forEach((apt) => {
-      const aptDate = new Date(apt.date);
-      if (
-        aptDate.getMonth() === currentMonth &&
-        aptDate.getFullYear() === currentYear &&
-        apt.status === "confirmed"
-      ) {
-        monthlyRevenue += apt.price;
+      if (apt.status === "cancelled" || apt.status === "no_show") return;
+      const netPrice = Math.max(0, apt.price - (apt.discount || 0));
+      const [y, m] = (apt.date || "").split("-").map(Number);
+
+      const isCurrentMonth =
+        y === currentYear && m - 1 === currentMonth;
+
+      const isRealized =
+        apt.status === "confirmed" || apt.status === "completed";
+
+      if (apt.date === today && isRealized) {
+        dailyRevenue += netPrice;
+      }
+      if (apt.date >= sevenDaysAgoStr && apt.date <= today && isRealized) {
+        weeklyRevenue += netPrice;
+      }
+      if (isCurrentMonth && isRealized) {
+        monthlyRevenue += netPrice;
         totalAppointmentsCount++;
+
+        const srv = services.find((s) => s.id === apt.serviceId);
+        if (srv?.costPrice) {
+          totalProductCosts += srv.costPrice;
+        }
+
+        const prof = professionals.find((p) => p.id === apt.professionalId);
+        const commRate =
+          srv?.commissionRate !== undefined && srv?.commissionRate !== null
+            ? srv.commissionRate
+            : prof?.commission || 0;
+        const commAmount = netPrice * (commRate / 100);
+
+        if (apt.commissionPaid) {
+          totalCommissionsPaid += commAmount;
+        } else {
+          totalCommissionsPending += commAmount;
+        }
+      }
+
+      if (apt.paymentStatus === "pending" || apt.paymentStatus === "partial") {
+        const remaining = Math.max(0, netPrice - (apt.depositAmount || 0));
+        accountsReceivable += remaining;
       }
     });
 
-    // 2. Costs
-    const totalFixedCosts = fixedCosts.reduce((acc, c) => acc + c.amount, 0);
-    const totalVariableCosts = variableCosts.reduce(
-      (acc, c) => acc + c.amount,
-      0,
-    );
+    // Also include manual transactions
+    let manualExpensesToday = 0;
+    let manualExpensesMonth = 0;
 
-    // 3. Bills Due
-    const todayDay = new Date().getDate();
+    transactions.forEach((tx) => {
+      if (tx.status === "refunded") return;
+      const [y, m] = (tx.date || "").split("-").map(Number);
+      const isCurrentMonth = y === currentYear && m - 1 === currentMonth;
+      const netAmount = Math.max(0, tx.amount - (tx.discount || 0));
+
+      if (tx.type === "income") {
+        if (tx.status === "paid") {
+          if (tx.date === today) dailyRevenue += netAmount;
+          if (tx.date >= sevenDaysAgoStr && tx.date <= today)
+            weeklyRevenue += netAmount;
+          if (isCurrentMonth) monthlyRevenue += netAmount;
+        } else if (tx.status === "pending" || tx.status === "partial") {
+          accountsReceivable += Math.max(0, netAmount - (tx.depositAmount || 0));
+        }
+      } else if (tx.type === "expense") {
+        if (tx.status === "paid" && tx.date === today) {
+          manualExpensesToday += netAmount;
+        }
+        if (isCurrentMonth) {
+          manualExpensesMonth += netAmount;
+        }
+      }
+    });
+
+    const totalFixedCosts = fixedCosts.reduce((acc, c) => acc + c.amount, 0);
+    const totalVariableCosts =
+      variableCosts.reduce((acc, c) => acc + c.amount, 0) + manualExpensesMonth;
+
+    const todayDay = Math.max(1, now.getDate());
+    const variablePaidToday = variableCosts
+      .filter((c) => c.date === today)
+      .reduce((acc, c) => acc + c.amount, 0);
+    const fixedPaidToday = fixedCosts
+      .filter((c) => c.paid && c.dayDue === todayDay)
+      .reduce((acc, c) => acc + c.amount, 0);
+    const expensesPaidToday =
+      manualExpensesToday + variablePaidToday + fixedPaidToday;
+
     const billsDueToday = fixedCosts
       .filter((c) => c.dayDue === todayDay && !c.paid)
       .reduce((acc, c) => acc + c.amount, 0);
 
-    const todayDate = new Date();
-    const endOfWeek = new Date(todayDate);
-    endOfWeek.setDate(todayDate.getDate() + 7);
+    const endOfWeek = new Date(now);
+    endOfWeek.setDate(now.getDate() + 7);
     const billsDueThisWeek = fixedCosts
       .filter((c) => {
         const isDue = c.dayDue >= todayDay && c.dayDue <= endOfWeek.getDate();
@@ -375,11 +585,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
       })
       .reduce((acc, c) => acc + c.amount, 0);
 
-    // 4. Funds & Allocations
     const fundsAccumulated: Record<string, number> = {};
     let totalFundsAllocation = 0;
-
-    // Ensure customFunds exists (migration fallback)
     const effectiveFunds = settings.customFunds || DEFAULT_SETTINGS.customFunds;
 
     effectiveFunds.forEach((fund) => {
@@ -393,20 +600,31 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     const taxAllocation = monthlyRevenue * (settings.taxRate / 100);
     const cardFees = monthlyRevenue * (settings.cardFeeRate / 100);
 
-    // 5. Safe to Withdraw
+    // Real Estimated Net Profit (Revenue - Fixed Costs - Variable Costs - Product Costs - Commissions - Taxes/Fees)
+    const estimatedNetProfit =
+      monthlyRevenue -
+      totalFixedCosts -
+      totalVariableCosts -
+      totalProductCosts -
+      (totalCommissionsPending + totalCommissionsPaid) -
+      taxAllocation -
+      cardFees;
+
     const netOperatingIncome =
       monthlyRevenue -
       (taxAllocation +
         cardFees +
         totalFundsAllocation +
-        (totalFixedCosts / 30) * todayDay); // Pro-rated fixed costs logic approximation
+        totalVariableCosts +
+        totalProductCosts +
+        (totalCommissionsPending + totalCommissionsPaid) +
+        (totalFixedCosts / 30) * todayDay);
 
     const safeToWithdraw = Math.max(
       0,
       netOperatingIncome * (settings.ownerSalaryPercent / 100),
     );
 
-    // 6. Goals Logic
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const dailyGoalTarget = settings.monthlyGoal / daysInMonth;
     const gapToDailyGoal = dailyGoalTarget - dailyRevenue;
@@ -418,18 +636,14 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
           : "behind"
     ) as "ahead" | "on_track" | "behind";
 
-    // 7. Averages
     const averageTicket =
       totalAppointmentsCount > 0 ? monthlyRevenue / totalAppointmentsCount : 0;
     const projectedRevenue = (monthlyRevenue / todayDay) * daysInMonth;
 
-    // 8. AI Advice & Combo
     let advice = "";
     let suggestedCombo = undefined;
 
     if (gapToDailyGoal > 0) {
-      // Find services that could help close the gap
-      // Simple logic: Suggest a combo that is close to the gap or a popular high value service
       const highValueServices = services
         .filter((s) => s.price >= 50)
         .sort((a, b) => b.price - a.price);
@@ -444,9 +658,9 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         const originalPrice =
           mainService.price +
           (mainService.id !== secondaryService.id ? secondaryService.price : 0);
-        const discountPrice = originalPrice * 0.86; // 14% OFF
+        const discountPrice = originalPrice * 0.86;
 
-        advice = `Faltam R$ ${gapToDailyGoal.toFixed(2)} para a meta. Sugiro uma oferta relâmpago de ${mainService.name} + ${secondaryService.name}.`;
+        advice = `Faltam R$ ${gapToDailyGoal.toFixed(2)} para a meta de hoje. Sugiro divulgar uma oferta de ${mainService.name} + ${secondaryService.name} pelo WhatsApp.`;
         suggestedCombo = {
           name: `Combo ${mainService.name} + ${secondaryService.name}`,
           price: discountPrice,
@@ -454,7 +668,7 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         };
       } else {
         advice =
-          "Cadastre mais serviços de alto valor para receber sugestões de combos.";
+          "Cadastre seus serviços e combos no catálogo para receber recomendações personalizadas de vendas.";
       }
     } else {
       const neighborhoodMultipliers = {
@@ -462,56 +676,60 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
         media: 120,
         rica: 200,
       };
-
       const flavor =
         settings?.neighborhood as keyof typeof neighborhoodMultipliers;
       const targetTicket = neighborhoodMultipliers[flavor] || 100;
 
-      if (averageTicket < targetTicket) {
-        advice = `Meta batida! Porém, seu ticket médio (R$ ${averageTicket.toFixed(2)}) está abaixo do ideal para um bairro ${settings.neighborhood || "médio"} (R$ ${targetTicket}). Considere aumentar levemente os preços ou criar combos premium.`;
+      if (averageTicket < targetTicket && averageTicket > 0) {
+        advice = `Meta diária batida! Seu ticket médio atual é R$ ${averageTicket.toFixed(2)}. Criar pacotes com hidratação ou design pode elevar seu ticket para R$ ${targetTicket}.`;
       } else {
         advice =
-          "Parabéns! Meta batida e ticket médio saudável. Foco em fidelização.";
+          "Excelente desempenho! Meta batida e margem saudável. Aproveite para fidelizar as clientes atendidas hoje.";
       }
     }
 
-    // 9. Growth Calculations
     const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
     const yearOfLastMonth = currentMonth === 0 ? currentYear - 1 : currentYear;
 
     let previousMonthRevenue = 0;
     appointments.forEach((apt) => {
-      const aptDate = new Date(apt.date);
+      const [y, m] = (apt.date || "").split("-").map(Number);
       if (
-        aptDate.getMonth() === lastMonth &&
-        aptDate.getFullYear() === yearOfLastMonth &&
-        apt.status === "confirmed"
+        m - 1 === lastMonth &&
+        y === yearOfLastMonth &&
+        (apt.status === "confirmed" || apt.status === "completed")
       ) {
-        previousMonthRevenue += apt.price;
+        previousMonthRevenue += Math.max(0, apt.price - (apt.discount || 0));
       }
     });
 
     const growthGoalReached =
       previousMonthRevenue > 0
         ? monthlyRevenue >= previousMonthRevenue * 1.2
-        : true;
+        : monthlyRevenue >= settings.monthlyGoal;
 
     const targetDailyForNextMonth =
       previousMonthRevenue > 0
         ? (previousMonthRevenue * 1.2) / 30
         : settings.monthlyGoal / 30;
 
-    // 10. Savings Separation
     const mustSaveForFixedCosts = fixedCosts
       .filter((c) => !c.paid)
       .reduce((acc, c) => acc + c.amount, 0);
 
     return {
       dailyRevenue,
+      weeklyRevenue,
       monthlyRevenue,
       projectedRevenue,
       totalFixedCosts,
       totalVariableCosts,
+      totalProductCosts,
+      totalCommissionsPending,
+      totalCommissionsPaid,
+      estimatedNetProfit,
+      expensesPaidToday,
+      accountsReceivable,
       billsDueToday,
       billsDueThisWeek,
       safeToWithdraw,
@@ -528,21 +746,30 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     };
   }, [
     appointments,
-    realizedRevenueByDate,
     services,
+    professionals,
     fixedCosts,
     variableCosts,
+    transactions,
     settings,
   ]);
 
-  const value = {
+  const value: FinanceContextType = {
     settings,
     updateSettings,
     fixedCosts,
     addFixedCost,
+    deleteFixedCost,
     toggleFixedCostPaid,
     variableCosts,
     addVariableCost,
+    deleteVariableCost,
+    transactions,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction,
+    dailyClosings,
+    closeDailyCash,
     financialHealth,
     isLoading,
     addCustomFund,
@@ -550,6 +777,8 @@ export function FinanceProvider({ children }: { children: React.ReactNode }) {
     updateCustomFund,
     checklist,
     toggleChecklistItem,
+    addChecklistItem,
+    deleteChecklistItem,
     resetDailyChecklist,
   };
 

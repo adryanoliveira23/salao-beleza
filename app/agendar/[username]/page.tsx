@@ -1,37 +1,58 @@
 "use client";
 
-// export const dynamic = "force-dynamic"; // Firebase SDK might handle caching differently, but force-dynamic is Next.js specific for fetch. Firestore uses websockets/independent connection.
-
 import React, { useState, useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { db } from "@/app/lib/firebase";
-import { collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  doc,
+  getDoc,
+} from "firebase/firestore";
+import {
+  Scissors,
+  Clock,
+  Calendar,
+  User,
+  CheckCircle2,
+  MessageCircle,
+  Copy,
+  Check,
+  ShieldCheck,
+  MapPin,
+} from "lucide-react";
 
-// Types matching Supabase/Firestore
 interface Service {
   id: string;
   name: string;
+  description?: string;
   duration: number;
+  bufferTime?: number;
   price: number;
   category: string;
+  onlineBookingEnabled?: boolean;
+  enabledProfessionals?: string[];
 }
 
 interface Professional {
   id: string;
   name: string;
   specialty: string;
-  commission: number;
 }
 
-interface Appointment {
+interface ExistingAppointment {
   date: string;
   time: string;
   duration: number;
+  professionalId?: string;
+  status?: string;
 }
 
-// Reuse logic from previous implementation
 const SLOT_START = 8;
-const SLOT_END = 18;
+const SLOT_END = 19;
 const SLOT_INTERVAL = 30;
 
 function generateTimeSlots(): string[] {
@@ -47,19 +68,15 @@ function generateTimeSlots(): string[] {
 const TIME_SLOTS = generateTimeSlots();
 
 function parseTimeToMinutes(time: string): number {
-  const [h, m] = time.split(":").map(Number);
-  return h * 60 + m;
+  const [h, m] = (time || "00:00").split(":").map(Number);
+  return h * 60 + (m || 0);
 }
 
 function formatPhone(value: string): string {
   const digits = value.replace(/\D/g, "");
   if (digits.length === 0) return "";
-  if (digits.length <= 2) {
-    return digits.length === 1 ? `(${digits}` : `(${digits})`;
-  }
-  if (digits.length <= 6) {
-    return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
-  }
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
   if (digits[2] === "9") {
     return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7, 11)}`;
   }
@@ -72,16 +89,33 @@ export default function AgendarPage() {
 
   const [salonUserId, setSalonUserId] = useState<string | null>(null);
   const [salonName, setSalonName] = useState<string>("");
+  const [salonAddress, setSalonAddress] = useState<string>("");
+  const [salonPhone, setSalonPhone] = useState<string>("");
+  const [bookingRules, setBookingRules] = useState<{
+    requireDeposit?: boolean;
+    depositPercent?: number;
+    pixKey?: string;
+    cancellationPolicyText?: string;
+  }>({});
   const [loadingSalon, setLoadingSalon] = useState(true);
 
   const [services, setServices] = useState<Service[]>([]);
   const [professionals, setProfessionals] = useState<Professional[]>([]);
   const [existingAppointments, setExistingAppointments] = useState<
-    Appointment[]
+    ExistingAppointment[]
   >([]);
 
-  const [submitted, setSubmitted] = useState(false);
+  const [submittedData, setSubmittedData] = useState<{
+    clientName: string;
+    serviceName: string;
+    professionalName: string;
+    date: string;
+    time: string;
+    price: number;
+    depositAmount: number;
+  } | null>(null);
   const [error, setError] = useState("");
+  const [copiedPix, setCopiedPix] = useState(false);
 
   const today = useMemo(() => new Date(), []);
   const minDateStr = today.toISOString().split("T")[0];
@@ -94,17 +128,13 @@ export default function AgendarPage() {
     professionalId: "",
     date: minDateStr,
     time: "",
-    hairType: "",
-    skinType: "",
-    allergies: "",
     observations: "",
+    marketingConsent: true,
   });
 
-  const CATEGORIES = ["Cabelo", "Unhas", "Estética", "Outros"] as const;
   const [selectedCategory, setSelectedCategory] = useState<string>("");
-  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
 
-  // Fetch Salon User ID from Username
+  // 1. Load Salon Profile by Username
   useEffect(() => {
     async function fetchSalonUser() {
       if (!username) return;
@@ -117,12 +147,14 @@ export default function AgendarPage() {
         const querySnapshot = await getDocs(q);
 
         if (!querySnapshot.empty) {
-          const doc = querySnapshot.docs[0];
-          const data = doc.data();
-          setSalonUserId(doc.id); // doc.id is the userId (uid)
-          setSalonName(data.salon_name || "Salão de Beleza");
+          const docSnap = querySnapshot.docs[0];
+          const data = docSnap.data();
+          setSalonUserId(docSnap.id);
+          setSalonName(data.salon_name || "Espaço de Beleza");
+          setSalonAddress(data.address || "");
+          setSalonPhone(data.phone || "");
+          setBookingRules(data.bookingRules || {});
         } else {
-          console.error("Salon not found");
           setError("Salão não encontrado.");
         }
       } catch (e) {
@@ -134,7 +166,7 @@ export default function AgendarPage() {
     fetchSalonUser();
   }, [username]);
 
-  // Fetch Data (Services, Professionals) when salonUserId is set
+  // 2. Load Services & Professionals
   useEffect(() => {
     if (!salonUserId) return;
 
@@ -145,34 +177,32 @@ export default function AgendarPage() {
           where("userId", "==", salonUserId),
         );
         const sSnap = await getDocs(qServices);
-        const sData = sSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as any[];
-        setServices(
-          sData.map((s) => ({ ...s, category: s.category || "Outros" })),
-        );
+        const sData = sSnap.docs
+          .map((d) => ({ id: d.id, ...(d.data() as Omit<Service, "id">) }))
+          .filter((s) => s.onlineBookingEnabled !== false);
+        setServices(sData);
 
         const qProfs = query(
           collection(db, "professionals"),
           where("userId", "==", salonUserId),
         );
         const pSnap = await getDocs(qProfs);
-        const pData = pSnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as any[];
-        setProfessionals(
-          pData.map((p) => ({ ...p, specialty: p.specialty || "" })),
-        );
+        const pData = pSnap.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as Omit<Professional, "id">),
+        }));
+        setProfessionals(pData);
+        if (pData.length > 0) {
+          setForm((prev) => ({ ...prev, professionalId: pData[0].id }));
+        }
       } catch (e) {
-        console.error("Error fetching data:", e);
+        console.error("Error fetching services/professionals:", e);
       }
     }
     fetchData();
   }, [salonUserId]);
 
-  // Fetch Appointments for check availability
+  // 3. Load Appointments for Selected Date
   useEffect(() => {
     if (!salonUserId || !form.date) return;
 
@@ -182,11 +212,10 @@ export default function AgendarPage() {
           collection(db, "appointments"),
           where("userId", "==", salonUserId),
           where("date", "==", form.date),
-          // where("status", "!=", "cancelled") // Firestore requires index for complex queries, handle in memory if simple
         );
         const snap = await getDocs(q);
-        const data = snap.docs.map((doc) => doc.data()) as Appointment[];
-        setExistingAppointments(data); // Filtered by status in memory or add index
+        const data = snap.docs.map((d) => d.data() as ExistingAppointment);
+        setExistingAppointments(data);
       } catch (e) {
         console.error("Error fetching appointments:", e);
       }
@@ -194,213 +223,315 @@ export default function AgendarPage() {
     fetchAppointments();
   }, [salonUserId, form.date]);
 
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    services.forEach((s) => {
+      if (s.category) set.add(s.category);
+    });
+    return Array.from(set);
+  }, [services]);
+
   const filteredServices = useMemo(() => {
     if (!selectedCategory) return services;
-    return services.filter((s) => {
-      const cat = (s.category || "").toLowerCase();
-      const sel = selectedCategory.toLowerCase();
-      return (
-        cat === sel ||
-        ((sel === "unhas" || sel === "unha") &&
-          (cat === "unhas" || cat === "unha"))
-      );
-    });
+    return services.filter((s) => s.category === selectedCategory);
   }, [services, selectedCategory]);
-
-  useEffect(() => {
-    if (
-      form.serviceId &&
-      !filteredServices.some((s) => s.id === form.serviceId)
-    ) {
-      setTimeout(() => setForm((f) => ({ ...f, serviceId: "" })), 0);
-    }
-  }, [filteredServices, form.serviceId]);
 
   const selectedService = services.find((s) => s.id === form.serviceId);
   const selectedProfessional = professionals.find(
     (p) => p.id === form.professionalId,
   );
 
+  // Check occupied slots for the selected professional AND service duration
   const occupiedSlots = useMemo(() => {
     const occupied = new Set<string>();
-    for (const apt of existingAppointments) {
-      // @ts-ignore
-      if (apt.status === "cancelled") continue; // Manually filter if not in query
+    const neededDuration =
+      (selectedService?.duration || 30) + (selectedService?.bufferTime || 0);
 
-      if (apt.date !== form.date) continue;
-      const startMin = parseTimeToMinutes(apt.time);
-      const endMin = startMin + apt.duration;
-      for (const slot of TIME_SLOTS) {
-        const slotMin = parseTimeToMinutes(slot);
-        if (slotMin >= startMin && slotMin < endMin) {
+    for (const slot of TIME_SLOTS) {
+      const slotStart = parseTimeToMinutes(slot);
+      const slotEnd = slotStart + neededDuration;
+
+      for (const apt of existingAppointments) {
+        if (apt.status === "cancelled" || apt.status === "no_show") continue;
+        if (apt.date !== form.date) continue;
+        // Filter by selected professional so two clients cannot book the same time for the same professional
+        if (
+          form.professionalId &&
+          apt.professionalId &&
+          apt.professionalId !== form.professionalId
+        ) {
+          continue;
+        }
+        const aptStart = parseTimeToMinutes(apt.time);
+        const aptEnd = aptStart + (apt.duration || 45);
+        if (slotStart < aptEnd && slotEnd > aptStart) {
           occupied.add(slot);
         }
       }
     }
     return occupied;
-  }, [existingAppointments, form.date]);
+  }, [existingAppointments, form.date, form.professionalId, selectedService]);
 
-  const selectedDateObj = useMemo(() => {
-    if (!form.date) return null;
-    const [y, m, d] = form.date.split("-").map(Number);
-    return new Date(y, m - 1, d);
-  }, [form.date]);
-
-  const isToday = useMemo(() => {
-    if (!selectedDateObj) return false;
-    return (
-      selectedDateObj.getDate() === today.getDate() &&
-      selectedDateObj.getMonth() === today.getMonth() &&
-      selectedDateObj.getFullYear() === today.getFullYear()
-    );
-  }, [selectedDateObj, today]);
-
-  const isTomorrow = useMemo(() => {
-    if (!selectedDateObj) return false;
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return (
-      selectedDateObj.getDate() === tomorrow.getDate() &&
-      selectedDateObj.getMonth() === tomorrow.getMonth() &&
-      selectedDateObj.getFullYear() === tomorrow.getFullYear()
-    );
-  }, [selectedDateObj, today]);
-
-  const dateLabel = useMemo(() => {
-    if (!selectedDateObj) return "";
-    const weekday = selectedDateObj.toLocaleDateString("pt-BR", {
-      weekday: "long",
-    });
-    const dayMonth = selectedDateObj.toLocaleDateString("pt-BR", {
-      day: "numeric",
-      month: "long",
-    });
-    if (isToday) return `Hoje - ${weekday}, ${dayMonth}`;
-    if (isTomorrow) return `Amanhã - ${weekday}, ${dayMonth}`;
-    return `${weekday}, ${dayMonth}`;
-  }, [selectedDateObj, isToday, isTomorrow]);
+  const depositRequiredAmount = useMemo(() => {
+    if (!selectedService || !bookingRules.requireDeposit) return 0;
+    const pct = bookingRules.depositPercent || 30;
+    return (selectedService.price * pct) / 100;
+  }, [selectedService, bookingRules]);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
 
-    if (!salonUserId) {
-      setError("Erro no salão. Tente recarregar a página.");
+    if (!salonUserId || !selectedService) {
+      setError("Selecione um serviço válido.");
       return;
     }
 
-    if (!form.clientName?.trim()) {
-      setError("Preencha seu nome.");
+    if (!form.clientName.trim()) {
+      setError("Informe seu nome completo.");
       return;
     }
 
     const phoneDigits = form.clientPhone.replace(/\D/g, "");
     if (phoneDigits.length < 10) {
-      setError("Preencha o WhatsApp com um número válido (DDD + número).");
-      return;
-    }
-
-    if (!form.serviceId) {
-      setError("Selecione o serviço.");
+      setError("Informe um WhatsApp válido com DDD.");
       return;
     }
 
     if (!form.date || !form.time) {
-      setError("Selecione a data e o horário.");
+      setError("Escolha a data e o horário desejado.");
       return;
     }
 
-    if (!selectedService) {
-      setError("Dados inválidos. Tente novamente.");
-      return;
-    }
-
-    if (professionals.length > 0 && !form.professionalId) {
-      setError("Selecione o profissional.");
+    if (occupiedSlots.has(form.time)) {
+      setError(
+        "Este horário acabou de ser reservado por outra cliente. Por favor, escolha outro horário.",
+      );
       return;
     }
 
     try {
+      // Double-check in real time on Firestore to prevent race condition
+      const qCheck = query(
+        collection(db, "appointments"),
+        where("userId", "==", salonUserId),
+        where("date", "==", form.date),
+      );
+      const snapCheck = await getDocs(qCheck);
+      const newStart = parseTimeToMinutes(form.time);
+      const newEnd =
+        newStart +
+        selectedService.duration +
+        (selectedService.bufferTime || 0);
+
+      const hasConflict = snapCheck.docs.some((docItem) => {
+        const d = docItem.data();
+        if (d.status === "cancelled" || d.status === "no_show") return false;
+        if (
+          form.professionalId &&
+          d.professionalId &&
+          d.professionalId !== form.professionalId
+        ) {
+          return false;
+        }
+        const aStart = parseTimeToMinutes(d.time);
+        const aEnd = aStart + (Number(d.duration) || 45);
+        return newStart < aEnd && newEnd > aStart;
+      });
+
+      if (hasConflict) {
+        setError(
+          "Este horário já foi reservado para esta profissional. Selecione outro horário.",
+        );
+        return;
+      }
+
+      // Find or create Client in CRM
+      let clientId: string | null = null;
+      const qClient = query(
+        collection(db, "clients"),
+        where("userId", "==", salonUserId),
+        where("phone", "==", form.clientPhone),
+      );
+      const clientSnap = await getDocs(qClient);
+      if (!clientSnap.empty) {
+        clientId = clientSnap.docs[0].id;
+      } else {
+        const newClientRef = await addDoc(collection(db, "clients"), {
+          userId: salonUserId,
+          name: form.clientName,
+          phone: form.clientPhone,
+          email: form.clientEmail || "",
+          visits: 1,
+          lastVisit: form.date,
+          totalSpent: selectedService.price,
+          origin: "Agendamento Online",
+          marketingConsent: form.marketingConsent,
+          tags: ["Nova"],
+        });
+        clientId = newClientRef.id;
+      }
+
       await addDoc(collection(db, "appointments"), {
         userId: salonUserId,
-        clientId: null,
-        serviceId: form.serviceId,
-        professionalId: form.professionalId || null,
+        clientId,
+        serviceId: selectedService.id,
+        professionalId: form.professionalId || "a-definir",
         date: form.date,
         time: form.time,
         duration: selectedService.duration,
         price: selectedService.price,
+        depositAmount: depositRequiredAmount,
+        depositPaid: false,
         status: "pending",
+        origin: "online",
         clientName: form.clientName,
         clientPhone: form.clientPhone,
         clientEmail: form.clientEmail,
         serviceName: selectedService.name,
-        professionalName: selectedProfessional?.name || "A definir",
-        hairType: form.hairType,
-        skinType: form.skinType,
-        allergies: form.allergies,
+        professionalName: selectedProfessional?.name || "Equipe do Salão",
         observations: form.observations,
         createdAt: new Date().toISOString(),
       });
 
-      setSubmitted(true);
-      setForm({
-        clientName: "",
-        clientPhone: "",
-        clientEmail: "",
-        serviceId: "",
-        professionalId: "",
-        date: minDateStr,
-        time: "",
-        hairType: "",
-        skinType: "",
-        allergies: "",
-        observations: "",
+      setSubmittedData({
+        clientName: form.clientName,
+        serviceName: selectedService.name,
+        professionalName: selectedProfessional?.name || "Equipe do Salão",
+        date: form.date,
+        time: form.time,
+        price: selectedService.price,
+        depositAmount: depositRequiredAmount,
       });
     } catch (err) {
       console.error(err);
-      setError("Erro ao salvar. Tente novamente.");
+      setError("Erro ao confirmar agendamento. Tente novamente.");
     }
   };
 
   if (loadingSalon) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
-        <p className="text-[#FF6B9D] animate-pulse">Carregando salão...</p>
+      <div className="min-h-screen flex items-center justify-center bg-[#faf6f2]">
+        <p className="text-[#b83b6b] font-semibold animate-pulse">
+          Carregando agenda online...
+        </p>
       </div>
     );
   }
 
   if (error === "Salão não encontrado.") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold text-[#2d1b2e] mb-2">
+      <div className="min-h-screen flex items-center justify-center bg-[#faf6f2] p-4">
+        <div className="bg-white rounded-3xl p-8 shadow-md text-center max-w-md">
+          <h1 className="text-2xl font-bold font-serif text-[#2d1b2e] mb-2">
             Salão não encontrado
           </h1>
-          <p className="text-[#666]">Verifique o link e tente novamente.</p>
+          <p className="text-sm text-[#6e5a65]">
+            Verifique o link de agendamento e tente novamente.
+          </p>
         </div>
       </div>
     );
   }
 
-  if (submitted) {
+  if (submittedData) {
+    const cleanSalonPhone = salonPhone.replace(/\D/g, "");
+    const waTarget =
+      cleanSalonPhone.length >= 10
+        ? cleanSalonPhone.length <= 11
+          ? `55${cleanSalonPhone}`
+          : cleanSalonPhone
+        : "";
+    const waMsg = encodeURIComponent(
+      `Olá! Acabei de reservar meu agendamento online em *${salonName}*:\n• *Cliente:* ${submittedData.clientName}\n• *Serviço:* ${submittedData.serviceName}\n• *Profissional:* ${submittedData.professionalName}\n• *Data:* ${submittedData.date.split("-").reverse().join("/")} às *${submittedData.time}*`,
+    );
+
     return (
-      <div className="min-h-screen bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff] flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-[#d1fae5] rounded-full flex items-center justify-center mx-auto mb-6 text-[#059669] text-3xl">
-            ✓
+      <div className="min-h-screen bg-[#faf6f2] flex items-center justify-center p-4">
+        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center border border-[#f2e6ea] space-y-5">
+          <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-[#0ca678]">
+            <CheckCircle2 size={34} />
           </div>
-          <h1 className="text-2xl font-bold text-[#2d1b2e] mb-2 [font-family:var(--font-outfit)]">
-            Agendamento realizado!
-          </h1>
-          <p className="text-[#666] mb-6">
-            Seu agendamento em <strong>{salonName}</strong> foi enviado com
-            sucesso.
-          </p>
+          <div>
+            <h1 className="text-2xl font-bold font-serif text-[#2d1b2e]">
+              Horário Reservado! ✨
+            </h1>
+            <p className="text-xs text-[#6e5a65] mt-1">
+              Seu agendamento em <strong>{salonName}</strong> foi registrado com
+              sucesso.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-2xl bg-[#faf6f2] text-left text-xs space-y-1.5 border border-[#f2e6ea]">
+            <div className="flex justify-between">
+              <span className="text-[#6e5a65]">Serviço:</span>
+              <strong className="text-[#2d1b2e]">
+                {submittedData.serviceName}
+              </strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#6e5a65]">Profissional:</span>
+              <strong className="text-[#2d1b2e]">
+                {submittedData.professionalName}
+              </strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#6e5a65]">Data e Horário:</span>
+              <strong className="text-[#b83b6b]">
+                {submittedData.date.split("-").reverse().join("/")} às{" "}
+                {submittedData.time}
+              </strong>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[#6e5a65]">Valor Total:</span>
+              <strong className="text-[#0ca678]">
+                R$ {submittedData.price.toFixed(2)}
+              </strong>
+            </div>
+          </div>
+
+          {submittedData.depositAmount > 0 && bookingRules.pixKey && (
+            <div className="p-4 rounded-2xl bg-[#fdf8e7] border border-[#c59b27]/40 text-xs text-left space-y-2">
+              <p className="font-bold text-[#2d1b2e]">
+                Pagamento de Sinal (R$ {submittedData.depositAmount.toFixed(2)})
+              </p>
+              <p className="text-[#6e5a65]">
+                Copie a chave PIX abaixo para garantir sua reserva antecipada:
+              </p>
+              <div className="flex gap-2">
+                <input
+                  readOnly
+                  value={bookingRules.pixKey}
+                  className="flex-1 p-2 rounded-lg bg-white border border-[#c59b27]/30 font-mono text-[11px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(bookingRules.pixKey || "");
+                    setCopiedPix(true);
+                    setTimeout(() => setCopiedPix(false), 2000);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-[#c59b27] text-white font-bold"
+                >
+                  {copiedPix ? <Check size={14} /> : <Copy size={14} />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <a
+            href={`https://wa.me/${waTarget}?text=${waMsg}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full py-3.5 rounded-xl bg-[#25D366] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md hover:bg-[#128C7E] transition"
+          >
+            <MessageCircle size={18} />
+            Receber Comprovante / Confirmar pelo WhatsApp
+          </a>
+
           <button
-            onClick={() => setSubmitted(false)}
-            className="bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white px-6 py-3 rounded-xl font-semibold hover:shadow-lg transition-all"
+            onClick={() => setSubmittedData(null)}
+            className="text-xs font-bold text-[#b83b6b] hover:underline block mx-auto"
           >
             Fazer outro agendamento
           </button>
@@ -410,87 +541,154 @@ export default function AgendarPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-[#ffeef8] via-[#fff5f7] to-[#f0f9ff]">
-      <main className="max-w-2xl mx-auto p-4 md:p-8 py-12">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#2d1b2e] mb-2 text-center [font-family:var(--font-outfit)]">
+    <div className="min-h-screen bg-[#faf6f2]">
+      {/* Header Banner */}
+      <div className="bg-linear-to-r from-[#88234b] to-[#b83b6b] text-white py-10 px-4 text-center">
+        <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3 border border-white/20">
+          <Scissors size={26} />
+        </div>
+        <h1 className="text-2xl md:text-3xl font-bold font-serif">
           {salonName}
         </h1>
-        <p className="text-[#666] text-center mb-8 [font-family:var(--font-outfit)]">
-          Agende seu horário
+        {salonAddress && (
+          <p className="text-xs text-white/80 mt-1 flex items-center justify-center gap-1">
+            <MapPin size={13} /> {salonAddress}
+          </p>
+        )}
+        <p className="text-xs text-[#f3d078] font-semibold mt-2">
+          Agendamento Online 24h em Tempo Real
         </p>
+      </div>
 
+      <main className="max-w-2xl mx-auto p-4 md:p-6 -mt-6">
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-6"
+          className="bg-white rounded-3xl shadow-lg border border-[#f2e6ea] p-6 md:p-8 space-y-6"
         >
           {error && (
-            <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm">
+            <div className="bg-red-50 text-red-700 border border-red-200 p-3.5 rounded-xl text-xs font-bold">
               {error}
             </div>
           )}
 
-          {/* Bloco 1 – Data e dia da semana */}
+          {/* Passo 1 & 2: Serviços, Preços e Duração */}
           <div className="space-y-3">
-            <h3 className="font-semibold text-[#2d1b2e] text-sm">
-              Escolha o dia
+            <h3 className="font-bold font-serif text-base text-[#2d1b2e]">
+              1. Escolha o Serviço
             </h3>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const d = new Date();
-                  setForm((f) => ({
-                    ...f,
-                    date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
-                  }));
-                }}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isToday
-                    ? "bg-[#FF6B9D] text-white shadow-md"
-                    : "bg-[#f5f5f5] text-[#666] hover:bg-[#eee]"
-                }`}
-              >
-                Hoje
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const d = new Date();
-                  d.setDate(d.getDate() + 1);
-                  setForm((f) => ({
-                    ...f,
-                    date: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`,
-                  }));
-                }}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  isTomorrow
-                    ? "bg-[#FF6B9D] text-white shadow-md"
-                    : "bg-[#f5f5f5] text-[#666] hover:bg-[#eee]"
-                }`}
-              >
-                Amanhã
-              </button>
+
+            {categories.length > 1 && (
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory("")}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${
+                    !selectedCategory
+                      ? "bg-[#b83b6b] text-white"
+                      : "bg-[#faf6f2] text-[#6e5a65]"
+                  }`}
+                >
+                  Todos
+                </button>
+                {categories.map((cat) => (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-bold transition ${
+                      selectedCategory === cat
+                        ? "bg-[#b83b6b] text-white"
+                        : "bg-[#faf6f2] text-[#6e5a65]"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-2.5 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
+              {filteredServices.map((s) => {
+                const isSelected = form.serviceId === s.id;
+                return (
+                  <div
+                    key={s.id}
+                    onClick={() => setForm((f) => ({ ...f, serviceId: s.id }))}
+                    className={`p-3.5 rounded-2xl border-2 cursor-pointer transition flex items-center justify-between ${
+                      isSelected
+                        ? "border-[#b83b6b] bg-[#fff0f5]/50"
+                        : "border-[#f2e6ea] hover:border-[#b83b6b]/40"
+                    }`}
+                  >
+                    <div>
+                      <span className="font-bold text-sm text-[#2d1b2e] block">
+                        {s.name}
+                      </span>
+                      <span className="text-xs text-[#6e5a65] flex items-center gap-1 mt-0.5">
+                        <Clock size={12} /> {s.duration} min{" "}
+                        {s.description ? `• ${s.description}` : ""}
+                      </span>
+                    </div>
+                    <span className="font-bold text-sm text-[#0ca678] shrink-0">
+                      R$ {s.price.toFixed(2)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
+          </div>
+
+          {/* Passo 3: Escolher uma Profissional */}
+          {professionals.length > 0 && (
+            <div className="space-y-3 pt-4 border-t border-[#f2e6ea]">
+              <h3 className="font-bold font-serif text-base text-[#2d1b2e]">
+                2. Escolha a Profissional
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                {professionals.map((p) => {
+                  const isSelected = form.professionalId === p.id;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() =>
+                        setForm((f) => ({ ...f, professionalId: p.id, time: "" }))
+                      }
+                      className={`p-3 rounded-2xl border-2 text-left transition ${
+                        isSelected
+                          ? "border-[#b83b6b] bg-[#fff0f5]/50"
+                          : "border-[#f2e6ea]"
+                      }`}
+                    >
+                      <span className="font-bold text-xs text-[#2d1b2e] block">
+                        {p.name}
+                      </span>
+                      <span className="text-[11px] text-[#6e5a65]">
+                        {p.specialty}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Passo 4: Data e Horários Disponíveis em Tempo Real */}
+          <div className="space-y-3 pt-4 border-t border-[#f2e6ea]">
+            <h3 className="font-bold font-serif text-base text-[#2d1b2e]">
+              3. Data e Horário Disponível
+            </h3>
             <input
               type="date"
               required
               min={minDateStr}
               value={form.date}
-              onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
-              className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D]"
+              onChange={(e) =>
+                setForm((f) => ({ ...f, date: e.target.value, time: "" }))
+              }
+              className="w-full p-3 border border-[#f2e6ea] rounded-xl text-sm outline-none focus:border-[#b83b6b]"
             />
-            {dateLabel && (
-              <p className="text-[#FF6B9D] font-semibold text-sm">
-                {dateLabel}
-              </p>
-            )}
-          </div>
 
-          {/* Bloco 2 – Horários */}
-          <div className="space-y-3">
-            <h3 className="font-semibold text-[#2d1b2e] text-sm">
-              Escolha o horário
-            </h3>
             <div className="grid grid-cols-4 sm:grid-cols-5 gap-2">
               {TIME_SLOTS.map((slot) => {
                 const isOccupied = occupiedSlots.has(slot);
@@ -500,16 +698,15 @@ export default function AgendarPage() {
                     key={slot}
                     type="button"
                     disabled={isOccupied}
-                    title={isOccupied ? "Horário indisponível" : undefined}
                     onClick={() =>
                       !isOccupied && setForm((f) => ({ ...f, time: slot }))
                     }
-                    className={`py-2.5 rounded-xl text-sm font-medium transition-all ${
+                    className={`py-2.5 rounded-xl text-xs font-bold transition ${
                       isOccupied
-                        ? "bg-[#e5e5e5] text-[#9ca3af] cursor-not-allowed line-through border border-[#d4d4d4] opacity-75"
+                        ? "bg-gray-100 text-gray-400 cursor-not-allowed line-through"
                         : isSelected
-                          ? "bg-[#FF6B9D] text-white shadow-md"
-                          : "bg-[#fafafa] border border-[#f0f0f0] text-[#2d1b2e] hover:border-[#FF6B9D] hover:bg-[#fff0f5]"
+                          ? "bg-[#b83b6b] text-white shadow-sm"
+                          : "bg-[#faf6f2] text-[#2d1b2e] hover:bg-[#fff0f5]"
                     }`}
                   >
                     {slot}
@@ -519,130 +716,26 @@ export default function AgendarPage() {
             </div>
           </div>
 
-          {/* Bloco 3 – Categoria e Serviços */}
-          <div className="space-y-3">
-            <h3 className="font-semibold text-[#2d1b2e] text-sm">
-              Escolha a categoria
+          {/* Passo 5: Dados da Cliente */}
+          <div className="space-y-3 pt-4 border-t border-[#f2e6ea]">
+            <h3 className="font-bold font-serif text-base text-[#2d1b2e]">
+              4. Seus Dados para Confirmação
             </h3>
-            <div className="flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedCategory("")}
-                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                  !selectedCategory
-                    ? "bg-[#FF6B9D] text-white shadow-md"
-                    : "bg-[#f5f5f5] text-[#666] hover:bg-[#eee]"
-                }`}
-              >
-                Todos
-              </button>
-              {CATEGORIES.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
-                    selectedCategory === cat
-                      ? "bg-[#FF6B9D] text-white shadow-md"
-                      : "bg-[#f5f5f5] text-[#666] hover:bg-[#eee]"
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            {services.length === 0 ? (
-              <div className="p-6 bg-[#fafafa] rounded-xl border-2 border-dashed border-[#f0f0f0] text-center">
-                <p className="text-[#666] text-sm font-medium">
-                  O salão ainda não configurou os serviços.
-                </p>
-                <p className="text-[#999] text-xs mt-1">
-                  Entre em contato para agendar seu horário.
-                </p>
-              </div>
-            ) : filteredServices.length === 0 ? (
-              <p className="text-[#999] text-sm py-2">
-                Nenhum serviço nesta categoria. Selecione outra ou
-                &quot;Todos&quot;.
-              </p>
-            ) : (
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setServiceDropdownOpen((o) => !o)}
-                  className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm text-left focus:outline-none focus:border-[#FF6B9D] bg-white flex items-center justify-between"
-                >
-                  <span
-                    className={
-                      form.serviceId ? "text-[#2d1b2e]" : "text-[#999]"
-                    }
-                  >
-                    {form.serviceId
-                      ? `${filteredServices.find((s) => s.id === form.serviceId)?.name} (${filteredServices.find((s) => s.id === form.serviceId)?.duration} min)`
-                      : "Selecione o serviço"}
-                  </span>
-                  <span className="text-[#666]">▼</span>
-                </button>
-                {serviceDropdownOpen && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10"
-                      onClick={() => setServiceDropdownOpen(false)}
-                      aria-hidden="true"
-                    />
-                    <div className="absolute top-full left-0 right-0 mt-1 border-2 border-[#f0f0f0] rounded-xl bg-white shadow-lg z-20 max-h-[220px] overflow-y-auto custom-scrollbar">
-                      {filteredServices.map((s) => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          onClick={() => {
-                            setForm((f) => ({ ...f, serviceId: s.id }));
-                            setServiceDropdownOpen(false);
-                          }}
-                          className={`w-full p-3 text-left text-sm hover:bg-[#fff0f5] transition-colors first:rounded-t-xl last:rounded-b-xl ${
-                            form.serviceId === s.id
-                              ? "bg-[#fff0f5] text-[#FF6B9D] font-medium"
-                              : "text-[#2d1b2e]"
-                          }`}
-                        >
-                          {s.name} ({s.duration} min)
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Bloco 4 – Contatos */}
-          <div className="space-y-4 border-t border-[#f0f0f0] pt-5">
-            <h3 className="font-semibold text-[#2d1b2e] text-sm">Seus dados</h3>
-
-            <div>
-              <label className="block font-semibold text-[#2d1b2e] text-sm mb-1">
-                Nome *
-              </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <input
                 type="text"
                 required
+                placeholder="Seu nome completo *"
                 value={form.clientName}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, clientName: e.target.value }))
                 }
-                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
-                placeholder="Seu nome completo"
+                className="p-3 border border-[#f2e6ea] rounded-xl text-sm outline-none focus:border-[#b83b6b]"
               />
-            </div>
-
-            <div>
-              <label className="block font-semibold text-[#2d1b2e] text-sm mb-1">
-                WhatsApp *
-              </label>
               <input
                 type="tel"
                 required
+                placeholder="WhatsApp (00) 90000-0000 *"
                 value={form.clientPhone}
                 onChange={(e) =>
                   setForm((f) => ({
@@ -650,129 +743,55 @@ export default function AgendarPage() {
                     clientPhone: formatPhone(e.target.value),
                   }))
                 }
-                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
-                placeholder="(00) 00000-0000"
                 maxLength={16}
+                className="p-3 border border-[#f2e6ea] rounded-xl text-sm outline-none focus:border-[#b83b6b]"
               />
             </div>
 
-            <div>
-              <label className="block font-semibold text-[#2d1b2e] text-sm mb-1">
-                E-mail
-              </label>
-              <input
-                type="email"
-                value={form.clientEmail}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, clientEmail: e.target.value }))
-                }
-                className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
-                placeholder="seu@email.com"
-              />
-            </div>
+            <textarea
+              rows={2}
+              placeholder="Alguma observação ou preferência para seu atendimento? (Opcional)"
+              value={form.observations}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, observations: e.target.value }))
+              }
+              className="w-full p-3 border border-[#f2e6ea] rounded-xl text-xs outline-none focus:border-[#b83b6b] resize-none"
+            />
 
-            {professionals.length > 0 && (
-              <div>
-                <label className="block font-semibold text-[#2d1b2e] text-sm mb-1">
-                  Profissional *
-                </label>
-                <select
-                  required
-                  value={form.professionalId}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, professionalId: e.target.value }))
-                  }
-                  className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
-                >
-                  <option value="">Selecione o profissional</option>
-                  {professionals.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
+            {depositRequiredAmount > 0 && (
+              <div className="p-3.5 rounded-2xl bg-[#fdf8e7] border border-[#c59b27]/40 text-xs">
+                <strong className="text-[#2d1b2e] block">
+                  Política de Sinal do Salão:
+                </strong>
+                <span className="text-[#6e5a65]">
+                  Este atendimento solicita um sinal antecipado de{" "}
+                  <strong>R$ {depositRequiredAmount.toFixed(2)}</strong> (
+                  {bookingRules.depositPercent}%). Os dados para PIX serão
+                  exibidos na próxima tela.
+                </span>
               </div>
             )}
 
-            <div className="border-t border-[#f0f0f0] pt-5 mt-6">
-              <h3 className="font-semibold text-[#2d1b2e] mb-4">
-                Informações para o atendimento
-              </h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block font-medium text-[#666] text-sm mb-1">
-                    Tipo de cabelo
-                  </label>
-                  <select
-                    value={form.hairType}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, hairType: e.target.value }))
-                    }
-                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
-                  >
-                    <option value="">Selecione</option>
-                    <option value="liso">Liso</option>
-                    <option value="ondulado">Ondulado</option>
-                    <option value="cacheado">Cacheado</option>
-                    <option value="crespo">Crespo</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-medium text-[#666] text-sm mb-1">
-                    Tipo de pele
-                  </label>
-                  <select
-                    value={form.skinType}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, skinType: e.target.value }))
-                    }
-                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white"
-                  >
-                    <option value="">Selecione</option>
-                    <option value="normal">Normal</option>
-                    <option value="oleosa">Oleosa</option>
-                    <option value="seca">Seca</option>
-                    <option value="mista">Mista</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-medium text-[#666] text-sm mb-1">
-                    Alergias
-                  </label>
-                  <textarea
-                    value={form.allergies}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, allergies: e.target.value }))
-                    }
-                    rows={2}
-                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white resize-none"
-                    placeholder="Informe se possui alguma alergia a produtos..."
-                  />
-                </div>
-                <div>
-                  <label className="block font-medium text-[#666] text-sm mb-1">
-                    Observações
-                  </label>
-                  <textarea
-                    value={form.observations}
-                    onChange={(e) =>
-                      setForm((f) => ({ ...f, observations: e.target.value }))
-                    }
-                    rows={3}
-                    className="w-full p-3 border-2 border-[#f0f0f0] rounded-xl text-sm focus:outline-none focus:border-[#FF6B9D] text-[#2d1b2e] placeholder:text-[#999] bg-white resize-none"
-                    placeholder="Alguma informação adicional para o atendimento..."
-                  />
-                </div>
-              </div>
-            </div>
+            <label className="flex items-center gap-2 text-xs text-[#6e5a65] cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.marketingConsent}
+                onChange={(e) =>
+                  setForm((f) => ({ ...f, marketingConsent: e.target.checked }))
+                }
+                className="w-4 h-4 accent-[#b83b6b]"
+              />
+              Autorizo o recebimento de confirmações, lembretes e novidades pelo
+              WhatsApp.
+            </label>
           </div>
 
           <button
             type="submit"
-            disabled={services.length === 0}
-            className="w-full mt-6 bg-linear-to-br from-[#FF6B9D] to-[#C73866] text-white py-4 rounded-xl font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-none"
+            disabled={!form.serviceId || !form.time}
+            className="w-full py-4 rounded-2xl bg-linear-to-r from-[#b83b6b] to-[#88234b] text-white font-bold text-sm shadow-lg hover:opacity-95 transition disabled:opacity-50"
           >
-            Confirmar agendamento
+            Confirmar Reserva de Horário
           </button>
         </form>
       </main>

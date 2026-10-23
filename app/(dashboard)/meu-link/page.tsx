@@ -135,7 +135,7 @@ export default function MeuLinkPage() {
 
                 <p className="text-xs text-[#999] mt-6 text-center">
                   Seu link é único:{" "}
-                  <strong>AGENDLY.COM/AGENDAR/{username?.toUpperCase()}</strong>
+                  <strong>BELLAMAIS.COM/AGENDAR/{username?.toUpperCase()}</strong>
                 </p>
               </>
             )}

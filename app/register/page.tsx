@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  Sparkles,
+  Scissors,
   Mail,
   User,
   Building2,
@@ -55,7 +55,7 @@ export default function RegisterPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-10">
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-linear-to-br from-primary to-primary-dark rounded-2xl mb-4 shadow-lg">
-              <Sparkles size={32} className="text-white" />
+              <Scissors size={28} className="text-white" />
             </div>
             <h1 className="text-3xl font-bold text-[#2d1b2e] mb-2">
               Comece agora

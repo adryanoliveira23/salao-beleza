@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import styles from "./landing.module.css";
 import { useRouter } from "next/navigation";
 import {
-  Sparkles,
+  Scissors,
   Calendar,
   Users,
   TrendingUp,
@@ -15,21 +15,55 @@ import {
   CheckCircle2,
   Clock,
   DollarSign,
+  ArrowRight,
+  Sparkles,
 } from "lucide-react";
 import { DemoSection } from "@/components/LandingPage/DemoSection";
 import { FAQSection } from "@/components/LandingPage/FAQSection";
 import { SegmentsSection } from "@/components/LandingPage/SegmentsSection";
 
 export default function LandingPage() {
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    let ticking = false;
+    const threshold = 10;
+    const handleScroll = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          const currentScrollY =
+            window.pageYOffset || document.documentElement.scrollTop;
+
+          if (currentScrollY <= 60) {
+            // No topo: sempre visível
+            setIsHeaderVisible(true);
+          } else if (currentScrollY > lastScrollY.current + threshold) {
+            // Descendo a página: esconde o header
+            setIsHeaderVisible(false);
+          } else if (currentScrollY < lastScrollY.current - threshold) {
+            // Subindo a página: mostra o header
+            setIsHeaderVisible(true);
+          }
+
+          lastScrollY.current = Math.max(0, currentScrollY);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   useEffect(() => {
     const handleScrollLink = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      if (
-        target.tagName === "A" &&
-        target.getAttribute("href")?.startsWith("#")
-      ) {
+      const anchor = target.closest("a");
+      if (anchor && anchor.getAttribute("href")?.startsWith("#")) {
         e.preventDefault();
-        const id = target.getAttribute("href")?.substring(1);
+        const id = anchor.getAttribute("href")?.substring(1);
         const element = document.getElementById(id || "");
         if (element) {
           element.scrollIntoView({ behavior: "smooth" });
@@ -43,38 +77,42 @@ export default function LandingPage() {
 
   return (
     <div className={styles.landingPage}>
-      {/* Navigation */}
-      <nav className={styles.nav}>
+      {/* Navigation com auto-hide ao descer a página e alinhamento perfeito dos botões */}
+      <nav
+        className={`${styles.nav} ${!isHeaderVisible ? styles.navHidden : ""}`}
+      >
         <div className={styles.navContainer}>
-          <div className={styles.logo}>
-            <Sparkles size={24} />
-            Agendly Glow
-          </div>
+          <a href="#" className={styles.logo}>
+            <div className={styles.logoBadge}>
+              <Scissors size={18} />
+            </div>
+            <span className={styles.logoText}>BellaMais</span>
+          </a>
+
           <ul className={styles.navLinks}>
             <li>
               <a href="#recursos">Soluções</a>
             </li>
             <li>
+              <a href="#demo">Demonstração</a>
+            </li>
+            <li>
               <a href="#precos">Planos</a>
             </li>
             <li>
-              <a href="#depoimentos">Cases de Sucesso</a>
-            </li>
-            <li>
-              <a
-                href="/login"
-                className={`${styles.btn} ${styles.btnPrimary} ${styles.btnNavCompact}`}
-              >
-                Área do Cliente
-              </a>
+              <a href="#depoimentos">Depoimentos</a>
             </li>
           </ul>
-          <div className={styles.navCtaMobileOnly}>
+
+          <div className={styles.navActions}>
+            <a href="/login" className={styles.navLoginLink}>
+              Entrar
+            </a>
             <a
-              href="/login"
+              href="#precos"
               className={`${styles.btn} ${styles.btnPrimary} ${styles.btnNavCompact}`}
             >
-              Área do Cliente
+              Começar Agora
             </a>
           </div>
         </div>
@@ -85,16 +123,17 @@ export default function LandingPage() {
         <div className={styles.heroContainer}>
           <div className={styles.heroContent}>
             <span className={styles.heroBadge}>
-              ✨ Software nº 1 para Salões de Beleza e Spas
+              <Sparkles size={14} className="text-primary shrink-0" />
+              Plataforma de Gestão para Salões, Clínicas & Spas
             </span>
             <h1>
-              Eleve o nível do seu{" "}
-              <span className="text-primary">salão de beleza</span>
+              O sistema definitivo para o seu{" "}
+              <span>salão de beleza</span>
             </h1>
             <p>
-              Gestão inteligente que une agendamento, financeiro e marketing em
-              uma experiência moderna e intuitiva. Deixe a tecnologia cuidar da
-              rotina enquanto você foca na beleza.
+              Agenda online integrada ao WhatsApp, controle financeiro em tempo
+              real e cálculo automático de comissões. Organize sua rotina e
+              encante suas clientes.
             </p>
             <div className={styles.heroCtaRow}>
               <div className={styles.heroCta}>
@@ -102,12 +141,12 @@ export default function LandingPage() {
                   href="#precos"
                   className={`${styles.btn} ${styles.btnPrimary}`}
                 >
-                  Quero esse sistema
+                  Começar Agora <ArrowRight size={16} className="ml-1.5" />
                 </a>
                 <a
                   href="#demo"
                   className={`${styles.btn} ${styles.btnWhite}`}
-                  style={{ background: "#ffffff", border: "1px solid #eeeeee" }}
+                  style={{ background: "#ffffff", border: "1px solid #e5d7df" }}
                 >
                   Ver Demonstração
                 </a>
@@ -123,7 +162,7 @@ export default function LandingPage() {
       {/* Transformation Section */}
       <section className={styles.transformation}>
         <div className={styles.transformationContainer}>
-          <h2>Tecnologia que impulsiona beleza</h2>
+          <h2>Tecnologia que impulsiona o seu negócio</h2>
           <p>
             Elimine as planilhas e o papel. Centralize toda a operação do seu
             salão em uma plataforma elegante, intuitiva e pensada para o seu
@@ -132,7 +171,7 @@ export default function LandingPage() {
           <div className={styles.transformationGrid}>
             <div className={styles.transformCard}>
               <span className={styles.transformIcon}>
-                <Clock size={40} className="text-[#FF6B9D]" />
+                <Clock size={36} className="text-[#9e3160]" />
               </span>
               <h3>Otimização de Tempo</h3>
               <p>
@@ -142,32 +181,32 @@ export default function LandingPage() {
             </div>
             <div className={styles.transformCard}>
               <span className={styles.transformIcon}>
-                <DollarSign size={40} className="text-[#FF6B9D]" />
+                <DollarSign size={36} className="text-[#9e3160]" />
               </span>
               <h3>Maximização de Lucro</h3>
               <p>
-                Ferramentas de upselling e controle financeiro preciso que
-                identificam oportunidades de receita e reduzem desperdícios.
+                Controle financeiro preciso com fluxo de caixa, despesas fixas e
+                margens de lucro transparentes em tempo real.
               </p>
             </div>
             <div className={styles.transformCard}>
               <span className={styles.transformIcon}>
-                <CheckCircle2 size={40} className="text-[#FF6B9D]" />
+                <CheckCircle2 size={36} className="text-[#9e3160]" />
               </span>
               <h3>Redução de No-Show</h3>
               <p>
-                Lembretes automáticos inteligentes reduzem as faltas em até 80%,
-                mantendo sua agenda sempre produtiva.
+                Lembretes automáticos por WhatsApp reduzem as faltas e atrasos,
+                mantendo a grade da sua equipe sempre ocupada.
               </p>
             </div>
             <div className={styles.transformCard}>
               <span className={styles.transformIcon}>
-                <Heart size={40} className="text-[#FF6B9D]" />
+                <Heart size={36} className="text-[#9e3160]" />
               </span>
-              <h3>Fidelização Premium</h3>
+              <h3>Fidelização de Clientes</h3>
               <p>
-                Programa de fidelidade integrado que encanta clientes e aumenta
-                a recorrência dos seus serviços.
+                Histórico completo, fichas de anamnese, mimos de aniversário e
+                pontuação de retorno para manter suas clientes fiéis.
               </p>
             </div>
           </div>
@@ -178,48 +217,48 @@ export default function LandingPage() {
       <section className={styles.features} id="recursos">
         <div className={styles.featuresContainer}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionBadge}>Recursos Profissionais</span>
+            <span className={styles.sectionBadge}>Recursos Essenciais</span>
             <h2>
               Gestão completa para
               <br />
-              negócios de beleza
+              profissionais da beleza
             </h2>
             <p>
               Do agendamento ao pós-venda, cada ferramenta foi desenhada para a
-              realidade de salões, esmalterias, barbearias e spas.
+              rotina prática de salões, manicures, maquiadoras, esteticistas e spas.
             </p>
           </div>
           <div className={styles.featuresGrid}>
             {[
               {
-                icon: <Calendar size={32} />,
+                icon: <Calendar size={28} />,
                 title: "Agenda Inteligente",
-                desc: "Gestão multi-profissional com visualização intuitiva, bloqueios, recorrências e lista de espera.",
+                desc: "Visualização diária, semanal e mensal com filtros por profissional, bloqueios de folga e prevenção de duplicidades.",
               },
               {
-                icon: <Users size={32} />,
-                title: "Gestão de Clientes (CRM)",
-                desc: "Histórico completo de atendimentos, galeria de fotos antes/depois, preferências e anamnese.",
+                icon: <Users size={28} />,
+                title: "Cadastro & Ficha de Clientes",
+                desc: "Histórico completo de atendimentos, preferências de serviços, fórmulas capilares e consentimento LGPD.",
               },
               {
-                icon: <TrendingUp size={32} />,
-                title: "Financeiro Completo",
-                desc: "Fluxo de caixa, DRE, conciliação bancária, split de pagamentos e cálculo automático de comissões.",
+                icon: <TrendingUp size={28} />,
+                title: "Financeiro & Caixa",
+                desc: "Registro de receitas, despesas fixas, fechamento de caixa diário e relatórios de lucratividade real.",
               },
               {
-                icon: <Briefcase size={32} />,
-                title: "Gestão de Equipe",
-                desc: "Controle de escalas, permissões personalizadas, metas individuais e relatórios de performance.",
+                icon: <Briefcase size={28} />,
+                title: "Equipe & Comissões",
+                desc: "Cálculo automático de comissões por serviço e relatórios claros para repasses justos às colaboradoras.",
               },
               {
-                icon: <Package size={32} />,
-                title: "Controle de Estoque",
-                desc: "Gestão de produtos de revenda e consumo interno, com alertas de reposição e ficha técnica.",
+                icon: <Package size={28} />,
+                title: "Estoque & Produtos",
+                desc: "Controle de insumos utilizados em bancada e cosméticos para revenda, com alertas de reposição mínima.",
               },
               {
-                icon: <MessageCircle size={32} />,
-                title: "Marketing Automatizado",
-                desc: "Campanhas de aniversário, recuperação de inativos e promoções via WhatsApp e E-mail.",
+                icon: <MessageCircle size={28} />,
+                title: "WhatsApp & Agendamento Online",
+                desc: "Link próprio para a bio do Instagram e envio de lembretes automáticos diretamente para as clientes.",
               },
             ].map((feature, i) => (
               <div key={i} className={styles.featureCard}>
@@ -236,31 +275,30 @@ export default function LandingPage() {
       <section className={styles.testimonials} id="depoimentos">
         <div className={styles.testimonialsContainer}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionBadge}>Quem usa, ama</span>
-            <h2>Histórias de Sucesso</h2>
+            <span className={styles.sectionBadge}>Depoimentos Reais</span>
+            <h2>Salões que confiam na plataforma</h2>
             <p>
-              Junte-se a milhares de empreendedoras que transformaram seus
-              negócios
+              Veja como profissionais da beleza transformaram a organização do seu dia a dia
             </p>
           </div>
           <div className={styles.testimonialsGrid}>
             {[
               {
-                text: "A Agendly Glow profissionalizou completamente meu salão. O controle financeiro me deu a clareza que eu precisava para expandir para a segunda unidade.",
+                text: "A BellaMais organizou completamente o meu espaço. O cálculo de comissão que antes levava horas no fim do mês agora é feito em minutos e sem nenhum erro.",
                 author: "Mariana Costa",
-                salon: "CEO, Salão Bella Vista",
+                salon: "Studio Bella Vista",
                 initials: "MC",
               },
               {
-                text: "Meus clientes amam a facilidade de agendar online e receber os lembretes. Minha equipe está mais feliz com a transparência das comissões.",
+                text: "Minhas clientes adoram a facilidade de agendar direto pelo link no Instagram e os lembretes no WhatsApp diminuíram drasticamente as faltas de sexta e sábado.",
                 author: "Patricia Silva",
-                salon: "Proprietária, Studio P&S",
+                salon: "Espaço P&S Hair",
                 initials: "PS",
               },
               {
-                text: "O suporte é incrível e a plataforma não para de evoluir. O módulo de marketing pagou o sistema no primeiro mês trazendo clientes sumidos de volta.",
+                text: "A plataforma é muito fácil de usar no celular. Consigo ver o financeiro, os custos e o lucro real do salão de qualquer lugar sem precisar de computador.",
                 author: "Juliana Almeida",
-                salon: "Diretora, Glamour Hair Spa",
+                salon: "Glamour Estética & Spa",
                 initials: "JA",
               },
             ].map((testimonial, i) => (
@@ -291,39 +329,37 @@ export default function LandingPage() {
       <section className={styles.pricing} id="precos">
         <div className={styles.pricingContainer}>
           <div className={styles.sectionHeader}>
-            <span className={styles.sectionBadge}>
-              Investimento Inteligente
-            </span>
+            <span className={styles.sectionBadge}>Planos Transparentes</span>
             <h2>
-              Planos que crescem
+              Investimento pensado para
               <br />
-              com você
+              o crescimento do seu salão
             </h2>
-            <p>Transparência total. Sem taxas de setup ou fidelidade.</p>
+            <p>Sem taxas escondidas, sem contratos abusivos. Cancele quando quiser.</p>
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center px-4">
             <div
               className={`${styles.pricingCard} ${styles.featured} max-w-sm w-full`}
             >
               <span className={styles.popularBadge}>
-                O Melhor Custo-Benefício
+                Mais Escolhido por Donas de Salão
               </span>
-              <h3>Agendly Glow</h3>
+              <h3>Plano Profissional</h3>
               <div className={styles.price}>
                 <span>R$</span>
                 35,90
                 <span>/mês</span>
               </div>
               <span className={styles.period}>
-                O plano completo para o seu sucesso
+                Tudo o que seu salão precisa em um só lugar
               </span>
               <ul className={styles.pricingFeatures}>
-                <li>Agenda Online Inteligente</li>
-                <li>Gestão Completa de Clientes</li>
-                <li>Financeiro e Comissões</li>
+                <li>Agenda Online Completa</li>
+                <li>Cadastro Ilimitado de Clientes</li>
+                <li>Gestão Financeira & Comissões</li>
                 <li>Lembretes via WhatsApp</li>
-                <li>Relatórios de Performance</li>
-                <li>Suporte Premium</li>
+                <li>Página Própria de Agendamento</li>
+                <li>Suporte Rápido e Humanizado</li>
               </ul>
               <a
                 href="/register"
@@ -334,7 +370,7 @@ export default function LandingPage() {
                   marginTop: "2rem",
                 }}
               >
-                Começar Agora
+                Criar Minha Conta
               </a>
             </div>
           </div>
@@ -348,14 +384,19 @@ export default function LandingPage() {
       <section className={styles.ctaFinal}>
         <div className={styles.ctaContainer}>
           <h2>
-            Sua história de sucesso
+            Leve seu salão para o
             <br />
-            começa aqui
+            próximo nível
           </h2>
-          <p>Entre em contato com nossa equipe para cadastrar seu salão.</p>
-          <a href="/login" className={`${styles.btn} ${styles.btnWhite}`}>
-            Área do Cliente
-          </a>
+          <p>Comece a organizar sua agenda e financeiro hoje mesmo.</p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <a href="/register" className={`${styles.btn} ${styles.btnPrimary}`}>
+              Começar Gratuitamente
+            </a>
+            <a href="/login" className={`${styles.btn} ${styles.btnWhite}`}>
+              Acessar Minha Conta
+            </a>
+          </div>
         </div>
       </section>
 
@@ -363,43 +404,26 @@ export default function LandingPage() {
       <footer className={styles.footer}>
         <div className={styles.footerContainer}>
           <div className={styles.footerBrand}>
-            <h3>Agendly Glow</h3>
+            <h3>BellaMais</h3>
             <p>
-              Tecnologia e beleza caminhando juntas. Desenvolvemos soluções que
-              empoderam empreendedores e transformam a gestão de salões.
+              Software profissional desenvolvido especialmente para salões de beleza,
+              esteticistas, cabeleireiras, manicures e maquiadoras autônomas.
             </p>
           </div>
           <div className={styles.footerLinks}>
             <h4>Plataforma</h4>
             <ul>
               <li>
-                <a href="#">Funcionalidades</a>
+                <a href="#recursos">Funcionalidades</a>
               </li>
               <li>
-                <a href="#">Para Salões</a>
+                <a href="#demo">Demonstração</a>
               </li>
               <li>
-                <a href="#">Para Barbearias</a>
+                <a href="#precos">Planos & Preços</a>
               </li>
               <li>
-                <a href="#">Para Spas</a>
-              </li>
-            </ul>
-          </div>
-          <div className={styles.footerLinks}>
-            <h4>Empresa</h4>
-            <ul>
-              <li>
-                <a href="#">Sobre Nós</a>
-              </li>
-              <li>
-                <a href="#">Carreiras</a>
-              </li>
-              <li>
-                <a href="#">Blog</a>
-              </li>
-              <li>
-                <a href="#">Imprensa</a>
+                <a href="#depoimentos">Casos de Uso</a>
               </li>
             </ul>
           </div>
@@ -407,166 +431,40 @@ export default function LandingPage() {
             <h4>Suporte</h4>
             <ul>
               <li>
-                <a href="#">Central de Ajuda</a>
-              </li>
-              <li>
-                <a href="#">Tutoriais</a>
-              </li>
-              <li>
                 <a
-                  href="https://wa.me/556699762785?text=Olá,preciso%20de%20ajuda%20com%20a%20Agendly%20Glow"
+                  href="https://wa.me/556699762785?text=Olá!%20Gostaria%20de%20tirar%20dúvidas%20sobre%20o%20BellaMais"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Contato (WhatsApp)
+                  Suporte pelo WhatsApp
                 </a>
               </li>
               <li>
-                <a href="#">Status</a>
-              </li>
-            </ul>
-          </div>
-          <div className={styles.footerLinks}>
-            <h4>Legal</h4>
-            <ul>
-              <li>
-                <a href="#">Termos de Uso</a>
+                <a href="/login">Área da Cliente</a>
               </li>
               <li>
-                <a href="#">Privacidade</a>
-              </li>
-              <li>
-                <a href="#">Compliance</a>
+                <a href="/admin/login">Portal Administrativo</a>
               </li>
             </ul>
           </div>
         </div>
         <div className={styles.footerBottom}>
           <p>
-            © 2026 Agendly Glow Tecnologia Ltda. Todos os direitos reservados.
+            © {new Date().getFullYear()} BellaMais. Todos os direitos reservados.
           </p>
         </div>
       </footer>
 
-      <WhatsAppWidget />
-    </div>
-  );
-}
-
-function WhatsAppWidget() {
-  const router = useRouter();
-  const [isOpen, setIsOpen] = React.useState(false);
-  const [step, setStep] = React.useState(0);
-  const [isTyping, setIsTyping] = React.useState(false);
-
-  const script = [
-    {
-      question:
-        "Olá! Notei que você está interessado em profissionalizar seu salão. Posso te fazer uma pergunta rápida?",
-      options: [
-        { text: "Claro, pode falar!", next: 1 },
-        { text: "Agora não, obrigado.", action: "close" },
-      ],
-    },
-    {
-      question:
-        "Você ainda usa papel ou planilhas para controlar seus agendamentos?",
-      options: [
-        { text: "Sim, ainda uso papel/planilha", next: 2 },
-        { text: "Já uso outro sistema", next: 2 },
-      ],
-    },
-    {
-      question:
-        "Sabia que nossos parceiros reduzem faltas em 80% e aumentam o lucro já no primeiro mês? Gostaria de ver como funciona?",
-      options: [
-        { text: "Sim! Quero ver", next: 3 },
-        { text: "Como funciona?", next: 3 },
-      ],
-    },
-    {
-      question:
-        "Perfeito! A melhor forma de começar é criando sua conta gratuita para conhecer. Vamos lá?",
-      options: [
-        { text: "Sim, vamos criar!", action: "register" },
-        { text: "Quero falar com suporte", action: "whatsapp" },
-      ],
-    },
-  ];
-
-  interface Option {
-    text: string;
-    next?: number;
-    action?: string;
-  }
-
-  const handleOption = (option: Option) => {
-    if (option.action === "close") {
-      setIsOpen(false);
-      setStep(0);
-    } else if (option.action === "register") {
-      router.push("/register");
-    } else if (option.action === "whatsapp") {
-      window.open(
-        "https://wa.me/556699762785?text=Olá,preciso%20de%20ajuda%20com%20a%20Agendly%20Glow",
-        "_blank",
-      );
-    } else if (option.next !== undefined) {
-      setIsTyping(true);
-      setTimeout(() => {
-        setStep(option.next!);
-        setIsTyping(false);
-      }, 1000);
-    }
-  };
-
-  return (
-    <div className={styles.whatsappWrapper}>
-      {isOpen && (
-        <div className={styles.whatsappChat}>
-          <div className={styles.chatHeader}>
-            <div className={styles.chatAvatar}>
-              <Sparkles size={20} />
-            </div>
-            <div>
-              <div className={styles.chatName}>Suporte Agendly</div>
-              <div className={styles.chatStatus}>Online</div>
-            </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className={styles.chatClose}
-            >
-              ×
-            </button>
-          </div>
-          <div className={styles.chatBody}>
-            <div className={styles.chatMessage}>{script[step].question}</div>
-            {isTyping && (
-              <div className={styles.typingIndicator}>Digitando...</div>
-            )}
-            {!isTyping && (
-              <div className={styles.chatOptions}>
-                {script[step].options.map((opt, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleOption(opt)}
-                    className={styles.chatOptionBtn}
-                  >
-                    {opt.text}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-      <button
+      {/* Botão Flutuante Direto do WhatsApp (Sem simulação de robô/IA) */}
+      <a
+        href="https://wa.me/556699762785?text=Olá!%20Gostaria%20de%20saber%20mais%20sobre%20o%20sistema%20BellaMais."
+        target="_blank"
+        rel="noopener noreferrer"
         className={styles.whatsappFloat}
-        onClick={() => setIsOpen(!isOpen)}
-        title="Fale conosco"
+        title="Fale Conosco pelo WhatsApp"
       >
-        <MessageCircle size={32} />
-      </button>
+        <MessageCircle size={30} />
+      </a>
     </div>
   );
 }

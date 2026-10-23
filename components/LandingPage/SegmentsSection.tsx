@@ -62,12 +62,12 @@ export function SegmentsSection() {
           <span className="inline-block py-1 px-3 rounded-full bg-[#FF6B9D]/10 text-[#FF6B9D] font-semibold text-sm mb-4">
             Para Todos os Tamanhos
           </span>
-          <h2 className="text-3xl md:text-4xl font-bold text-[#2d1b2e] mb-6 font-serif">
+          <h2 className="text-3xl md:text-4xl font-bold text-[#2d1b2e] mb-6 font-sans tracking-tight">
             Feito sob medida para o seu negócio
           </h2>
           <p className="text-[#666] max-w-2xl mx-auto">
             Não importa se você é uma grande franquia ou trabalha sozinho(a), o
-            Agendly Glow se adapta à sua rotina.
+            BellaMais se adapta à sua rotina.
           </p>
         </div>
 

@@ -38,11 +38,11 @@ export function DemoSection() {
           <span className="inline-block py-1 px-3 rounded-full bg-primary/10 text-primary font-semibold text-sm mb-4">
             Experimente Agora
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-[#2d1b2e] mb-6 font-serif">
+          <h2 className="text-3xl md:text-5xl font-bold text-[#2d1b2e] mb-6 font-sans tracking-tight">
             Veja como é simples gerenciar seu salão
           </h2>
           <p className="text-lg text-[#666]">
-            Navegue pelas abas abaixo e descubra como o Agendly Glow transforma
+            Navegue pelas abas abaixo e descubra como o BellaMais transforma
             a gestão do seu negócio em uma experiência visual e intuitiva.
           </p>
         </div>
@@ -59,7 +59,7 @@ export function DemoSection() {
             <div className="flex-1 text-center">
               <div className="bg-white px-3 py-1 rounded-md text-xs text-[#999] inline-flex items-center gap-2 border border-[#eee] shadow-sm">
                 <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                app.agendlyglow.com/dashboard
+                app.bellamais.com/dashboard
               </div>
             </div>
           </div>
@@ -69,7 +69,7 @@ export function DemoSection() {
             <div className="w-[70px] md:w-[240px] bg-[#2d1b2e] text-white flex flex-col shrink-0">
               <div className="p-4 md:p-6 flex items-center gap-3 border-b border-white/10">
                 <div className="w-8 h-8 bg-linear-to-br from-primary to-primary-dark rounded-lg shrink-0"></div>
-                <span className="font-bold text-lg hidden md:block">Glow</span>
+                <span className="font-bold text-lg hidden md:block">BellaMais</span>
               </div>
 
               <div className="flex-1 py-6 px-2 md:px-4 flex flex-col gap-2">
@@ -135,7 +135,7 @@ export function DemoSection() {
               </div>
 
               {/* Tab Content */}
-              <div className="flex-1 p-6 overflow-y-auto relative">
+              <div className="flex-1 p-3.5 sm:p-6 overflow-y-auto relative min-w-0">
                 {/* DASHBOARD TAB */}
                 {activeTab === "dashboard" && (
                   <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">

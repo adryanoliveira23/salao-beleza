@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Perfis de usuários e salões
+    match /profiles/{userId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 2. Serviços e combos do salão
+    match /services/{serviceId} {
+      allow read: if true; // Leitura pública para agendamento online
+      allow write: if request.auth != null;
+    }
+
+    // 3. Profissionais e colaboradores
+    match /professionals/{profId} {
+      allow read: if true; // Leitura pública para escolha no agendamento
+      allow write: if request.auth != null;
+    }
+
+    match /employees/{employeeId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 4. Clientes do salão
+    match /clients/{clientId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 5. Agendamentos (Permite agendamento público online de clientes sem login)
+    match /appointments/{appointmentId} {
+      allow read, write: if true;
+    }
+
+    // 6. Módulo financeiro e metas
+    match /salon_finance/{userId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 7. Dados extras (estoque, produtos, cupons, bloqueios)
+    match /salon_extras/{userId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // 8. Configurações da plataforma SaaS
+    match /platform_config/{configId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Regra global de segurança para qualquer coleção nova
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
