@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -17,10 +17,23 @@ import {
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem("bellamais_remembered_email");
+      if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+      }
+    } catch {
+      // Ignorar caso localStorage não esteja acessível em modo privado
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,8 +41,24 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const { signInWithEmailAndPassword } = await import("firebase/auth");
+      if (rememberMe) {
+        localStorage.setItem("bellamais_remembered_email", email);
+      } else {
+        localStorage.removeItem("bellamais_remembered_email");
+      }
+
+      const {
+        signInWithEmailAndPassword,
+        setPersistence,
+        browserLocalPersistence,
+        browserSessionPersistence,
+      } = await import("firebase/auth");
       const { auth } = await import("@/app/lib/firebase");
+
+      await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence,
+      );
 
       await signInWithEmailAndPassword(auth, email, password);
 
@@ -122,6 +151,25 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {/* Lembrar-me e Esqueceu a Senha */}
+            <div className="flex items-center justify-between text-xs sm:text-sm pt-0.5">
+              <label className="flex items-center gap-2 cursor-pointer select-none text-[#2d1b2e]/80 hover:text-[#2d1b2e]">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded-md border-[#2d1b2e]/20 text-[var(--primary)] focus:ring-[var(--primary)] cursor-pointer accent-[var(--primary)]"
+                />
+                <span className="font-medium">Lembrar-me</span>
+              </label>
+              <Link
+                href="/recuperar-senha"
+                className="text-[var(--primary)] font-semibold hover:underline"
+              >
+                Esqueceu a senha?
+              </Link>
+            </div>
+
             {error && (
               <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-xs sm:text-sm">
                 <AlertCircle size={16} className="shrink-0" />
@@ -145,16 +193,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <div className="mt-6 pt-5 border-t border-[#2d1b2e]/10 text-center space-y-2.5 text-xs sm:text-sm">
-            <p className="text-[#2d1b2e]/60">
-              Esqueceu sua senha?{" "}
-              <Link
-                href="/recuperar-senha"
-                className="text-[var(--primary)] font-semibold hover:underline"
-              >
-                Recuperar acesso
-              </Link>
-            </p>
+          <div className="mt-6 pt-5 border-t border-[#2d1b2e]/10 text-center text-xs sm:text-sm">
             <p className="text-[#2d1b2e]/60">
               Ainda não tem conta?{" "}
               <Link
