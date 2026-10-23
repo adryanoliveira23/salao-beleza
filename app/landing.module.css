@@ -343,12 +343,28 @@
 
 .heroCtaRow {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1.5rem;
+  gap: 1rem;
   margin-bottom: 2.5rem;
-  flex-wrap: wrap;
   width: 100%;
+}
+
+.heroTrustBadges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: #776a74;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.heroTrustBadges span {
+  display: inline-flex;
+  align-items: center;
 }
 
 .heroCta {
@@ -1066,8 +1082,8 @@
 /* Responsive - Mobile */
 @media (max-width: 768px) {
   .navContainer {
-    padding: 0.75rem 1rem;
-    gap: 0.75rem;
+    padding: 0.65rem 1rem;
+    gap: 0.5rem;
   }
   .navLinks {
     display: none;
@@ -1075,56 +1091,59 @@
   .navActions {
     display: flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.35rem;
   }
   .navLoginLink {
-    height: 34px;
-    padding: 0 0.85rem;
-    font-size: 0.8rem;
-    line-height: 34px;
+    height: 32px;
+    padding: 0 0.65rem;
+    font-size: 0.775rem;
+    line-height: 32px;
     border-radius: 50px;
     box-sizing: border-box;
+    white-space: nowrap;
   }
   .btnNavCompact {
-    height: 34px;
-    padding: 0 0.95rem;
-    font-size: 0.8rem;
-    line-height: 34px;
+    height: 32px;
+    padding: 0 0.85rem;
+    font-size: 0.775rem;
+    line-height: 32px;
     border-radius: 50px;
     box-sizing: border-box;
+    white-space: nowrap;
   }
   .logo {
-    font-size: 1.25rem;
+    font-size: 1.2rem;
   }
   .logoBadge {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
   }
   .hero {
-    padding: 5.75rem 1rem 3rem;
+    padding: 5.25rem 1rem 2.5rem;
   }
   .heroContent h1,
   .hero h1 {
-    font-size: 2.15rem;
-    line-height: 1.18;
+    font-size: 2.05rem;
+    line-height: 1.2;
     letter-spacing: -0.02em;
   }
   .heroContent p,
   .hero p {
-    font-size: 0.975rem;
-    margin: 0 auto 1.5rem;
-    line-height: 1.6;
+    font-size: 0.95rem;
+    margin: 0 auto 1.25rem;
+    line-height: 1.55;
     color: #443640;
   }
   .heroCtaRow {
     flex-direction: column;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
+    gap: 0.75rem;
   }
   .heroCta {
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 0.65rem;
     width: 100%;
-    max-width: 340px;
+    max-width: 320px;
   }
   .heroCta .btn {
     width: 100%;
@@ -1134,37 +1153,134 @@
   .heroBadge {
     font-size: 0.75rem;
     padding: 0.35rem 0.75rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 1.15rem;
   }
-  .transformationGrid {
-    grid-template-columns: 1fr;
-    gap: 1.25rem;
+  .heroTrustBadges {
+    font-size: 0.725rem;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
   }
-  .transformation h2,
-  .sectionHeader h2 {
-    font-size: 1.85rem;
+  .sectionHeader {
+    margin-bottom: 2.25rem;
+  }
+  .sectionHeader h2,
+  .transformation h2 {
+    font-size: 1.75rem;
     line-height: 1.25;
+  }
+  .sectionHeader p,
+  .transformation p {
+    font-size: 0.925rem;
+    line-height: 1.55;
   }
   .transformation,
   .features,
   .testimonials,
   .pricing,
   .ctaFinal {
-    padding: 3.5rem 1rem;
+    padding: 3rem 1rem;
+  }
+  .transformationGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    margin-top: 2rem;
+  }
+  .transformCard {
+    padding: 1.5rem 1.25rem;
+  }
+  .transformIcon {
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+  }
+  .transformCard h3 {
+    font-size: 1.15rem;
+  }
+  .transformCard p {
+    font-size: 0.9rem;
   }
   .featuresGrid {
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+  .featureCard {
+    padding: 1.5rem 1.25rem;
+  }
+  .featureIcon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .featureCard h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+  }
+  .featureCard p {
+    font-size: 0.9rem;
+    line-height: 1.55;
+  }
   .testimonialsGrid {
     grid-template-columns: 1fr;
     gap: 1rem;
+    margin-top: 2rem;
+  }
+  .testimonialCard {
+    padding: 1.75rem 1.25rem;
+  }
+  .testimonialText {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+  .testimonialCard::before {
+    font-size: 3.5rem;
+    top: 0.75rem;
+    left: 0.75rem;
+    opacity: 0.08;
+  }
+  .authorAvatar {
+    width: 42px;
+    height: 42px;
+    font-size: 0.9rem;
+  }
+  /* Pricing Card Mobile Fixes */
+  .pricingCard.featured {
+    transform: none !important;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 360px;
+  }
+  .pricingCard {
+    padding: 2.25rem 1.25rem !important;
+  }
+  .price {
+    font-size: 2.75rem !important;
+  }
+  .popularBadge {
+    font-size: 0.725rem !important;
+    padding: 0.35rem 0.85rem !important;
+    top: -12px !important;
+    white-space: nowrap !important;
+  }
+  .pricingFeatures {
+    margin: 1.5rem 0 !important;
+  }
+  .pricingFeatures li {
+    font-size: 0.875rem !important;
+    padding: 0.6rem 0 !important;
   }
   .ctaFinal h2 {
     font-size: 1.85rem;
+    line-height: 1.25;
   }
   .ctaFinal p {
     font-size: 0.95rem;
+    margin-bottom: 1.75rem;
+  }
+  .ctaFinal a.btn {
+    width: 100%;
+    max-width: 320px;
+    text-align: center;
   }
   .footerContainer {
     grid-template-columns: 1fr;
@@ -1176,18 +1292,21 @@
 /* Responsive - Small Mobile */
 @media (max-width: 480px) {
   .navContainer {
-    padding: 0.65rem 0.75rem;
+    padding: 0.6rem 0.75rem;
   }
   .logo {
-    font-size: 1.15rem;
+    font-size: 1.1rem;
   }
   .logoBadge {
-    width: 28px;
-    height: 28px;
+    width: 26px;
+    height: 26px;
   }
   .heroContent h1,
   .hero h1 {
     font-size: 1.85rem;
+  }
+  .price {
+    font-size: 2.45rem !important;
   }
 }
 

@@ -151,6 +151,13 @@ export default function LandingPage() {
                   Ver Demonstração
                 </a>
               </div>
+              <div className={styles.heroTrustBadges}>
+                <span>✓ Teste grátis de 7 dias</span>
+                <span>•</span>
+                <span>Sem cartão de crédito</span>
+                <span>•</span>
+                <span>Cancele quando quiser</span>
+              </div>
             </div>
           </div>
         </div>
@@ -389,11 +396,11 @@ export default function LandingPage() {
             próximo nível
           </h2>
           <p>Comece a organizar sua agenda e financeiro hoje mesmo.</p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <a href="/register" className={`${styles.btn} ${styles.btnPrimary}`}>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full max-w-md mx-auto">
+            <a href="/register" className={`${styles.btn} ${styles.btnPrimary} w-full sm:w-auto`}>
               Começar Gratuitamente
             </a>
-            <a href="/login" className={`${styles.btn} ${styles.btnWhite}`}>
+            <a href="/login" className={`${styles.btn} ${styles.btnWhite} w-full sm:w-auto`}>
               Acessar Minha Conta
             </a>
           </div>

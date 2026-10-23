@@ -531,21 +531,21 @@ export function DemoSection() {
                 {/* 7. FINANCEIRO TAB */}
                 {activeTab === "financeiro" && (
                   <div className="space-y-4 animate-in fade-in duration-300">
-                    <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
-                      <div className="bg-white p-3 rounded-xl border border-[#ede4e9] text-center">
-                        <span className="text-[10px] text-[#888] font-bold uppercase block">Faturamento</span>
-                        <span className="text-base sm:text-lg font-bold text-emerald-700 block mt-0.5">R$ 14.850</span>
-                        <span className="text-[9px] text-emerald-600 font-semibold block">Mês atual</span>
+                    <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+                      <div className="bg-white p-2 sm:p-3 rounded-xl border border-[#ede4e9] text-center">
+                        <span className="text-[9px] sm:text-[10px] text-[#888] font-bold uppercase block truncate">Faturamento</span>
+                        <span className="text-xs sm:text-base md:text-lg font-bold text-emerald-700 block mt-0.5 truncate">R$ 14.850</span>
+                        <span className="text-[8px] sm:text-[9px] text-emerald-600 font-semibold block">Mês atual</span>
                       </div>
-                      <div className="bg-white p-3 rounded-xl border border-[#ede4e9] text-center">
-                        <span className="text-[10px] text-[#888] font-bold uppercase block">Custos Fixos</span>
-                        <span className="text-base sm:text-lg font-bold text-rose-700 block mt-0.5">R$ 4.200</span>
-                        <span className="text-[9px] text-[#999] block">Reservado</span>
+                      <div className="bg-white p-2 sm:p-3 rounded-xl border border-[#ede4e9] text-center">
+                        <span className="text-[9px] sm:text-[10px] text-[#888] font-bold uppercase block truncate">Custos Fixos</span>
+                        <span className="text-xs sm:text-base md:text-lg font-bold text-rose-700 block mt-0.5 truncate">R$ 4.200</span>
+                        <span className="text-[8px] sm:text-[9px] text-[#999] block">Reservado</span>
                       </div>
-                      <div className="bg-white p-3 rounded-xl border border-[#ede4e9] text-center">
-                        <span className="text-[10px] text-[#888] font-bold uppercase block">Lucro Líquido</span>
-                        <span className="text-base sm:text-lg font-bold text-[var(--primary)] block mt-0.5">R$ 6.310</span>
-                        <span className="text-[9px] text-emerald-600 font-semibold block">Livre</span>
+                      <div className="bg-white p-2 sm:p-3 rounded-xl border border-[#ede4e9] text-center">
+                        <span className="text-[9px] sm:text-[10px] text-[#888] font-bold uppercase block truncate">Lucro Líquido</span>
+                        <span className="text-xs sm:text-base md:text-lg font-bold text-[var(--primary)] block mt-0.5 truncate">R$ 6.310</span>
+                        <span className="text-[8px] sm:text-[9px] text-emerald-600 font-semibold block">Livre</span>
                       </div>
                     </div>
 
