@@ -695,9 +695,9 @@ export default function WhatsAppPage() {
                 WhatsApp Conectado ({connectedPhone || salonPhone})
               </span>
             ) : (
-              <span className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-300/80 shadow-2xs">
-                <span className="w-2.5 h-2.5 rounded-full bg-amber-500" />
-                {isRealHandshake ? "Aguardando Leitura do QR Code Oficial" : "Modo Direto / Simulação"}
+              <span className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300/80 shadow-2xs">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                Disparo Direto Ativo no Site
               </span>
             )}
           </div>
@@ -804,8 +804,29 @@ export default function WhatsAppPage() {
                     Conectar WhatsApp do Salão
                   </h2>
                   <p className="text-xs md:text-sm text-[var(--muted)] mt-1 max-w-2xl leading-relaxed">
-                    Conecte o WhatsApp da sua recepção ao BellaMais para sincronizar confirmações e lembretes com as clientes.
+                    Envie lembretes e confirmações com 1 clique diretamente pelo site ou conecte seu aparelho via Baileys.
                   </p>
+                </div>
+
+                {/* BANNER CLARO: FUNCIONA DIRETO NO SITE */}
+                <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                  <div className="flex items-start sm:items-center gap-2.5">
+                    <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 sm:mt-0" />
+                    <div>
+                      <span className="font-bold text-emerald-950 dark:text-emerald-200">
+                        O WhatsApp já funciona 100% diretamente pelo site sem precisar rodar nenhum comando!
+                      </span>
+                      <p className="text-[11.5px] text-emerald-800 dark:text-emerald-300 mt-0.5 leading-relaxed">
+                        Ao clicar no ícone do WhatsApp na <strong>Agenda</strong>, nos <strong>Clientes</strong> ou no <strong>Caixa</strong>, a mensagem abre pré-formatada com o nome da cliente e horário para envio em 1 clique.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleTestDispatch()}
+                    className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 cursor-pointer shadow-xs"
+                  >
+                    Testar Disparo Agora
+                  </button>
                 </div>
 
                 {/* ALERTA DE STATUS BAILEYS */}
