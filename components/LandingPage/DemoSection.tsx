@@ -18,522 +18,455 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
+  MessageCircle,
+  Sparkles,
 } from "lucide-react";
 
+type DemoTab =
+  | "dashboard"
+  | "agenda"
+  | "profissionais"
+  | "clientes"
+  | "estoque"
+  | "marketing"
+  | "financeiro";
+
+const TABS: { id: DemoTab; label: string; icon: React.ReactNode }[] = [
+  { id: "dashboard", label: "Dashboard", icon: <LayoutDashboard size={16} /> },
+  { id: "agenda", label: "Agenda", icon: <Calendar size={16} /> },
+  { id: "clientes", label: "Clientes", icon: <Users size={16} /> },
+  { id: "profissionais", label: "Equipe", icon: <Scissors size={16} /> },
+  { id: "estoque", label: "Estoque", icon: <Package size={16} /> },
+  { id: "marketing", label: "WhatsApp & Mkt", icon: <Megaphone size={16} /> },
+  { id: "financeiro", label: "Financeiro", icon: <DollarSign size={16} /> },
+];
+
 export function DemoSection() {
-  const [activeTab, setActiveTab] = useState<
-    | "dashboard"
-    | "agenda"
-    | "profissionais"
-    | "clientes"
-    | "estoque"
-    | "marketing"
-    | "financeiro"
-  >("dashboard");
+  const [activeTab, setActiveTab] = useState<DemoTab>("dashboard");
 
   return (
-    <section className="py-20 bg-linear-to-b from-[#fff5f7] to-white" id="demo">
-      <div className="max-w-7xl mx-auto px-4 md:px-6">
-        <div className="text-center mb-16 max-w-3xl mx-auto">
-          <span className="inline-block py-1 px-3 rounded-full bg-primary/10 text-primary font-semibold text-sm mb-4">
-            Experimente Agora
+    <section className="py-12 md:py-20 bg-gradient-to-b from-[#fff5f7] via-white to-white" id="demo">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        {/* Section Header */}
+        <div className="text-center mb-8 md:mb-14 max-w-3xl mx-auto">
+          <span className="inline-flex items-center gap-1.5 py-1 px-3.5 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] font-bold text-xs uppercase tracking-wider mb-3">
+            <Sparkles size={13} />
+            Demonstração Interativa
           </span>
-          <h2 className="text-3xl md:text-5xl font-bold text-[#2d1b2e] mb-6 font-sans tracking-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-[#2d1b2e] mb-3 md:mb-5 font-sans tracking-tight text-balance">
             Veja como é simples gerenciar seu salão
           </h2>
-          <p className="text-lg text-[#666]">
-            Navegue pelas abas abaixo e descubra como o BellaMais transforma
-            a gestão do seu negócio em uma experiência visual e intuitiva.
+          <p className="text-sm sm:text-base md:text-lg text-[#666] leading-relaxed max-w-2xl mx-auto text-balance">
+            Toque nas abas abaixo para navegar pela interface do BellaMais e sentir a facilidade de organizar sua rotina.
           </p>
         </div>
 
         {/* Demo Interface Wrapper */}
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-[#f0f0f0] ring-4 ring-primary/5 max-w-5xl mx-auto">
-          {/* Fake Browser Header */}
-          <div className="bg-[#f8f9fa] border-b border-[#eee] px-4 py-3 flex items-center gap-2">
+        <div className="bg-white rounded-2xl md:rounded-3xl shadow-xl border border-[#efe6ea] overflow-hidden max-w-5xl mx-auto ring-1 ring-black/5">
+          {/* Desktop Browser Chrome (Apenas em telas médias e grandes) */}
+          <div className="hidden md:flex bg-[#f8f9fa] border-b border-[#eee] px-4 py-3 items-center gap-3">
             <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-[#ff5f57]"></div>
-              <div className="w-3 h-3 rounded-full bg-[#febc2e]"></div>
-              <div className="w-3 h-3 rounded-full bg-[#28c840]"></div>
+              <div className="w-3 h-3 rounded-full bg-[#ff5f57]" />
+              <div className="w-3 h-3 rounded-full bg-[#febc2e]" />
+              <div className="w-3 h-3 rounded-full bg-[#28c840]" />
             </div>
             <div className="flex-1 text-center">
-              <div className="bg-white px-3 py-1 rounded-md text-xs text-[#999] inline-flex items-center gap-2 border border-[#eee] shadow-sm">
-                <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                app.bellamais.com/dashboard
+              <div className="bg-white px-3.5 py-1 rounded-md text-xs text-[#888] inline-flex items-center gap-2 border border-[#eee] shadow-2xs font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                app.bellamais.com/{activeTab}
               </div>
+            </div>
+            <div className="w-12 text-right">
+              <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Ao Vivo
+              </span>
             </div>
           </div>
 
-          <div className="flex h-[600px] md:h-[700px]">
-            {/* Fake Sidebar */}
-            <div className="w-[70px] md:w-[240px] bg-[#2d1b2e] text-white flex flex-col shrink-0">
-              <div className="p-4 md:p-6 flex items-center gap-3 border-b border-white/10">
-                <div className="w-8 h-8 bg-linear-to-br from-primary to-primary-dark rounded-lg shrink-0"></div>
-                <span className="font-bold text-lg hidden md:block">BellaMais</span>
+          {/* Mobile Top App Bar (Apenas em Celulares) */}
+          <div className="flex md:hidden bg-white border-b border-[#f0f0f0] px-3.5 py-2.5 items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-[var(--primary)] to-pink-500 text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+                <Scissors size={14} />
+              </div>
+              <div>
+                <span className="font-bold text-xs text-[#2d1b2e] block leading-tight">
+                  BellaMais
+                </span>
+                <span className="text-[9px] text-[#999] uppercase tracking-wider block">
+                  Demonstração
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Online
+              </span>
+            </div>
+          </div>
+
+          {/* Mobile Horizontal Tabs Bar (Scroll Horizontal Sem Fricção) */}
+          <div className="flex md:hidden bg-[#faf7f9] border-b border-[#ede4e9] p-2 overflow-x-auto gap-1.5 no-scrollbar scroll-smooth">
+            {TABS.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap flex items-center gap-1.5 transition shrink-0 cursor-pointer ${
+                  activeTab === tab.id
+                    ? "bg-[var(--primary)] text-white shadow-xs"
+                    : "bg-white text-[#666] hover:text-[#2d1b2e] border border-[#f0e6eb]"
+                }`}
+              >
+                {tab.icon}
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Main Interface Body */}
+          <div className="flex flex-col md:flex-row min-h-[480px] md:h-[660px]">
+            {/* Desktop Sidebar (Oculta no Mobile) */}
+            <div className="hidden md:flex w-[220px] bg-[#231920] text-white flex-col shrink-0">
+              <div className="p-5 flex items-center gap-2.5 border-b border-white/10">
+                <div className="w-7 h-7 rounded-xl bg-gradient-to-tr from-[var(--primary)] to-pink-500 flex items-center justify-center text-white shrink-0 shadow-xs">
+                  <Scissors size={15} />
+                </div>
+                <div>
+                  <span className="font-bold text-sm tracking-tight block leading-tight text-white">
+                    BellaMais
+                  </span>
+                  <span className="text-[9px] uppercase tracking-wider text-rose-300 font-bold block">
+                    Salão & Gestão
+                  </span>
+                </div>
               </div>
 
-              <div className="flex-1 py-6 px-2 md:px-4 flex flex-col gap-2">
-                <SidebarItem
-                  icon={<LayoutDashboard size={20} />}
-                  label="Dashboard"
-                  active={activeTab === "dashboard"}
-                  onClick={() => setActiveTab("dashboard")}
-                />
-                <SidebarItem
-                  icon={<Calendar size={20} />}
-                  label="Agenda"
-                  active={activeTab === "agenda"}
-                  onClick={() => setActiveTab("agenda")}
-                />
-                <SidebarItem
-                  icon={<Users size={20} />}
-                  label="Clientes"
-                  active={activeTab === "clientes"}
-                  onClick={() => setActiveTab("clientes")}
-                />
-                <SidebarItem
-                  icon={<Scissors size={20} />}
-                  label="Profissionais"
-                  active={activeTab === "profissionais"}
-                  onClick={() => setActiveTab("profissionais")}
-                />
-                <SidebarItem
-                  icon={<Package size={20} />}
-                  label="Estoque"
-                  active={activeTab === "estoque"}
-                  onClick={() => setActiveTab("estoque")}
-                />
-                <SidebarItem
-                  icon={<Megaphone size={20} />}
-                  label="Marketing"
-                  active={activeTab === "marketing"}
-                  onClick={() => setActiveTab("marketing")}
-                />
-                <SidebarItem
-                  icon={<DollarSign size={20} />}
-                  label="Financeiro"
-                  active={activeTab === "financeiro"}
-                  onClick={() => setActiveTab("financeiro")}
-                />
+              <div className="flex-1 py-4 px-2.5 flex flex-col gap-1 overflow-y-auto">
+                {TABS.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all w-full text-left cursor-pointer ${
+                      activeTab === tab.id
+                        ? "bg-white/15 text-white font-bold shadow-2xs border-l-3 border-[var(--primary)]"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    {tab.icon}
+                    <span>{tab.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="p-3 border-t border-white/10 text-[10px] text-white/50 text-center">
+                Visualização Interativa
               </div>
             </div>
 
-            {/* Fake Content Area */}
-            <div className="flex-1 bg-[#fcfcfc] flex flex-col min-w-0">
-              {/* Fake App Header */}
-              <div className="h-16 bg-white border-b border-[#f0f0f0] flex items-center justify-between px-6">
-                <h3 className="font-bold text-lg text-[#2d1b2e] capitalize">
-                  {activeTab}
-                </h3>
-                <div className="flex items-center gap-4">
-                  <Search size={20} className="text-[#999]" />
-                  <Bell size={20} className="text-[#999]" />
-                  <div className="w-8 h-8 rounded-full bg-[#e0e0e0] overflow-hidden ml-2">
-                    <img src="https://i.pravatar.cc/150?img=32" alt="User" />
+            {/* Content Area (100% da largura no Mobile) */}
+            <div className="flex-1 bg-[#fcfafc] flex flex-col min-w-0">
+              {/* Desktop Inner App Header */}
+              <div className="hidden md:flex h-14 bg-white border-b border-[#f0e8ed] items-center justify-between px-6 shrink-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-sm text-[#2d1b2e] capitalize">
+                    {activeTab}
+                  </span>
+                  <span className="text-xs text-[#999]">• Modo Demonstração</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-rose-50 text-[var(--primary)] flex items-center justify-center font-bold text-xs border border-rose-200">
+                    BM
                   </div>
                 </div>
               </div>
 
-              {/* Tab Content */}
-              <div className="flex-1 p-3.5 sm:p-6 overflow-y-auto relative min-w-0">
-                {/* DASHBOARD TAB */}
+              {/* Tab Scrollable Content */}
+              <div className="flex-1 p-3.5 sm:p-5 md:p-6 overflow-y-auto min-w-0 pb-16 md:pb-6">
+                {/* 1. DASHBOARD TAB */}
                 {activeTab === "dashboard" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="bg-white p-4 rounded-xl border border-[#f0f0f0] shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-[#999] uppercase tracking-wider">
+                  <div className="space-y-4 md:space-y-5 animate-in fade-in duration-300">
+                    {/* 3 Core KPI Cards */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
+                      <div className="bg-white p-3.5 md:p-4 rounded-2xl border border-[#ede4e9] shadow-xs">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[11px] font-bold text-[#888] uppercase tracking-wider">
                             Receita Hoje
                           </span>
-                          <TrendingUp size={16} className="text-green-500" />
+                          <span className="w-6 h-6 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                            <TrendingUp size={14} />
+                          </span>
                         </div>
-                        <div className="text-2xl font-bold text-[#2d1b2e]">
+                        <div className="text-xl sm:text-2xl font-bold text-[#2d1b2e]">
                           R$ 2.450,00
                         </div>
-                        <div className="text-xs text-green-500 mt-1">
-                          +15% em relação a ontem
+                        <div className="text-[11px] text-emerald-600 font-semibold mt-1">
+                          ↑ +15% vs ontem
                         </div>
                       </div>
-                      <div className="bg-white p-4 rounded-xl border border-[#f0f0f0] shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-[#999] uppercase tracking-wider">
-                            Agendamentos
+
+                      <div className="bg-white p-3.5 md:p-4 rounded-2xl border border-[#ede4e9] shadow-xs">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[11px] font-bold text-[#888] uppercase tracking-wider">
+                            Atendimentos
                           </span>
-                          <Calendar size={16} className="text-primary" />
+                          <span className="w-6 h-6 rounded-lg bg-rose-50 text-[var(--primary)] flex items-center justify-center">
+                            <Calendar size={14} />
+                          </span>
                         </div>
-                        <div className="text-2xl font-bold text-[#2d1b2e]">
-                          18
+                        <div className="text-xl sm:text-2xl font-bold text-[#2d1b2e]">
+                          18 clientes
                         </div>
-                        <div className="text-xs text-[#666] mt-1">
-                          5 concluídos hoje
+                        <div className="text-[11px] text-[#888] font-medium mt-1">
+                          5 concluídos • 13 previstos
                         </div>
                       </div>
-                      <div className="bg-white p-4 rounded-xl border border-[#f0f0f0] shadow-sm">
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs font-semibold text-[#999] uppercase tracking-wider">
-                            Novos Clientes
+
+                      <div className="bg-white p-3.5 md:p-4 rounded-2xl border border-[#ede4e9] shadow-xs">
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className="text-[11px] font-bold text-[#888] uppercase tracking-wider">
+                            Ticket Médio
                           </span>
-                          <Users size={16} className="text-blue-500" />
+                          <span className="w-6 h-6 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+                            <DollarSign size={14} />
+                          </span>
                         </div>
-                        <div className="text-2xl font-bold text-[#2d1b2e]">
-                          4
+                        <div className="text-xl sm:text-2xl font-bold text-[#2d1b2e]">
+                          R$ 136,10
                         </div>
-                        <div className="text-xs text-blue-500 mt-1">
-                          Meta do mês: 80%
+                        <div className="text-[11px] text-amber-700 font-semibold mt-1">
+                          Alta ocupação na grade
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="bg-white rounded-xl border border-[#f0f0f0] shadow-sm p-4">
-                        <h4 className="font-bold text-[#2d1b2e] mb-4 flex items-center gap-2">
-                          <Clock size={18} /> Próximos de Hoje
-                        </h4>
-                        <div className="space-y-3">
+                    {/* Próximos Atendimentos & Ações */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Próximos de Hoje */}
+                      <div className="bg-white rounded-2xl border border-[#ede4e9] shadow-xs p-4">
+                        <div className="flex items-center justify-between mb-3.5">
+                          <h4 className="font-bold text-xs sm:text-sm text-[#2d1b2e] flex items-center gap-2">
+                            <Clock size={16} className="text-[var(--primary)]" />
+                            Próximos de Hoje
+                          </h4>
+                          <span className="text-[10px] font-bold text-[var(--primary)] bg-rose-50 px-2 py-0.5 rounded-full">
+                            Grade em tempo real
+                          </span>
+                        </div>
+
+                        <div className="space-y-2.5">
                           {[
                             {
                               time: "14:30",
+                              dur: "45m",
                               client: "Beatriz Oliveira",
-                              service: "Mechas",
+                              service: "Mechas & Tonalização",
+                              pro: "Camila",
+                              price: "R$ 380",
                             },
                             {
-                              time: "15:00",
+                              time: "15:15",
+                              dur: "30m",
                               client: "Carla Mendes",
-                              service: "Corte",
+                              service: "Corte & Escova",
+                              pro: "Juliana",
+                              price: "R$ 140",
                             },
                             {
-                              time: "16:15",
+                              time: "16:00",
+                              dur: "50m",
                               client: "Daniela Porto",
-                              service: "Manicure",
+                              service: "Manicure & Pedicure",
+                              pro: "Fernanda",
+                              price: "R$ 95",
                             },
                           ].map((app, i) => (
                             <div
                               key={i}
-                              className="flex items-center justify-between p-3 bg-[#fcfcfc] rounded-lg border border-[#f5f5f5]"
+                              className="flex items-center justify-between p-2.5 sm:p-3 bg-[#faf7f9] rounded-xl border border-[#f2eaef] hover:border-[var(--primary)]/30 transition-all"
                             >
-                              <div className="flex items-center gap-3">
-                                <span className="text-sm font-bold text-primary">
-                                  {app.time}
-                                </span>
-                                <div>
-                                  <div className="text-sm font-semibold text-[#2d1b2e]">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                <div className="px-2 py-1 rounded-lg bg-white border border-[#eae0e6] text-center shrink-0">
+                                  <span className="text-[11px] font-bold text-[var(--primary)] block leading-tight">
+                                    {app.time}
+                                  </span>
+                                  <span className="text-[9px] text-[#999] block leading-none">
+                                    {app.dur}
+                                  </span>
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-xs font-bold text-[#2d1b2e] truncate">
                                     {app.client}
                                   </div>
-                                  <div className="text-xs text-[#999]">
-                                    {app.service}
+                                  <div className="text-[10px] text-[#777] truncate">
+                                    {app.service} • {app.pro}
                                   </div>
                                 </div>
                               </div>
-                              <ChevronRight size={14} className="text-[#ccc]" />
+
+                              <div className="flex items-center gap-2 shrink-0">
+                                <span className="text-xs font-bold text-emerald-700">
+                                  {app.price}
+                                </span>
+                                <div className="w-6 h-6 rounded-lg bg-[#25D366] text-white flex items-center justify-center shadow-2xs">
+                                  <MessageCircle size={12} />
+                                </div>
+                              </div>
                             </div>
                           ))}
                         </div>
                       </div>
-                      <div className="bg-white rounded-xl border border-[#f0f0f0] shadow-sm p-4">
-                        <h4 className="font-bold text-[#2d1b2e] mb-4 flex items-center gap-2">
-                          <CheckCircle2 size={18} /> Atividades Rápidas
-                        </h4>
-                        <div className="space-y-2">
-                          <button className="w-full text-left p-3 text-sm rounded-lg hover:bg-primary/5 transition-colors border border-dashed border-[#e0e0e0] flex items-center gap-2">
-                            <Plus size={16} /> Abrir novo caixa
-                          </button>
-                          <button className="w-full text-left p-3 text-sm rounded-lg hover:bg-primary/5 transition-colors border border-dashed border-[#e0e0e0] flex items-center gap-2">
-                            <Plus size={16} /> Registrar despesa
-                          </button>
-                          <button className="w-full text-left p-3 text-sm rounded-lg hover:bg-primary/5 transition-colors border border-dashed border-[#e0e0e0] flex items-center gap-2">
-                            <Plus size={16} /> Cadastrar cupom
+
+                      {/* Ações Rápidas & WhatsApp */}
+                      <div className="bg-white rounded-2xl border border-[#ede4e9] shadow-xs p-4 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center justify-between mb-3.5">
+                            <h4 className="font-bold text-xs sm:text-sm text-[#2d1b2e] flex items-center gap-2">
+                              <CheckCircle2 size={16} className="text-emerald-600" />
+                              Operação & Disparos
+                            </h4>
+                          </div>
+
+                          <div className="space-y-2">
+                            <div className="p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/60 text-xs">
+                              <span className="font-bold text-emerald-900 block mb-0.5">
+                                WhatsApp Conectado
+                              </span>
+                              <span className="text-[11px] text-emerald-800">
+                                14 lembretes de amanhã prontos para confirmação com 1 clique.
+                              </span>
+                            </div>
+
+                            <div className="p-3 rounded-xl bg-rose-50/70 border border-rose-200/60 text-xs">
+                              <span className="font-bold text-rose-900 block mb-0.5">
+                                Agendamento da Bio Ativo
+                              </span>
+                              <span className="text-[11px] text-rose-800">
+                                4 clientes agendaram sozinhas pelo link do Instagram hoje.
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-[#f2eaef] mt-3">
+                          <button
+                            onClick={() => setActiveTab("agenda")}
+                            className="w-full py-2.5 rounded-xl bg-[#2d1b2e] text-white font-bold text-xs flex items-center justify-center gap-1.5 hover:bg-[#442c3b] transition cursor-pointer"
+                          >
+                            <span>Abrir Agenda Completa</span>
+                            <ChevronRight size={14} />
                           </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
-                {/* AGENDA TAB */}
+
+                {/* 2. AGENDA TAB */}
                 {activeTab === "agenda" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
-                    <div className="flex justify-between items-center mb-6">
-                      <div className="flex gap-2">
-                        <span className="px-4 py-2 bg-white border border-[#e0e0e0] rounded-lg text-sm font-medium text-[#666]">
-                          Hoje
+                  <div className="space-y-3 md:space-y-4 animate-in fade-in duration-300">
+                    <div className="flex flex-wrap items-center justify-between gap-2 bg-white p-3 rounded-2xl border border-[#ede4e9]">
+                      <div className="flex items-center gap-2">
+                        <span className="px-3 py-1.5 bg-[var(--primary)] text-white rounded-xl text-xs font-bold">
+                          Hoje, Quinta
                         </span>
-                        <span className="px-4 py-2 bg-white border border-[#e0e0e0] rounded-lg text-sm font-medium text-[#666]">
+                        <span className="px-3 py-1.5 bg-[#faf7f9] text-[#666] rounded-xl text-xs font-bold border border-[#f0e8ed]">
                           Semana
                         </span>
                       </div>
-                      <button className="bg-[#2d1b2e] text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2">
-                        <Plus size={16} /> Novo Agendamento
-                      </button>
+                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg">
+                        18 horários reservados
+                      </span>
                     </div>
 
-                    <div className="bg-white border border-[#f0f0f0] rounded-xl flex-1 shadow-sm overflow-hidden flex min-h-[400px]">
-                      <div className="w-16 border-r border-[#f0f0f0] flex flex-col py-4 shrink-0 bg-[#fafafa]">
-                        {[
-                          "09:00",
-                          "10:00",
-                          "11:00",
-                          "12:00",
-                          "13:00",
-                          "14:00",
-                          "15:00",
-                        ].map((t) => (
-                          <div
-                            key={t}
-                            className="h-20 text-xs text-center text-[#999] font-medium"
-                          >
-                            {t}
-                          </div>
-                        ))}
-                      </div>
-                      <div className="flex-1 relative bg-[url('https://www.transparenttextures.com/patterns/grid-me.png')] bg-white overflow-x-auto">
-                        <div className="min-w-[600px] h-full relative">
-                          {/* Professional Columns Headers */}
-                          <div className="absolute top-0 left-0 right-0 h-10 border-b border-[#f0f0f0] flex bg-white/80 backdrop-blur-sm z-10">
-                            <div className="flex-1 border-r border-[#f0f0f0] flex items-center justify-center text-[10px] font-bold uppercase text-[#999]">
-                              Julia Santos
-                            </div>
-                            <div className="flex-1 border-r border-[#f0f0f0] flex items-center justify-center text-[10px] font-bold uppercase text-[#999]">
-                              Ricardo O.
-                            </div>
-                            <div className="flex-1 flex items-center justify-center text-[10px] font-bold uppercase text-[#999]">
-                              Fernanda L.
+                    <div className="bg-white rounded-2xl border border-[#ede4e9] p-3 md:p-4 shadow-xs space-y-2.5">
+                      {[
+                        { time: "09:00", client: "Ana Clara Souza", service: "Corte Bordado & Escova", pro: "Juliana", tag: "Confirmado", color: "bg-emerald-100 text-emerald-800" },
+                        { time: "10:30", client: "Patrícia Lima", service: "Mechas Globais & Matização", pro: "Camila", tag: "Em Atendimento", color: "bg-blue-100 text-blue-800" },
+                        { time: "11:45", client: "Carla Dias", service: "Spa dos Pés & Esmaltação", pro: "Fernanda", tag: "Confirmado", color: "bg-emerald-100 text-emerald-800" },
+                        { time: "14:00", client: "Juliana Mendes", service: "Design de Sobrancelhas & Henna", pro: "Mariana", tag: "Aguardando", color: "bg-amber-100 text-amber-800" },
+                        { time: "15:30", client: "Fernanda Rocha", service: "Tratamento Reconstrutor Kérastase", pro: "Camila", tag: "Confirmado", color: "bg-emerald-100 text-emerald-800" },
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between p-3 rounded-xl bg-[#faf7f9] border border-[#f2eaef]">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <span className="text-xs font-bold text-[var(--primary)] shrink-0 bg-white px-2.5 py-1 rounded-lg border border-[#e8dfe5]">
+                              {item.time}
+                            </span>
+                            <div className="min-w-0">
+                              <h5 className="text-xs font-bold text-[#2d1b2e] truncate">{item.client}</h5>
+                              <p className="text-[10px] text-[#777] truncate">{item.service} • {item.pro}</p>
                             </div>
                           </div>
-
-                          {/* Appointment Cards */}
-                          <div className="absolute top-12 left-[2%] w-[30%] h-[70px] bg-[#eefda3] border-l-4 border-[#c7d966] rounded-md p-2 text-xs shadow-sm hover:scale-105 transition-transform cursor-pointer">
-                            <div className="font-bold text-[#2d1b2e]">
-                              Corte e Escova
-                            </div>
-                            <div className="text-[#666]">Ana Clara • 09:00</div>
-                          </div>
-
-                          <div className="absolute top-[172px] left-[35%] w-[30%] h-[150px] bg-[#ffd6e6] border-l-4 border-[#ff6b9d] rounded-md p-2 text-xs shadow-sm hover:scale-105 transition-transform cursor-pointer">
-                            <div className="font-bold text-[#2d1b2e]">
-                              Mechas e Tonalização
-                            </div>
-                            <div className="text-[#666]">
-                              Patrícia Lima • 11:00
-                            </div>
-                          </div>
-
-                          <div className="absolute top-[260px] left-[2%] w-[30%] h-[70px] bg-[#e0f2fe] border-l-4 border-[#38bdf8] rounded-md p-2 text-xs shadow-sm hover:scale-105 transition-transform cursor-pointer">
-                            <div className="font-bold text-[#2d1b2e]">
-                              Manicure
-                            </div>
-                            <div className="text-[#666]">
-                              Carla Dias • 13:00
-                            </div>
-                          </div>
-
-                          <div className="absolute top-[80px] left-[68%] w-[30%] h-[100px] bg-[#f0e7ff] border-l-4 border-[#a855f7] rounded-md p-2 text-xs shadow-sm hover:scale-105 transition-transform cursor-pointer">
-                            <div className="font-bold text-[#2d1b2e]">
-                              Design de Sobrancelha
-                            </div>
-                            <div className="text-[#666]">
-                              Juliana M. • 10:00
-                            </div>
-                          </div>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${item.color}`}>
+                            {item.tag}
+                          </span>
                         </div>
-                      </div>
+                      ))}
                     </div>
                   </div>
                 )}
 
-                {/* PROFISSIONAIS TAB */}
-                {activeTab === "profissionais" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      <ProfessionalCard
-                        name="Julia Santos"
-                        role="Hairstylist Senior"
-                        image="https://i.pravatar.cc/150?img=5"
-                        rating={5.0}
-                        services={124}
-                        status="Disponível"
-                      />
-                      <ProfessionalCard
-                        name="Ricardo Oliveira"
-                        role="Barbeiro Master"
-                        image="https://i.pravatar.cc/150?img=11"
-                        rating={4.9}
-                        services={98}
-                        status="Em atendimento"
-                      />
-                      <ProfessionalCard
-                        name="Fernanda Lima"
-                        role="Manicure e Pedicure"
-                        image="https://i.pravatar.cc/150?img=9"
-                        rating={4.8}
-                        services={215}
-                        status="Disponível"
-                      />
-                      <div className="border-2 border-dashed border-[#e0e0e0] rounded-xl flex flex-col items-center justify-center p-8 text-[#999] hover:bg-[#fafafa] cursor-pointer transition-colors h-[180px]">
-                        <div className="w-12 h-12 rounded-full bg-[#f0f0f0] flex items-center justify-center mb-3">
-                          <Plus size={24} />
-                        </div>
-                        <span className="font-medium">
-                          Adicionar Profissional
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* FINANCEIRO TAB */}
-                {activeTab === "financeiro" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="bg-white p-4 rounded-xl border border-[#f0f0f0] shadow-sm">
-                        <div className="text-sm text-[#999] mb-1">
-                          Faturamento Hoje
-                        </div>
-                        <div className="text-2xl font-bold text-[#2d1b2e]">
-                          R$ 1.240,00
-                        </div>
-                        <div className="text-xs text-green-500 mt-1">
-                          ↑ 12% vs ontem
-                        </div>
-                      </div>
-                      <div className="bg-white p-4 rounded-xl border border-[#f0f0f0] shadow-sm">
-                        <div className="text-sm text-[#999] mb-1">
-                          Ticket Médio
-                        </div>
-                        <div className="text-2xl font-bold text-[#2d1b2e]">
-                          R$ 145,00
-                        </div>
-                      </div>
-                      <div className="bg-white p-4 rounded-xl border border-[#f0f0f0] shadow-sm">
-                        <div className="text-sm text-[#999] mb-1">
-                          Comissões
-                        </div>
-                        <div className="text-2xl font-bold text-[#ff6b9d]">
-                          R$ 320,00
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bg-white p-6 rounded-xl border border-[#f0f0f0] shadow-sm h-64 flex items-center justify-center relative">
-                      {/* Fake Graph */}
-                      <div className="absolute inset-0 flex items-end justify-between px-8 pb-8 pt-16 gap-2">
-                        {[40, 65, 45, 80, 55, 90, 70].map((h, i) => (
-                          <div
-                            key={i}
-                            className="w-full bg-[#FF6B9D]/20 hover:bg-[#FF6B9D] transition-colors rounded-t-sm relative group"
-                            style={{ height: `${h}%` }}
-                          >
-                            <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                              R$ {h * 100},00
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* CLIENTES TAB */}
+                {/* 3. CLIENTES TAB (SEM FOTOS FALSAS) */}
                 {activeTab === "clientes" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-3">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <div
-                        key={i}
-                        className="bg-white p-4 rounded-xl border border-[#f0f0f0] flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#f0f0f0] flex items-center justify-center overflow-hidden">
-                            <img
-                              src={`https://i.pravatar.cc/150?img=${20 + i}`}
-                              alt="Client"
-                            />
+                  <div className="space-y-3 animate-in fade-in duration-300">
+                    <div className="bg-white p-3 rounded-2xl border border-[#ede4e9] flex items-center justify-between text-xs">
+                      <span className="font-bold text-[#2d1b2e]">Cadastro Inteligente de Clientes (CRM)</span>
+                      <span className="text-[11px] text-[var(--primary)] font-bold">Total: 428 clientes</span>
+                    </div>
+
+                    {[
+                      { initials: "AC", name: "Ana Clara Souza", phone: "(11) 98451-2299", last: "Há 4 dias", total: "14 visitas", pref: "Mechas & Corte" },
+                      { initials: "PL", name: "Patrícia Lima", phone: "(11) 97120-4411", last: "Hoje", total: "22 visitas", pref: "Cronograma Capilar" },
+                      { initials: "CD", name: "Carla Dias", phone: "(11) 99842-1055", last: "Há 12 dias", total: "8 visitas", pref: "Manicure Semanal" },
+                      { initials: "JM", name: "Juliana Mendes", phone: "(11) 98223-9900", last: "Há 28 dias", total: "5 visitas", pref: "Design & Henna" },
+                    ].map((c, i) => (
+                      <div key={i} className="bg-white p-3.5 rounded-xl border border-[#ede4e9] flex items-center justify-between hover:shadow-xs transition">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-rose-100 to-pink-100 text-[var(--primary)] font-bold text-xs flex items-center justify-center shrink-0 border border-rose-200">
+                            {c.initials}
                           </div>
-                          <div>
-                            <div className="font-semibold text-[#2d1b2e]">
-                              Cliente Exemplo {i}
-                            </div>
-                            <div className="text-xs text-[#999]">
-                              (11) 99999-9999
-                            </div>
+                          <div className="min-w-0">
+                            <h5 className="text-xs font-bold text-[#2d1b2e] truncate">{c.name}</h5>
+                            <p className="text-[10px] text-[#888] truncate">{c.phone} • Prefere: {c.pref}</p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-4">
-                          <div className="text-right hidden sm:block">
-                            <div className="text-xs font-semibold text-[#2d1b2e]">
-                              Última visita
-                            </div>
-                            <div className="text-xs text-[#999]">
-                              Há {i * 2} dias
-                            </div>
-                          </div>
-                          <ChevronRight size={18} className="text-[#ccc]" />
+                        <div className="text-right shrink-0">
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md block">
+                            {c.total}
+                          </span>
+                          <span className="text-[9px] text-[#999] block mt-0.5">{c.last}</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
 
-                {/* ESTOQUE TAB */}
-                {activeTab === "estoque" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-white rounded-xl border border-[#f0f0f0] shadow-sm overflow-hidden text-sm">
-                      <div className="bg-[#fafafa] flex items-center p-4 border-b border-[#f0f0f0] font-bold text-[#666]">
-                        <div className="flex-1">Produto</div>
-                        <div className="w-24 text-center">Preço</div>
-                        <div className="w-24 text-center">Status</div>
-                        <div className="w-24 text-center">Qtd.</div>
-                      </div>
+                {/* 4. EQUIPE & COMISSÕES (SEM FOTOS FALSAS) */}
+                {activeTab === "profissionais" && (
+                  <div className="space-y-3 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {[
-                        {
-                          name: "Shampoo Premium 500ml",
-                          price: "R$ 85,00",
-                          qty: 12,
-                          status: "Normal",
-                        },
-                        {
-                          name: "Condicionador Glow 300ml",
-                          price: "R$ 62,00",
-                          qty: 3,
-                          status: "Baixo",
-                        },
-                        {
-                          name: "Óleo Finalizador Argan",
-                          price: "R$ 115,00",
-                          qty: 0,
-                          status: "Faltando",
-                        },
-                        {
-                          name: "Máscara Hidratação Profunda",
-                          price: "R$ 145,00",
-                          qty: 8,
-                          status: "Normal",
-                        },
-                      ].map((item, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center p-4 border-b border-[#f5f5f5] hover:bg-[#fcfcfc] transition-colors"
-                        >
-                          <div className="flex-1 font-medium text-[#2d1b2e] flex items-center gap-2">
-                            {item.qty <= 5 && (
-                              <AlertCircle size={14} className="text-red-500" />
-                            )}
-                            {item.name}
+                        { initials: "JS", name: "Julia Santos", role: "Cabeleireira & Colorista", com: "45%", done: "62 atendimentos", total: "R$ 4.280" },
+                        { initials: "CS", name: "Camila Santos", role: "Especialista em Mechas", com: "50%", done: "48 atendimentos", total: "R$ 5.140" },
+                        { initials: "FL", name: "Fernanda Lima", role: "Nail Designer & Manicure", com: "40%", done: "89 atendimentos", total: "R$ 2.920" },
+                      ].map((pro, idx) => (
+                        <div key={idx} className="bg-white p-4 rounded-2xl border border-[#ede4e9] shadow-xs flex flex-col justify-between">
+                          <div>
+                            <div className="flex items-center justify-between mb-2.5">
+                              <div className="w-10 h-10 rounded-xl bg-[var(--primary)] text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                                {pro.initials}
+                              </div>
+                              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full">
+                                Comissão {pro.com}
+                              </span>
+                            </div>
+                            <h5 className="font-bold text-xs text-[#2d1b2e]">{pro.name}</h5>
+                            <p className="text-[11px] text-[#777]">{pro.role}</p>
                           </div>
-                          <div className="w-24 text-center text-[#666]">
-                            {item.price}
-                          </div>
-                          <div className="w-24 text-center">
-                            <span
-                              className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                item.status === "Normal"
-                                  ? "bg-green-100 text-green-700"
-                                  : item.status === "Baixo"
-                                    ? "bg-amber-100 text-amber-700"
-                                    : "bg-red-100 text-red-700"
-                              }`}
-                            >
-                              {item.status}
-                            </span>
-                          </div>
-                          <div className="w-24 text-center font-bold text-[#2d1b2e]">
-                            {item.qty}
+
+                          <div className="mt-4 pt-3 border-t border-[#f2eaef] flex items-center justify-between text-xs">
+                            <span className="text-[#888] text-[11px]">{pro.done}</span>
+                            <span className="font-bold text-[var(--primary)]">{pro.total}</span>
                           </div>
                         </div>
                       ))}
@@ -541,78 +474,106 @@ export function DemoSection() {
                   </div>
                 )}
 
-                {/* MARKETING TAB */}
-                {activeTab === "marketing" && (
-                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="p-5 rounded-2xl bg-linear-to-br from-primary/10 to-primary/5 border border-primary/20 relative overflow-hidden group hover:shadow-lg transition-all cursor-pointer">
-                        <div className="relative z-10">
-                          <h4 className="font-bold text-[#2d1b2e] mb-1">
-                            Aniversariantes do Mês
-                          </h4>
-                          <p className="text-sm text-[#666] mb-4">
-                            Envie um cupom de 20% OFF automaticamente via
-                            WhatsApp.
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <span className="bg-primary text-white text-[10px] px-2 py-1 rounded-full">
-                              Campanha Ativa
-                            </span>
-                            <span className="text-xs text-[#999]">
-                              12 disparos hoje
-                            </span>
-                          </div>
+                {/* 5. ESTOQUE TAB */}
+                {activeTab === "estoque" && (
+                  <div className="bg-white rounded-2xl border border-[#ede4e9] overflow-hidden text-xs animate-in fade-in duration-300">
+                    <div className="bg-[#faf7f9] p-3 border-b border-[#ede4e9] flex justify-between font-bold text-[#666]">
+                      <span>Produto de Bancada & Revenda</span>
+                      <span>Qtd. em Estoque</span>
+                    </div>
+                    {[
+                      { name: "Shampoo Pós-Química 1L", tag: "Em uso", qty: 4, alert: false },
+                      { name: "Pó Descolorante 500g", tag: "Baixo", qty: 1, alert: true },
+                      { name: "Óleo Finalizador Argan 60ml", tag: "Revenda", qty: 12, alert: false },
+                      { name: "Esmalte Gel Coleção Outono", tag: "Bancada", qty: 28, alert: false },
+                    ].map((item, idx) => (
+                      <div key={idx} className="p-3 border-b border-[#f5edf1] flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          {item.alert && <AlertCircle size={14} className="text-amber-500 shrink-0" />}
+                          <span className="font-semibold text-[#2d1b2e]">{item.name}</span>
                         </div>
-                        <Megaphone
-                          size={60}
-                          className="absolute -right-4 -bottom-4 text-primary/10 group-hover:scale-110 transition-transform"
-                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold text-[#777] bg-gray-100 px-2 py-0.5 rounded-md">
+                            {item.tag}
+                          </span>
+                          <span className="font-bold text-[#2d1b2e] min-w-8 text-right">{item.qty} un</span>
+                        </div>
                       </div>
-                      <div className="p-5 rounded-2xl bg-linear-to-br from-blue-50 to-blue-100/50 border border-blue-100 relative overflow-hidden group hover:shadow-lg transition-all cursor-pointer">
-                        <div className="relative z-10">
-                          <h4 className="font-bold text-[#2d1b2e] mb-1">
-                            Recuperar Clientes
-                          </h4>
-                          <p className="text-sm text-[#666] mb-4">
-                            Clientes que não voltam há mais de 45 dias.
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <span className="bg-blue-500 text-white text-[10px] px-2 py-1 rounded-full">
-                              850 clientes aptos
-                            </span>
-                          </div>
-                        </div>
-                        <Users
-                          size={60}
-                          className="absolute -right-4 -bottom-4 text-blue-500/10 group-hover:scale-110 transition-transform"
-                        />
+                    ))}
+                  </div>
+                )}
+
+                {/* 6. MARKETING TAB */}
+                {activeTab === "marketing" && (
+                  <div className="space-y-3 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-200">
+                        <span className="text-[10px] font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full mb-2 inline-block">
+                          Automação Ativa
+                        </span>
+                        <h5 className="font-bold text-xs text-[#2d1b2e]">Lembrete 24h WhatsApp</h5>
+                        <p className="text-[11px] text-[#666] mt-1">Disparado na véspera para reduzir faltas (no-show).</p>
+                        <div className="text-[11px] font-bold text-emerald-700 mt-3">✓ 18 disparos automáticos hoje</div>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-gradient-to-br from-rose-50 to-pink-50 border border-rose-200">
+                        <span className="text-[10px] font-bold text-rose-800 bg-rose-100 px-2 py-0.5 rounded-full mb-2 inline-block">
+                          Fidelização
+                        </span>
+                        <h5 className="font-bold text-xs text-[#2d1b2e]">Aniversariantes do Mês</h5>
+                        <p className="text-[11px] text-[#666] mt-1">Mensagem de carinho com mimo exclusivo do salão.</p>
+                        <div className="text-[11px] font-bold text-[var(--primary)] mt-3">✓ 6 aniversariantes esta semana</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* 7. FINANCEIRO TAB */}
+                {activeTab === "financeiro" && (
+                  <div className="space-y-4 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+                      <div className="bg-white p-3 rounded-xl border border-[#ede4e9] text-center">
+                        <span className="text-[10px] text-[#888] font-bold uppercase block">Faturamento</span>
+                        <span className="text-base sm:text-lg font-bold text-emerald-700 block mt-0.5">R$ 14.850</span>
+                        <span className="text-[9px] text-emerald-600 font-semibold block">Mês atual</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-[#ede4e9] text-center">
+                        <span className="text-[10px] text-[#888] font-bold uppercase block">Custos Fixos</span>
+                        <span className="text-base sm:text-lg font-bold text-rose-700 block mt-0.5">R$ 4.200</span>
+                        <span className="text-[9px] text-[#999] block">Reservado</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-[#ede4e9] text-center">
+                        <span className="text-[10px] text-[#888] font-bold uppercase block">Lucro Líquido</span>
+                        <span className="text-base sm:text-lg font-bold text-[var(--primary)] block mt-0.5">R$ 6.310</span>
+                        <span className="text-[9px] text-emerald-600 font-semibold block">Livre</span>
                       </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl border border-[#f0f0f0] shadow-sm">
-                      <h4 className="font-bold text-[#2d1b2e] mb-4">
-                        Programa de Fidelidade
-                      </h4>
-                      <div className="flex items-center gap-6">
-                        <div className="flex-1">
-                          <div className="flex justify-between text-xs mb-1">
-                            <span className="text-[#999]">
-                              Metas atingidas (Mês)
-                            </span>
-                            <span className="font-bold text-primary">78%</span>
+                    <div className="bg-white p-4 rounded-2xl border border-[#ede4e9] shadow-xs">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-xs font-bold text-[#2d1b2e]">Desempenho dos Últimos 7 Dias</span>
+                        <span className="text-[10px] text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-md">
+                          ↑ +18% crescimento
+                        </span>
+                      </div>
+                      <div className="h-28 flex items-end justify-between gap-2 pt-4 px-2">
+                        {[
+                          { day: "Seg", h: "45%", val: "R$ 1.8k" },
+                          { day: "Ter", h: "60%", val: "R$ 2.4k" },
+                          { day: "Qua", h: "55%", val: "R$ 2.2k" },
+                          { day: "Qui", h: "75%", val: "R$ 3.1k" },
+                          { day: "Sex", h: "95%", val: "R$ 4.2k" },
+                          { day: "Sáb", h: "100%", val: "R$ 4.6k" },
+                          { day: "Dom", h: "20%", val: "Folga" },
+                        ].map((bar, i) => (
+                          <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end">
+                            <div
+                              className="w-full max-w-[32px] rounded-t-lg bg-gradient-to-t from-[var(--primary)] to-pink-400 transition-all"
+                              style={{ height: bar.h }}
+                            />
+                            <span className="text-[9px] font-bold text-[#888]">{bar.day}</span>
                           </div>
-                          <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-primary w-[78%] rounded-full"></div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-2xl font-bold text-[#2d1b2e]">
-                            452
-                          </div>
-                          <div className="text-xs text-[#999]">
-                            Vouchers resgatados
-                          </div>
-                        </div>
+                        ))}
                       </div>
                     </div>
                   </div>
@@ -623,80 +584,5 @@ export function DemoSection() {
         </div>
       </div>
     </section>
-  );
-}
-
-function SidebarItem({
-  icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-3 px-3 py-3 rounded-xl transition-all w-full text-left
-      ${active ? "bg-white/10 text-white font-medium shadow-sm" : "text-white/60 hover:bg-white/5 hover:text-white"}`}
-    >
-      {icon}
-      <span className="hidden md:block">{label}</span>
-    </button>
-  );
-}
-
-interface ProfessionalCardProps {
-  name: string;
-  role: string;
-  image: string;
-  rating: number;
-  services: number;
-  status: string;
-}
-
-function ProfessionalCard({
-  name,
-  role,
-  image,
-  rating,
-  services,
-  status,
-}: ProfessionalCardProps) {
-  return (
-    <div className="bg-white p-4 rounded-xl border border-[#f0f0f0] shadow-sm hover:border-primary/30 transition-all group">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3">
-          <img
-            src={image}
-            alt={name}
-            className="w-12 h-12 rounded-full object-cover ring-2 ring-white shadow-md"
-          />
-          <div>
-            <h4 className="font-bold text-[#2d1b2e]">{name}</h4>
-            <p className="text-xs text-[#666]">{role}</p>
-          </div>
-        </div>
-        <div
-          className={`text-[10px] font-bold px-2 py-1 rounded-full ${status === "Disponível" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}
-        >
-          {status}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between text-sm py-3 border-t border-[#f8f8f8]">
-        <div className="flex items-center gap-1 text-amber-500 font-semibold">
-          <Star size={14} fill="currentColor" /> {rating}
-        </div>
-        <div className="text-[#999]">{services} atendimentos</div>
-      </div>
-
-      <button className="w-full mt-2 bg-[#f8f8f8] text-[#2d1b2e] py-2 rounded-lg text-sm font-medium group-hover:bg-[#2d1b2e] group-hover:text-white transition-colors">
-        Ver Agenda
-      </button>
-    </div>
   );
 }
