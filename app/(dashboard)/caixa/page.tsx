@@ -255,7 +255,7 @@ export default function CaixaPage() {
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-[1440px] w-full mx-auto">
         {/* Top Action Bar */}
         <div className="bg-white rounded-3xl p-4 md:p-5 shadow-xs border border-[#f2e6ea] flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex overflow-x-auto items-center gap-2 pb-1 no-scrollbar w-full lg:w-auto">
             {(
               [
                 { id: "fluxo", label: "Visão Geral & Caixinhas" },
@@ -267,7 +267,7 @@ export default function CaixaPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 whitespace-nowrap cursor-pointer ${
                   activeTab === tab.id
                     ? "bg-[#b83b6b] text-white shadow-xs"
                     : "bg-[#faf6f2] text-[#6e5a65] hover:text-[#2d1b2e]"

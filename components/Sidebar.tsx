@@ -39,7 +39,7 @@ interface MenuSection {
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { isOpen, close } = useSidebar();
+  const { isOpen, toggle, close } = useSidebar();
 
   const menuSections: MenuSection[] = [
     {
@@ -224,16 +224,13 @@ export function Sidebar() {
         })}
         <button
           type="button"
-          onClick={() =>
+          onClick={toggle}
+          className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-xl transition-all cursor-pointer ${
             isOpen
-              ? close()
-              : document
-                  .querySelector<HTMLButtonElement>(
-                    'button[aria-label="Abrir menu"]',
-                  )
-                  ?.click()
-          }
-          className="flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-xl text-[var(--muted)] cursor-pointer"
+              ? "text-[var(--primary)] font-bold bg-[var(--primary-light)]"
+              : "text-[var(--muted)]"
+          }`}
+          aria-label="Abrir menu completo"
         >
           <Menu size={19} />
           <span className="text-[10px] leading-none font-medium">Mais</span>

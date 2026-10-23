@@ -80,14 +80,14 @@ export default function Services() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap sm:flex-nowrap gap-2 w-full sm:w-auto">
               <button
                 onClick={() => {
                   setEditingService(null);
                   setIsComboDefault(true);
                   setShowModal(true);
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#fdf8e7] text-[#c59b27] border border-[#c59b27]/40 text-xs md:text-sm font-bold flex items-center gap-1.5 hover:brightness-95 transition"
+                className="flex-1 sm:flex-initial justify-center px-4 py-2.5 rounded-xl bg-[#fdf8e7] text-[#c59b27] border border-[#c59b27]/40 text-xs md:text-sm font-bold flex items-center gap-1.5 hover:brightness-95 transition"
               >
                 <Sparkles size={16} /> Novo Combo / Pacote
               </button>
@@ -97,7 +97,7 @@ export default function Services() {
                   setIsComboDefault(false);
                   setShowModal(true);
                 }}
-                className="px-5 py-2.5 rounded-xl bg-linear-to-r from-[#b83b6b] to-[#88234b] text-white text-xs md:text-sm font-bold flex items-center gap-2 shadow-md hover:opacity-95 transition"
+                className="flex-1 sm:flex-initial justify-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#b83b6b] to-[#88234b] text-white text-xs md:text-sm font-bold flex items-center gap-2 shadow-md hover:opacity-95 transition"
               >
                 <Plus size={18} /> Novo Serviço
               </button>
@@ -726,7 +726,7 @@ function ServiceModal({
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-linear-to-r from-[#b83b6b] to-[#88234b] text-white text-xs font-bold shadow-md"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#b83b6b] to-[#88234b] text-white text-xs font-bold shadow-md cursor-pointer"
             >
               Salvar Serviço
             </button>

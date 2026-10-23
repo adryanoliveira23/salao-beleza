@@ -316,10 +316,10 @@ export default function Dashboard() {
             </div>
 
             {/* Ações Rápidas Vibrantes */}
-            <div className="flex items-center gap-2.5 self-start md:self-center shrink-0">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full md:w-auto self-start md:self-center shrink-0">
               <Link
                 href="/whatsapp"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300/70 dark:border-emerald-800/60 text-xs font-bold transition-all shadow-2xs active:scale-[0.98]"
+                className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300/70 dark:border-emerald-800/60 text-xs font-bold transition-all shadow-2xs active:scale-[0.98]"
               >
                 <MessageCircle size={16} className="text-emerald-600 dark:text-emerald-400" />
                 <span>WhatsApp Salão</span>
@@ -327,7 +327,7 @@ export default function Dashboard() {
 
               <Link
                 href="/agenda"
-                className="inline-flex items-center gap-2 bg-gradient-to-r from-[var(--primary)] via-rose-600 to-pink-600 hover:opacity-95 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-rose-500/25 transition-all active:scale-[0.98]"
+                className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 bg-gradient-to-r from-[var(--primary)] via-rose-600 to-pink-600 hover:opacity-95 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-rose-500/25 transition-all active:scale-[0.98]"
               >
                 <Plus size={17} />
                 <span>Novo Agendamento</span>

@@ -158,16 +158,16 @@ export default function Clients() {
               />
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full md:w-auto">
               <button
                 onClick={exportClientsCSV}
-                className="px-3.5 py-2.5 rounded-xl bg-[#faf6f2] text-[#2d1b2e] border border-[#f2e6ea] text-xs font-bold flex items-center gap-1.5 hover:bg-[#fff0f5] transition"
+                className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 rounded-xl bg-[#faf6f2] text-[#2d1b2e] border border-[#f2e6ea] text-xs font-bold flex items-center gap-1.5 hover:bg-[#fff0f5] transition"
               >
                 <Download size={16} /> Exportar CSV (LGPD)
               </button>
               <button
                 onClick={() => setShowImportModal(true)}
-                className="px-3.5 py-2.5 rounded-xl bg-white text-[#b83b6b] border border-[#b83b6b] text-xs font-bold flex items-center gap-1.5 hover:bg-[#fff0f5] transition"
+                className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 rounded-xl bg-white text-[#b83b6b] border border-[#b83b6b] text-xs font-bold flex items-center gap-1.5 hover:bg-[#fff0f5] transition"
               >
                 <Upload size={16} /> Importar Lista
               </button>
@@ -176,7 +176,7 @@ export default function Clients() {
                   setEditingClient(null);
                   setShowModal(true);
                 }}
-                className="px-5 py-2.5 rounded-xl bg-linear-to-r from-[#b83b6b] to-[#88234b] text-white text-xs md:text-sm font-bold flex items-center gap-2 shadow-md hover:opacity-95 transition"
+                className="flex-1 sm:flex-initial justify-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#b83b6b] to-[#88234b] text-white text-xs md:text-sm font-bold flex items-center gap-2 shadow-md hover:opacity-95 transition"
               >
                 <Plus size={18} /> Nova Cliente
               </button>
@@ -241,7 +241,7 @@ export default function Clients() {
                 <div>
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-[#b83b6b] to-[#88234b] text-white font-bold text-base flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#b83b6b] to-[#88234b] text-white font-bold text-base flex items-center justify-center shrink-0 shadow-xs">
                         {client.name
                           .split(" ")
                           .slice(0, 2)
@@ -793,7 +793,7 @@ function ClientFormModal({
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-linear-to-r from-[#b83b6b] to-[#88234b] text-white text-xs font-bold shadow-md"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#b83b6b] to-[#88234b] text-white text-xs font-bold shadow-md cursor-pointer"
             >
               Salvar Ficha
             </button>

@@ -447,8 +447,8 @@ export default function AgendarPage() {
     );
 
     return (
-      <div className="min-h-screen bg-[#faf6f2] flex items-center justify-center p-4">
-        <div className="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center border border-[#f2e6ea] space-y-5">
+      <div className="min-h-screen bg-[#faf6f2] flex items-center justify-center p-3.5 sm:p-4">
+        <div className="bg-white rounded-3xl shadow-xl p-5 sm:p-8 max-w-md w-full text-center border border-[#f2e6ea] space-y-4 sm:space-y-5">
           <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto text-[#0ca678]">
             <CheckCircle2 size={34} />
           </div>
@@ -543,7 +543,7 @@ export default function AgendarPage() {
   return (
     <div className="min-h-screen bg-[#faf6f2]">
       {/* Header Banner */}
-      <div className="bg-linear-to-r from-[#88234b] to-[#b83b6b] text-white py-10 px-4 text-center">
+      <div className="bg-gradient-to-r from-[#88234b] to-[#b83b6b] text-white py-8 sm:py-10 px-4 text-center">
         <div className="w-14 h-14 rounded-2xl bg-white/15 flex items-center justify-center mx-auto mb-3 border border-white/20">
           <Scissors size={26} />
         </div>
@@ -560,10 +560,10 @@ export default function AgendarPage() {
         </p>
       </div>
 
-      <main className="max-w-2xl mx-auto p-4 md:p-6 -mt-6">
+      <main className="max-w-2xl mx-auto p-3.5 sm:p-4 md:p-6 -mt-6">
         <form
           onSubmit={handleSubmit}
-          className="bg-white rounded-3xl shadow-lg border border-[#f2e6ea] p-6 md:p-8 space-y-6"
+          className="bg-white rounded-3xl shadow-lg border border-[#f2e6ea] p-4 sm:p-6 md:p-8 space-y-5 sm:space-y-6"
         >
           {error && (
             <div className="bg-red-50 text-red-700 border border-red-200 p-3.5 rounded-xl text-xs font-bold">
@@ -789,7 +789,7 @@ export default function AgendarPage() {
           <button
             type="submit"
             disabled={!form.serviceId || !form.time}
-            className="w-full py-4 rounded-2xl bg-linear-to-r from-[#b83b6b] to-[#88234b] text-white font-bold text-sm shadow-lg hover:opacity-95 transition disabled:opacity-50"
+            className="w-full py-3.5 sm:py-4 rounded-2xl bg-gradient-to-r from-[#b83b6b] to-[#88234b] text-white font-bold text-sm shadow-lg hover:opacity-95 transition disabled:opacity-50 cursor-pointer"
           >
             Confirmar Reserva de Horário
           </button>

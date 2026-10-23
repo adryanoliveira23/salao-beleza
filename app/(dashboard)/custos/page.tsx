@@ -130,9 +130,9 @@ export default function CustosPage() {
 
         {/* Fixed Costs Section */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h2 className="text-lg font-bold font-serif text-[#2d1b2e]">
+              <h2 className="text-base sm:text-lg font-bold font-serif text-[#2d1b2e]">
                 Despesas Fixas Mensais (Aluguel, Luz, Internet, Contador)
               </h2>
               <p className="text-xs text-[#6e5a65]">
@@ -141,7 +141,7 @@ export default function CustosPage() {
             </div>
             <button
               onClick={() => setIsFixedModalOpen(true)}
-              className="bg-[#b83b6b] text-white px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-[#88234b] transition text-xs font-bold shadow-xs"
+              className="bg-[#b83b6b] text-white px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-[#88234b] transition text-xs font-bold shadow-xs w-full sm:w-auto shrink-0"
             >
               <Plus size={16} />
               Nova Despesa Fixa
@@ -207,9 +207,9 @@ export default function CustosPage() {
 
         {/* Variable Costs Section */}
         <div className="space-y-4">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
             <div>
-              <h2 className="text-lg font-bold font-serif text-[#2d1b2e]">
+              <h2 className="text-base sm:text-lg font-bold font-serif text-[#2d1b2e]">
                 Despesas Variáveis (Produtos, Manutenção, Marketing, Impostos)
               </h2>
               <p className="text-xs text-[#6e5a65]">
@@ -218,7 +218,7 @@ export default function CustosPage() {
             </div>
             <button
               onClick={() => setIsVariableModalOpen(true)}
-              className="bg-white border border-[#b83b6b] text-[#b83b6b] px-4 py-2.5 rounded-xl flex items-center gap-2 hover:bg-[#fff0f5] transition text-xs font-bold"
+              className="bg-white border border-[#b83b6b] text-[#b83b6b] px-4 py-2.5 rounded-xl flex items-center justify-center gap-2 hover:bg-[#fff0f5] transition text-xs font-bold w-full sm:w-auto shrink-0"
             >
               <Plus size={16} />
               Nova Despesa Variável

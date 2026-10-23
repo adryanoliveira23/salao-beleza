@@ -115,7 +115,7 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8 space-y-6">
         {/* Tabs */}
-        <div className="flex flex-wrap gap-2 bg-white p-1.5 rounded-2xl border border-rose-100 w-fit shadow-xs">
+        <div className="flex overflow-x-auto gap-1.5 bg-white p-1.5 rounded-2xl border border-rose-100 w-full sm:w-fit shadow-xs no-scrollbar">
           {[
             { id: "overview", label: "Indicadores SaaS", icon: TrendingUp },
             { id: "users", label: "Salões Cadastrados", icon: Users },
@@ -125,7 +125,7 @@ export default function AdminDashboard() {
             <button
               key={t.id}
               onClick={() => setActiveTab(t.id as typeof activeTab)}
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer ${
+              className={`flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer shrink-0 whitespace-nowrap ${
                 activeTab === t.id
                   ? "bg-[#b83b6b] text-white shadow-sm"
                   : "text-[#7d6570] hover:text-[#2b1822]"

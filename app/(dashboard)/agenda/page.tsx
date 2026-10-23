@@ -275,10 +275,10 @@ export default function Agenda() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full lg:w-auto">
               <button
                 onClick={() => setShowWaitlistModal(true)}
-                className="px-3.5 py-2.5 rounded-xl bg-[#fdf8e7] text-[#c59b27] border border-[#c59b27]/30 text-xs font-bold flex items-center gap-1.5 hover:brightness-95 transition"
+                className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 rounded-xl bg-[#fdf8e7] text-[#c59b27] border border-[#c59b27]/30 text-xs font-bold flex items-center gap-1.5 hover:brightness-95 transition"
               >
                 <ListTodo size={16} />
                 Lista de Espera ({waitlist.filter((w) => w.status === "waiting").length})
@@ -286,10 +286,10 @@ export default function Agenda() {
 
               <button
                 onClick={() => setShowBlockModal(true)}
-                className="px-3.5 py-2.5 rounded-xl bg-[#faf6f2] text-[#6e5a65] border border-[#f2e6ea] text-xs font-bold flex items-center gap-1.5 hover:bg-gray-100 transition"
+                className="flex-1 sm:flex-initial justify-center px-3.5 py-2.5 rounded-xl bg-[#faf6f2] text-[#6e5a65] border border-[#f2e6ea] text-xs font-bold flex items-center gap-1.5 hover:bg-gray-100 transition"
               >
                 <Lock size={16} />
-                Bloquear Horário / Folga
+                Bloquear Horário
               </button>
 
               <button
@@ -297,7 +297,7 @@ export default function Agenda() {
                   setEditingApt(null);
                   setShowAptModal(true);
                 }}
-                className="px-5 py-2.5 rounded-xl bg-linear-to-r from-[#b83b6b] to-[#88234b] text-white text-xs md:text-sm font-bold flex items-center gap-2 shadow-md hover:opacity-95 transition"
+                className="flex-1 sm:flex-initial justify-center px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#b83b6b] to-[#88234b] text-white text-xs md:text-sm font-bold flex items-center gap-2 shadow-md hover:opacity-95 transition cursor-pointer"
               >
                 <Plus size={18} />
                 Novo Agendamento
@@ -1244,7 +1244,7 @@ function AppointmentModal({
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 rounded-xl bg-linear-to-r from-[#b83b6b] to-[#88234b] text-white text-xs font-bold flex items-center gap-2 shadow-md"
+              className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-[#b83b6b] to-[#88234b] text-white text-xs font-bold flex items-center gap-2 shadow-md cursor-pointer"
             >
               <Check size={16} />
               {appointment ? "Salvar Alterações" : "Confirmar Agendamento"}
