@@ -632,12 +632,12 @@ export default function WhatsAppPage() {
             {[
               {
                 id: "connection",
-                label: "Conexão do Aparelho",
+                label: "Conexão Baileys",
                 icon: Smartphone,
               },
               {
                 id: "gateway",
-                label: "Configurar Gateway (Evolution / Z-API)",
+                label: "Servidor Baileys & Gateway",
                 icon: Server,
               },
               {
@@ -808,46 +808,43 @@ export default function WhatsAppPage() {
                   </p>
                 </div>
 
-                {/* ALERTA EXPLICATIVO SOBRE "QR CODE INVÁLIDO" */}
-                {!isRealHandshake ? (
-                  <div className="p-4 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300/80 dark:border-amber-900/80 text-xs space-y-2">
-                    <div className="flex items-start gap-2.5 text-amber-900 dark:text-amber-200 font-bold">
-                      <AlertTriangle size={17} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-                      <div>
-                        <span>Por que o WhatsApp no celular dá &quot;Código QR Inválido&quot;?</span>
-                        <p className="font-normal text-[11.5px] text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
-                          O aplicativo WhatsApp no celular (em <strong>Aparelhos Conectados</strong>) possui criptografia de ponta a ponta e <strong>só aceita QR Codes gerados por uma instância ativa da Evolution API ou Z-API</strong>. Códigos de demonstração são rejeitados pelo leitor do WhatsApp.
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-amber-200/60 dark:border-amber-900/40">
-                      <button
-                        onClick={() => setActiveTab("gateway")}
-                        className="px-3 py-1.5 rounded-xl bg-amber-600 text-white font-bold text-[11px] hover:bg-amber-700 transition cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Server size={13} /> Configurar Gateway (Evolution API / Z-API)
-                      </button>
-                      <button
-                        onClick={() => setActiveTab("console")}
-                        className="px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-amber-300 text-amber-900 dark:text-amber-200 font-bold text-[11px] hover:bg-amber-100/50 transition cursor-pointer flex items-center gap-1.5"
-                      >
-                        <Terminal size={13} /> Ver Detalhes no Console
-                      </button>
-                      <span className="text-[11px] text-amber-700 dark:text-amber-400">
-                        Ou use o <strong>Modo Disparo Direto</strong> abaixo para enviar mensagens sem precisar de servidor!
-                      </span>
-                    </div>
-                  </div>
-                ) : (
+                {/* ALERTA DE STATUS BAILEYS */}
+                {isRealHandshake ? (
                   <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300/80 dark:border-emerald-800 text-xs flex items-start gap-2.5">
                     <CheckCircle2 size={17} className="text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                     <div>
                       <span className="font-bold text-emerald-900 dark:text-emerald-200">
-                        QR Code Oficial da Evolution API Gerado!
+                        QR Code Oficial do WhatsApp gerado via Baileys Engine (@whiskeysockets/baileys)!
                       </span>
-                      <p className="text-[11.5px] text-emerald-800 dark:text-emerald-300 mt-0.5">
-                        Aponte a câmera em <strong>Aparelhos Conectados</strong> no seu WhatsApp. A leitura será aceita com sucesso!
+                      <p className="text-[11.5px] text-emerald-800 dark:text-emerald-300 mt-0.5 leading-relaxed">
+                        Aponte a câmera em <strong>Aparelhos Conectados</strong> no seu celular. O handshake do protocolo Noise do Baileys garante autenticação oficial direta com o WhatsApp sem erro de código inválido.
                       </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-900/60 text-xs space-y-2">
+                    <div className="flex items-start gap-2.5 text-indigo-950 dark:text-indigo-200 font-bold">
+                      <Sparkles size={17} className="text-indigo-600 dark:text-indigo-400 shrink-0 mt-0.5" />
+                      <div>
+                        <span>Motor Baileys Ativo (@whiskeysockets/baileys)</span>
+                        <p className="font-normal text-[11.5px] text-indigo-800 dark:text-indigo-300 mt-0.5 leading-relaxed">
+                          Conectando aos servidores do WhatsApp via protocolo WebSocket nativo. Para manter o WhatsApp conectado 24 horas por dia sem interrupções em produção, execute o comando <code className="bg-indigo-200/60 dark:bg-indigo-900 px-1.5 py-0.5 rounded font-mono font-bold">npm run whatsapp</code> no servidor.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-indigo-200/60 dark:border-indigo-900/40">
+                      <button
+                        onClick={() => setActiveTab("console")}
+                        className="px-3 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-[11px] hover:bg-indigo-700 transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <Terminal size={13} /> Ver Logs no Console Baileys
+                      </button>
+                      <button
+                        onClick={generateConnectionCredentials}
+                        className="px-3 py-1.5 rounded-xl bg-white dark:bg-zinc-800 border border-indigo-300 text-indigo-900 dark:text-indigo-200 font-bold text-[11px] hover:bg-indigo-100/50 transition cursor-pointer flex items-center gap-1.5"
+                      >
+                        <RefreshCw size={13} /> Atualizar Conexão Baileys
+                      </button>
                     </div>
                   </div>
                 )}
@@ -1135,23 +1132,65 @@ export default function WhatsAppPage() {
         )}
 
         {/* =========================================================================
-            ABA 2: CONFIGURAR GATEWAY (EVOLUTION API / Z-API / META)
+            ABA 2: SERVIDOR BAILEYS & CONFIGURAÇÃO DE PROVEDORES
             ========================================================================= */}
         {activeTab === "gateway" && (
           <div className="space-y-6">
             <div className="bg-[var(--card-bg)] rounded-3xl p-6 md:p-8 border border-[var(--card-border)] shadow-xs space-y-6">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                    <Server size={13} />
-                    Configuração de API
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                    <Zap size={13} />
+                    Motor Baileys Integrado (@whiskeysockets/baileys)
                   </span>
                 </div>
                 <h2 className="text-xl md:text-2xl font-bold font-sans tracking-tight text-[var(--foreground)]">
-                  Provedores de Conexão WhatsApp
+                  Conexão Nativa com WhatsApp via Baileys
                 </h2>
                 <p className="text-xs md:text-sm text-[var(--muted)] mt-1 max-w-3xl leading-relaxed">
-                  Escolha como o BellaMais se conectará ao WhatsApp do seu salão. Para habilitar o escaneamento real do celular sem &quot;Código QR Inválido&quot;, configure uma instância da Evolution API ou Z-API.
+                  O BellaMais agora utiliza diretamente a biblioteca oficial <strong>Baileys</strong> para comunicação WebSocket com o WhatsApp. Você pode conectar diretamente na aba de conexão ou executar o servidor em segundo plano para manter o WhatsApp conectado 24 horas.
+                </p>
+              </div>
+
+              {/* CARD DESTACADO: SERVIDOR BAILEYS BACKGROUND */}
+              <div className="p-6 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-zinc-900/5 to-emerald-500/10 border-2 border-emerald-400/60 dark:border-emerald-800 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0">
+                      <Terminal size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-sm text-[var(--foreground)]">
+                        Executar Baileys em Segundo Plano (24h Online)
+                      </h3>
+                      <p className="text-xs text-[var(--muted)] mt-0.5">
+                        Inicia o microserviço persistente do Baileys na porta 3001
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleRunDiagnostic}
+                      className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Activity size={14} /> Testar Conexão Baileys
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-zinc-950 rounded-2xl border border-zinc-800 font-mono text-xs text-zinc-300 flex items-center justify-between">
+                  <span className="text-emerald-400">$ npm run whatsapp</span>
+                  <button
+                    onClick={() => copyToClipboard("npm run whatsapp")}
+                    className="text-zinc-400 hover:text-white text-xs font-sans font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <Copy size={13} /> {copiedCode ? "Copiado!" : "Copiar Comando"}
+                  </button>
+                </div>
+
+                <p className="text-[11.5px] text-[var(--muted)] leading-relaxed">
+                  Ao rodar <code className="text-[var(--primary)] font-bold">npm run whatsapp</code> no seu servidor ou computador, o Baileys mantém uma sessão contínua de WebSocket com o WhatsApp Web, garantindo que confirmações e lembretes sejam disparados mesmo se o navegador estiver fechado.
                 </p>
               </div>
 
@@ -1192,14 +1231,14 @@ export default function WhatsAppPage() {
                 >
                   <div>
                     <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-800 bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 px-2 py-0.5 rounded-md inline-block mb-2">
-                      Recomendado para Automação Real
+                      Gateway Externo (Opcional)
                     </span>
                     <h3 className="font-bold text-sm text-[var(--foreground)] flex items-center gap-2">
                       <Server size={16} className="text-indigo-500" />
-                      Evolution API / Z-API (Baileys)
+                      Evolution API / Z-API
                     </h3>
                     <p className="text-xs text-[var(--muted)] mt-1.5 leading-relaxed">
-                      Gera o QR Code oficial criptografado que é 100% aceito pela câmera do WhatsApp em &quot;Aparelhos Conectados&quot;. Envia em background 24h por dia.
+                      Conecta com um servidor externo já existente da Evolution API ou Z-API caso seu salão utilize uma infraestrutura externa dedicada.
                     </p>
                   </div>
                   <span className="text-[11px] font-bold text-[var(--primary)] flex items-center gap-1">

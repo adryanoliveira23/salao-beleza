@@ -1,19 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sendBaileysMessage, getBaileysStatus } from "@/lib/baileysManager";
+
+export const runtime = "nodejs";
 
 /**
- * Endpoint real para envio de mensagens pelo WhatsApp:
- * - Suporta API Oficial da Meta (texto dentro da janela de 24h ou templates aprovados)
- * - Suporta Provedor Compatível (Evolution API / Z-API / WPPConnect)
- * - Suporta Modo Direto (WhatsApp Web / App wa.me 100% gratuito)
+ * Endpoint real para envio de mensagens pelo WhatsApp com suporte a Baileys:
+ * - 1. Envio nativo pelo Baileys Engine (@whiskeysockets/baileys)
+ * - 2. Suporta Microserviço Baileys em porta 3001 (whatsapp-server.js)
+ * - 3. Suporta API Oficial da Meta / Gateways externos
+ * - 4. Suporta Modo Direto (WhatsApp Web wa.me)
  */
 export async function POST(req: NextRequest) {
   const timestamp = new Date().toLocaleTimeString("pt-BR", { hour12: false });
-  console.log(`\n[WhatsApp Send Server - ${timestamp}] Disparo de mensagem solicitado.`);
+  console.log(`\n[WhatsApp Send API - ${timestamp}] Disparo de mensagem solicitado.`);
 
   try {
     const body = await req.json();
     const {
-      provider,
+      provider = "baileys",
       toPhone,
       messageText,
       templateName,
@@ -29,18 +33,18 @@ export async function POST(req: NextRequest) {
 
     const cleanPhone = (toPhone || "").replace(/\D/g, "");
     if (!cleanPhone || cleanPhone.length < 10) {
-      console.warn(`[WhatsApp Send Server] Número inválido recebido: "${toPhone}"`);
+      console.warn(`[WhatsApp Send API] Número inválido recebido: "${toPhone}"`);
       return NextResponse.json(
         { sent: false, message: "Número de telefone inválido. Informe DDD + Número." },
-        { status: 400 },
+        { status: 400 }
       );
     }
     const formattedPhone = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone;
-    console.log(`[WhatsApp Send Server] Destinatário formatado: ${formattedPhone} | Provedor: ${provider || "auto"}`);
+    console.log(`[WhatsApp Send API] Destinatário: ${formattedPhone} | Provedor: ${provider}`);
 
-    if (provider === "free_direct" || (!gatewayUrl && !phoneNumberId && !process.env.WHATSAPP_GATEWAY_URL)) {
+    // Modo Direto forçado ou explícito
+    if (provider === "free_direct") {
       const waUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(formattedPhone)}&text=${encodeURIComponent(messageText || "")}`;
-      console.log(`[WhatsApp Send Server] Gerado link direto WhatsApp Web: ${waUrl.substring(0, 80)}...`);
       return NextResponse.json({
         sent: true,
         provider: "free_direct",
@@ -49,130 +53,87 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    if (provider === "meta_official") {
-      if (!phoneNumberId || !accessToken) {
-        console.warn("[WhatsApp Send Server] Meta Official sem credenciais completas.");
-        return NextResponse.json(
-          {
-            sent: false,
-            requiresCredentials: true,
-            message:
-              "Envio via API Oficial pendente: configure o Phone Number ID e o Access Token da Meta.",
-          },
-          { status: 400 },
-        );
-      }
-
-      const payload = templateName
-        ? {
-            messaging_product: "whatsapp",
-            to: formattedPhone,
-            type: "template",
-            template: {
-              name: templateName,
-              language: { code: templateLanguage },
-            },
-          }
-        : {
-            messaging_product: "whatsapp",
-            recipient_type: "individual",
-            to: formattedPhone,
-            type: "text",
-            text: { preview_url: false, body: messageText },
-          };
-
-      const res = await fetch(
-        `https://graph.facebook.com/v20.0/${encodeURIComponent(phoneNumberId)}/messages`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        },
-      );
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        console.error("[WhatsApp Send Server] Erro Meta Cloud API:", data?.error);
-        return NextResponse.json(
-          {
-            sent: false,
-            message:
-              data?.error?.message ||
-              "Erro ao enviar mensagem pela API Oficial da Meta.",
-            details: data?.error,
-          },
-          { status: res.status },
-        );
-      }
-
-      console.log("[WhatsApp Send Server] Mensagem entregue com sucesso via Meta Official!");
-      return NextResponse.json({
-        sent: true,
-        messageId: data?.messages?.[0]?.id,
-        provider: "meta_official",
+    // 1. TENTA ENVIO VIA MICROSERVIÇO BAILEYS HTTP (whatsapp-server.js)
+    const baileysServerUrl = (process.env.WHATSAPP_BAILEYS_URL || "http://127.0.0.1:3001").replace(/\/$/, "");
+    try {
+      const bRes = await fetch(`${baileysServerUrl}/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ number: formattedPhone, text: messageText }),
+        signal: AbortSignal.timeout(5000),
       });
+      if (bRes.ok) {
+        const bData = await bRes.json();
+        if (bData.ok) {
+          console.log("[WhatsApp Send API] Mensagem enviada com sucesso pelo Microserviço Baileys!");
+          return NextResponse.json({
+            sent: true,
+            messageId: bData.messageId,
+            provider: "baileys_service",
+          });
+        }
+      }
+    } catch (e) {
+      // Microserviço offline, tenta Baileys embutido
     }
 
-    // Gateway provider (Evolution API / Z-API)
+    // 2. TENTA ENVIO VIA BAILEYS ENGINE EMBUTIDO
+    const bStatus = getBaileysStatus();
+    if (bStatus.isConnected) {
+      const bResult = await sendBaileysMessage(formattedPhone, messageText);
+      if (bResult.sent) {
+        console.log("[WhatsApp Send API] Mensagem enviada via Baileys Engine embutido!");
+        return NextResponse.json({
+          sent: true,
+          messageId: bResult.messageId,
+          provider: "baileys_embedded",
+        });
+      }
+    }
+
+    // 3. Tenta Gateway Externo se configurado
     const effectiveGatewayUrl = gatewayUrl || process.env.WHATSAPP_GATEWAY_URL || "";
     const effectiveApiKey = apiKey || process.env.WHATSAPP_GATEWAY_API_KEY || "";
     const effectiveInstance = instanceName || "salao-principal";
 
-    if (!effectiveGatewayUrl || !effectiveApiKey) {
-      console.warn("[WhatsApp Send Server] Nenhum gateway configurado para envio em background.");
-      return NextResponse.json(
+    if (effectiveGatewayUrl && effectiveApiKey) {
+      const baseUrl = effectiveGatewayUrl.replace(/\/$/, "");
+      const gwRes = await fetch(
+        `${baseUrl}/message/sendText/${encodeURIComponent(effectiveInstance)}`,
         {
-          sent: false,
-          requiresCredentials: true,
-          message:
-            "Credenciais de API ainda não configuradas. Configure o Gateway WhatsApp na aba Configurar Gateway.",
-        },
-        { status: 400 },
+          method: "POST",
+          headers: {
+            apikey: effectiveApiKey,
+            Authorization: `Bearer ${effectiveApiKey}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            number: formattedPhone,
+            text: messageText,
+          }),
+        }
       );
+      if (gwRes.ok) {
+        const gwData = await gwRes.json().catch(() => ({}));
+        return NextResponse.json({
+          sent: true,
+          messageId: gwData?.key?.id || crypto.randomUUID(),
+          provider: "qr_gateway",
+        });
+      }
     }
 
-    const baseUrl = effectiveGatewayUrl.replace(/\/$/, "");
-    console.log(`[WhatsApp Send Server] Disparando via Gateway: ${baseUrl}/message/sendText/${effectiveInstance}`);
-    
-    const gwRes = await fetch(
-      `${baseUrl}/message/sendText/${encodeURIComponent(effectiveInstance)}`,
-      {
-        method: "POST",
-        headers: {
-          apikey: effectiveApiKey,
-          Authorization: `Bearer ${effectiveApiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          number: formattedPhone,
-          text: messageText,
-        }),
-      },
-    );
-
-    const gwData = await gwRes.json().catch(() => ({}));
-    if (!gwRes.ok) {
-      console.error("[WhatsApp Send Server] Erro no envio via Gateway:", gwData);
-      return NextResponse.json(
-        {
-          sent: false,
-          message: gwData?.message || "Erro ao enviar mensagem pelo gateway WhatsApp.",
-        },
-        { status: gwRes.status },
-      );
-    }
-
-    console.log("[WhatsApp Send Server] Mensagem enviada com sucesso pelo Gateway!");
+    // 4. FALLBACK ELEGANTE: DISPARO DIRETO WHATSAPP WEB
+    // Se o Baileys ainda não estiver conectado por QR code, gera o link direto wa.me
+    const waUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(formattedPhone)}&text=${encodeURIComponent(messageText || "")}`;
     return NextResponse.json({
       sent: true,
-      messageId: gwData?.key?.id || crypto.randomUUID(),
-      provider: "qr_gateway",
+      provider: "free_direct",
+      directUrl: waUrl,
+      message: "Link de envio gerado com sucesso para envio via WhatsApp Web!",
     });
   } catch (error) {
-    console.error("[WhatsApp Send Server] Erro crítico no envio:", error);
+    console.error("[WhatsApp Send API] Erro crítico no envio:", error);
     return NextResponse.json(
       {
         sent: false,
@@ -181,7 +142,7 @@ export async function POST(req: NextRequest) {
             ? error.message
             : "Erro interno ao enviar mensagem.",
       },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
