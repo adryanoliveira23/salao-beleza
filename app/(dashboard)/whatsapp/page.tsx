@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   MessageCircle,
   ShieldCheck,
@@ -11,22 +11,16 @@ import {
   CheckCircle2,
   Calendar,
   Settings,
-  BellRing,
   Sparkles,
   Zap,
   Smartphone,
   Check,
   Info,
   QrCode,
-  KeyRound,
   RefreshCw,
   LogOut,
   AlertCircle,
   Copy,
-  Terminal,
-  Activity,
-  Trash2,
-  Server,
   DollarSign,
   HeartHandshake,
   Gift,
@@ -37,6 +31,14 @@ import {
   CheckCircle,
   ChevronRight,
   ExternalLink,
+  Crown,
+  Heart,
+  ChevronDown,
+  ChevronUp,
+  Activity,
+  Phone,
+  Cake,
+  Sliders,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,10 +50,11 @@ export interface AutoMessageRule {
   id: string;
   title: string;
   badge: string;
-  impact: string;
-  triggerDescription: string;
+  benefit: string;
+  explanation: string;
   enabled: boolean;
   template: string;
+  iconType: "clock" | "sparkles" | "shield" | "star" | "gift" | "cake";
 }
 
 export interface ConsoleLogEntry {
@@ -63,66 +66,78 @@ export interface ConsoleLogEntry {
   details?: any;
 }
 
-export const SALON_GOLDEN_RULES: AutoMessageRule[] = [
+export const SALON_BEAUTY_RULES: AutoMessageRule[] = [
   {
     id: "confirmation_24h",
-    title: "1. Confirmação Anti-Falta (24h Antes)",
-    badge: "Reduz até 80% das faltas",
-    impact: "Garante a cadeira cheia e libera a vaga se a cliente desistir",
-    triggerDescription: "Disparada na véspera do atendimento perguntando se a cliente confirma a presença",
+    title: "1. Confirmação Carinhosa na Véspera (24h Antes)",
+    badge: "Evita até 80% das Faltas",
+    benefit: "Garante a cadeira cheia e avisa a tempo se a cliente precisar remarcar",
+    explanation:
+      "Disparada no dia anterior perguntando se a cliente confirma a presença. Se ela desmarcar, você libera a vaga para a lista de espera sem perder faturamento.",
     enabled: true,
+    iconType: "clock",
     template:
-      "Olá {{cliente}}! ✨ Passando para confirmar seu horário amanhã ({{data}}) às *{{hora}}* para *{{servico}}* com *{{profissional}}* no {{salao}}. Podemos confirmar sua presença? Responda SIM! 💖",
+      "Olá {{cliente}}! ✨ Passando com carinho para confirmar seu horário amanhã ({{data}}) às *{{hora}}* para *{{servico}}* com *{{profissional}}* no {{salao}}. Podemos confirmar sua presença? Responda SIM! Mal podemos esperar para cuidar de você! 💖",
   },
   {
     id: "reminder_2h",
-    title: "2. Lembrete Anti-Atraso (2h Antes)",
-    badge: "Evita atrasos na bancada",
-    impact: "Ajuda a manter os horários dos profissionais em dia",
-    triggerDescription: "Disparada no dia do atendimento, 2h a 3h antes do horário marcado",
+    title: "2. Lembrete 'Bancada Pronta' (2h a 3h Antes)",
+    badge: "Pontualidade & Sem Atrasos",
+    benefit: "Mantém os horários do dia em dia sem virar bola de neve",
+    explanation:
+      "Disparada no dia do atendimento avisando que a equipe já está com os materiais esterilizados e tudo pronto esperando por ela.",
     enabled: true,
+    iconType: "sparkles",
     template:
-      "Oi {{cliente}}! Seu horário de *{{servico}}* é hoje às *{{hora}}*. Nossa equipe já está te esperando com a bancada pronta no {{salao}}. Até logo! ✨",
+      "Oi {{cliente}}! Passando para te lembrar que seu horário de *{{servico}}* é hoje às *{{hora}}*. Nossa equipe já está te esperando com a bancada pronta no {{salao}}. Até logo! 🌸✨",
   },
   {
     id: "deposit_pix",
-    title: "3. Solicitação de Sinal / PIX de Garantia",
-    badge: "Protege serviços caros",
-    impact: "Evita prejuízo com mechas, mega hair e procedimentos longos",
-    triggerDescription: "Disparada para solicitar entrada em agendamentos de valor mais alto",
+    title: "3. Sinal de Reserva / PIX de Garantia",
+    badge: "Segurança para Mechas & Mega Hair",
+    benefit: "Protege procedimentos caros contra desistência de última hora",
+    explanation:
+      "Disparada para solicitar um pequeno sinal para garantir a vaga de procedimentos demorados. O valor é abatido no pagamento final.",
     enabled: true,
+    iconType: "shield",
     template:
-      "Olá {{cliente}}! Para garantir sua reserva de *{{servico}}* no dia {{data}} às {{hora}}, solicitamos o sinal de garantia via PIX. Chave: *{{pix}}*. Por favor, nos envie o comprovante de pagamento!",
+      "Olá {{cliente}}! Para garantir a reserva exclusiva da sua cadeira para *{{servico}}* no dia {{data}} às {{hora}}, solicitamos o sinal de garantia via PIX. Chave: *{{pix}}*. O valor será abatido no final do seu atendimento. Por favor, nos envie o comprovante! ✨",
   },
   {
     id: "google_review",
-    title: "4. Avaliação 5 Estrelas no Google",
-    badge: "Atrai novas clientes",
-    impact: "Gera notas e depoimentos no Google Meu Negócio após o atendimento",
-    triggerDescription: "Disparada 30 minutos após o pagamento e fechamento da comanda no Caixa",
+    title: "4. Agradecimento & Avaliação 5 Estrelas no Google",
+    badge: "Atrai Novas Clientes no Bairro",
+    benefit: "Gera notas e depoimentos no Google Meu Negócio após o atendimento",
+    explanation:
+      "Disparada 30 minutos após o atendimento agradecendo a visita e convidando a cliente a deixar 5 estrelinhas no Google enquanto está feliz com o resultado.",
     enabled: true,
+    iconType: "star",
     template:
-      "Olá {{cliente}}! Foi um prazer cuidar de você hoje no {{salao}}! O que achou do seu *{{servico}}*? Se puder nos avaliar com 5 estrelas no Google, nos ajuda muito: {{link_avaliacao}} ✨",
+      "Oi {{cliente}}! Foi um prazer imenso cuidar da sua beleza hoje no {{salao}}! Ficou ainda mais maravilhosa! ✨ Se você puder nos presentear com uma avaliação de 5 estrelinhas no Google, nos ajuda muito: {{link_avaliacao}} 💖",
   },
   {
     id: "inactive_return",
-    title: "5. Resgate de Clientes Sumidas (+30 dias)",
-    badge: "Gera caixa imediato",
-    impact: "Reativa clientes que esqueceram de marcar a manutenção",
-    triggerDescription: "Disparada para clientes que não retornam ao salão há mais de 4 semanas",
+    title: "5. Resgate Afetuoso de Clientes (+30 dias sem visita)",
+    badge: "Gera Caixa Imediato",
+    benefit: "Traz de volta clientes que esqueceram de agendar a manutenção",
+    explanation:
+      "Disparada para clientes queridas que não voltam há mais de 4 semanas, oferecendo um mimo especial (hidratação cortesia ou mimo) no retorno.",
     enabled: true,
+    iconType: "gift",
     template:
-      "Oi {{cliente}}, estamos com saudades de você aqui no {{salao}}! Que tal renovar seus cuidados esta semana? Preparamos um mimo especial para o seu retorno: responda aqui para garantir sua vaga! 💖",
+      "Oi {{cliente}}, estamos com tanta saudade de você aqui no {{salao}}! 💖 Que tal tirar um momento só pra você esta semana? Preparamos um mimo especial para o seu retorno. Me responda aqui para escolhermos o melhor dia pra você! ✨",
   },
   {
     id: "birthday_gift",
-    title: "6. Parabéns de Aniversário com Mimo",
-    badge: "Fidelização e carinho",
-    impact: "Faz a cliente se sentir especial e marca horário no mês festivo",
-    triggerDescription: "Disparada para aniversariantes do mês com um desconto ou tratamento cortesia",
+    title: "6. Parabéns de Aniversário com Cortesia Especial",
+    badge: "Fidelização pelo Coração",
+    benefit: "Faz a cliente se sentir única e marca horário na semana festiva",
+    explanation:
+      "Disparada para as aniversariantes do mês com um desconto ou tratamento cortesia para ela vir se produzir no dia especial dela.",
     enabled: true,
+    iconType: "cake",
     template:
-      "Parabéns, {{cliente}}! 🎂✨ Desejamos um dia iluminado! Preparamos um mimo especial de aniversário para você comemorar aqui no {{salao}}. Que tal agendar seu horário com a gente esta semana?",
+      "Parabéns, {{cliente}}! 🎂✨ Desejamos que seu novo ciclo seja iluminado e cheio de realizações! Preparamos um mimo especial de aniversário para você comemorar aqui no {{salao}}. Que tal agendar seu horário com a gente esta semana?",
   },
 ];
 
@@ -130,15 +145,15 @@ export default function WhatsAppPage() {
   const { user, profile } = useAuth();
   const { appointments, clients, updateAppointment } = useSalonData();
 
+  // Navegação entre as 5 abas intuitivas
   const [activeTab, setActiveTab] = useState<
-    "pilot" | "queue" | "recovery" | "connection" | "advanced"
+    "pilot" | "queue" | "recovery" | "connection" | "messages"
   >("pilot");
 
   // Estado de Conexão WhatsApp
   const [isConnected, setIsConnected] = useState(false);
   const [connectedPhone, setConnectedPhone] = useState("");
   const [connectedAt, setConnectedAt] = useState("");
-  const [connectMethod, setConnectMethod] = useState<"qrcode" | "pairing_code">("qrcode");
 
   // Dados do QR Code & Pareamento
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
@@ -150,23 +165,24 @@ export default function WhatsAppPage() {
 
   // Configurações do Salão
   const [salonPhone, setSalonPhone] = useState(profile?.phone || "");
+  const [pixKey, setPixKey] = useState("");
+  const [googleReviewLink, setGoogleReviewLink] = useState("");
   const [savedSuccess, setSavedSuccess] = useState(false);
-  const [testRecipientPhone, setTestRecipientPhone] = useState("");
 
-  // Regras de Ouro
-  const [rules, setRules] = useState<AutoMessageRule[]>(SALON_GOLDEN_RULES);
+  // Regras de Mensagens Encantadoras
+  const [rules, setRules] = useState<AutoMessageRule[]>(SALON_BEAUTY_RULES);
   const [selectedRuleId, setSelectedRuleId] = useState<string>("confirmation_24h");
 
   // Fila de Agendamentos (Hoje vs Amanhã)
   const [queueDayFilter, setQueueDayFilter] = useState<"today" | "tomorrow">("tomorrow");
   const [queueSearch, setQueueSearch] = useState("");
 
-  // Console de Logs
+  // Console de Logs & Diagnóstico (colapsado por padrão)
   const [consoleLogs, setConsoleLogs] = useState<ConsoleLogEntry[]>([]);
-  const [isBottomConsoleOpen, setIsBottomConsoleOpen] = useState(false);
+  const [showTechnicalDiagnostics, setShowTechnicalDiagnostics] = useState(false);
   const [isRunningDiagnostic, setIsRunningDiagnostic] = useState(false);
 
-  const salonName = profile?.salon_name || "Meu Salão";
+  const salonName = profile?.salon_name || "Meu Salão de Beleza";
 
   // Datas de Referência
   const todayStr = useMemo(() => {
@@ -215,11 +231,10 @@ export default function WhatsAppPage() {
   }, [appointments]);
 
   const estimatedSavedMoney = useMemo(() => {
-    // Calcula o valor estimado de no-shows evitados (média de R$ 90 por agendamento confirmado)
     const confirmedTotal = (appointments || [])
       .filter((a) => a.status === "confirmed")
-      .reduce((acc, a) => acc + (a.price || 90), 0);
-    return confirmedTotal > 0 ? confirmedTotal : confirmedCountThisMonth * 90;
+      .reduce((acc, a) => acc + (a.price || 95), 0);
+    return confirmedTotal > 0 ? confirmedTotal : confirmedCountThisMonth * 95;
   }, [appointments, confirmedCountThisMonth]);
 
   // Logger Amigável
@@ -261,6 +276,8 @@ export default function WhatsAppPage() {
           if (d.salonPhone && !d.salonPhone.includes("999998888") && !d.salonPhone.includes("99999-8888")) {
             setSalonPhone(d.salonPhone);
           }
+          if (d.pixKey) setPixKey(d.pixKey);
+          if (d.googleReviewLink) setGoogleReviewLink(d.googleReviewLink);
           if (d.rules && Array.isArray(d.rules)) setRules(d.rules);
 
           const isMock =
@@ -270,7 +287,6 @@ export default function WhatsAppPage() {
             d.connectedAt === "22/10, 23:12";
 
           if (isMock) {
-            // Limpa dados mock salvos em cache local
             const prev = JSON.parse(local || "{}");
             localStorage.setItem(
               `bellamais_whatsapp_${user.uid}`,
@@ -292,6 +308,8 @@ export default function WhatsAppPage() {
           if (d.salonPhone && !d.salonPhone.includes("999998888") && !d.salonPhone.includes("99999-8888")) {
             setSalonPhone(d.salonPhone);
           }
+          if (d.pixKey) setPixKey(d.pixKey);
+          if (d.googleReviewLink) setGoogleReviewLink(d.googleReviewLink);
           if (d.rules && Array.isArray(d.rules)) setRules(d.rules);
 
           const isMock =
@@ -301,18 +319,12 @@ export default function WhatsAppPage() {
             d.connectedAt === "22/10, 23:12";
 
           if (isMock) {
-            // Remove dados mock no Firestore
             storedConnected = false;
             storedPhone = "";
             storedConnectedAt = "";
             setDoc(
               doc(db, "whatsapp_config", user.uid),
               { isConnected: false, connectedPhone: "", connectedAt: null },
-              { merge: true }
-            ).catch(() => {});
-            setDoc(
-              doc(db, "salon_extras", user.uid),
-              { whatsapp_config: { isConnected: false, connectedPhone: "", connectedAt: null } },
               { merge: true }
             ).catch(() => {});
           } else if (d.isConnected !== undefined) {
@@ -324,7 +336,6 @@ export default function WhatsAppPage() {
       } catch (e) {}
 
       // 3. Validação com status real do Baileys
-      // Se não houver socket ativo no backend, força desconectado!
       try {
         const res = await fetch("/api/whatsapp/connect", {
           method: "POST",
@@ -337,7 +348,6 @@ export default function WhatsAppPage() {
             storedConnected = true;
             storedPhone = statusData.phoneNumber || storedPhone;
           } else {
-            // Servidor não possui sessão aberta: desliga o status conectado para não haver falsos positivos
             storedConnected = false;
             storedPhone = "";
             storedConnectedAt = "";
@@ -377,9 +387,9 @@ export default function WhatsAppPage() {
       const merged = { ...prev, ...updates };
       localStorage.setItem(`bellamais_whatsapp_${user.uid}`, JSON.stringify(merged));
       setSavedSuccess(true);
-      setTimeout(() => setSavedSuccess(false), 2000);
+      setTimeout(() => setSavedSuccess(false), 2200);
 
-      // Tenta Firestore em background
+      // Sincroniza Firestore
       setDoc(doc(db, "whatsapp_config", user.uid), updates, { merge: true }).catch(() => {
         setDoc(doc(db, "salon_extras", user.uid), { whatsapp_config: updates }, { merge: true }).catch(() => {});
       });
@@ -445,7 +455,7 @@ export default function WhatsAppPage() {
       });
       const data = await res.json();
       if (data.connected) {
-        const phone = data.phoneNumber || salonPhone || "WhatsApp Oficial";
+        const phone = data.phoneNumber || salonPhone || "WhatsApp Ativo";
         const at =
           data.connectedAt ||
           new Date().toLocaleString("pt-BR", {
@@ -459,13 +469,13 @@ export default function WhatsAppPage() {
         setConnectedAt(at);
         saveConfig({ isConnected: true, connectedPhone: phone, connectedAt: at });
         logEvent("success", "CLIENT", `WhatsApp conectado com sucesso para o número ${phone}!`);
-        alert(`WhatsApp conectado com sucesso para o número ${phone}!`);
+        alert(`🎉 Parabéns! WhatsApp do salão conectado com sucesso para o número ${phone}!`);
       } else {
         setIsConnected(false);
         logEvent("warn", "CLIENT", data.message || "Aparelho ainda não detectado.");
         alert(
           data.message ||
-            "Aparelho ainda não concluiu a conexão. Aponte a câmera do WhatsApp em 'Aparelhos Conectados' para o QR Code."
+            "Aparelho ainda não detectado. Abra o WhatsApp no celular > Aparelhos Conectados e aponte para o QR Code."
         );
       }
     } catch (err: any) {
@@ -496,13 +506,12 @@ export default function WhatsAppPage() {
       });
     } catch (e) {}
 
-    // Gera um novo QR code após desconectar
     setTimeout(() => {
       generateBaileysQR();
     }, 400);
   };
 
-  // Toggle de Regra de Ouro
+  // Toggle de Regra de Mensagem
   const toggleRule = (ruleId: string) => {
     const updated = rules.map((r) => (r.id === ruleId ? { ...r, enabled: !r.enabled } : r));
     setRules(updated);
@@ -523,11 +532,11 @@ export default function WhatsAppPage() {
       .replace(/{{data}}/g, queueDayFilter === "today" ? "Hoje" : "Amanhã")
       .replace(/{{hora}}/g, "14:30")
       .replace(/{{salao}}/g, salonName)
-      .replace(/{{pix}}/g, salonPhone || "(Chave PIX do Salão)")
-      .replace(/{{link_avaliacao}}/g, "g.page/r/bellamais");
-  }, [currentSelectedRule, queueDayFilter, salonName, salonPhone]);
+      .replace(/{{pix}}/g, pixKey || salonPhone || "(sua chave PIX)")
+      .replace(/{{link_avaliacao}}/g, googleReviewLink || "g.page/r/bellamais");
+  }, [currentSelectedRule, queueDayFilter, salonName, pixKey, salonPhone, googleReviewLink]);
 
-  // Disparo de Mensagem (1 Clique)
+  // Disparo de Mensagem (1 Clique Direto)
   const handleSendWhatsApp = (
     phone: string,
     text: string,
@@ -535,201 +544,262 @@ export default function WhatsAppPage() {
   ) => {
     const clean = phone.replace(/\D/g, "");
     if (!clean) {
-      alert("Por favor, informe um número de telefone com DDD.");
+      alert("Por favor, cadastre um telefone com DDD para esta cliente.");
       return;
     }
     const num = clean.length <= 11 ? `55${clean}` : clean;
     const url = `https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(text)}`;
 
-    // Se houver ID de agendamento, marca como confirmado automaticamente
     if (appointmentId && updateAppointment) {
       updateAppointment(appointmentId, { status: "confirmed" });
-      logEvent("success", "CLIENT", `Agendamento marcado como Confirmado após envio do WhatsApp!`);
+      logEvent("success", "CLIENT", `Agendamento marcado como Confirmado após envio da mensagem!`);
     }
 
     window.open(url, "_blank");
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-[var(--background)] font-sans text-[var(--foreground)]">
-      <Header title="WhatsApp & Piloto Automático do Salão" />
+    <div className="flex flex-col min-h-full bg-gradient-to-b from-[#faf7f9] via-[var(--background)] to-[#f6f2f5] font-sans text-[var(--foreground)]">
+      <Header title="WhatsApp & Secretária Virtual" />
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-[1480px] w-full mx-auto">
         {/* =========================================================================
-            BARRA DE STATUS DO SALÃO & NAVEGAÇÃO
+            BANNER PRINCIPAL FEMININO & REFINADO (ESTILO SALÃO CHIC)
             ========================================================================= */}
-        <div className="bg-[var(--card-bg)] rounded-3xl p-4 md:p-5 shadow-xs border border-[var(--card-border)] flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              {
-                id: "pilot",
-                label: "Piloto Automático",
-                icon: Zap,
-              },
-              {
-                id: "queue",
-                label: `Fila da Agenda (${queueAppointments.length})`,
-                icon: Calendar,
-                badge: queueAppointments.filter((a) => a.status === "pending").length,
-              },
-              {
-                id: "recovery",
-                label: `Resgate de Clientes (${inactiveClients.length})`,
-                icon: HeartHandshake,
-                badge: inactiveClients.length > 0 ? inactiveClients.length : undefined,
-              },
-              {
-                id: "connection",
-                label: isConnected ? "WhatsApp Conectado" : "Conectar WhatsApp",
-                icon: Smartphone,
-              },
-              {
-                id: "advanced",
-                label: "Avançado & Diagnóstico",
-                icon: Settings,
-              },
-            ].map((tab) => (
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#fff5f8] via-[#fdf8f5] to-[#fbf2f6] border border-rose-200/70 p-6 md:p-8 shadow-sm">
+          <div className="absolute -right-8 -top-8 w-44 h-44 rounded-full bg-rose-200/30 blur-2xl pointer-events-none" />
+          <div className="absolute right-1/4 -bottom-10 w-36 h-36 rounded-full bg-amber-200/25 blur-xl pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100/80 border border-rose-200 text-rose-800 text-[11px] font-bold uppercase tracking-wider shadow-2xs">
+                <Sparkles size={13} className="text-rose-600" />
+                <span>Encantamento de Clientes & Cadeiras Sempre Cheias</span>
+              </div>
+              <h1 className="font-serif text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-[var(--foreground)]">
+                Sua Secretária Virtual no WhatsApp
+              </h1>
+              <p className="text-xs md:text-sm text-[var(--muted)] leading-relaxed font-sans">
+                Lembretes carinhosos na véspera para <strong>reduzir até 80% das faltas</strong>, convites com mimos para trazer clientes sumidas de volta e solicitação de sinal no PIX para serviços caros — tudo com um toque e no tom afetuoso do seu salão.
+              </p>
+            </div>
+
+            {/* Status Simples & Claro */}
+            <div className="shrink-0 flex items-center gap-3">
+              {isConnected ? (
+                <div className="p-3.5 px-4 rounded-2xl bg-white/90 border border-emerald-300 shadow-xs flex items-center gap-3">
+                  <span className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 block">
+                      Recepção Ativa
+                    </span>
+                    <strong className="text-xs text-[var(--foreground)] block">
+                      {connectedPhone || salonPhone || "WhatsApp do Salão"}
+                    </strong>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setActiveTab("connection")}
+                  className="px-4 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs flex items-center gap-2 shadow-sm shadow-emerald-600/20 transition cursor-pointer active:scale-[0.98]"
+                >
+                  <Smartphone size={16} />
+                  <span>Conectar WhatsApp da Recepção</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* =========================================================================
+            MENU DE NAVEGAÇÃO REFINADO (5 ABAS COM IDENTIDADE DE BELEZA)
+            ========================================================================= */}
+        <div className="bg-[var(--card-bg)] rounded-2xl p-2 shadow-xs border border-[var(--card-border)] flex flex-wrap gap-1.5">
+          {[
+            {
+              id: "pilot",
+              label: "Secretária Virtual",
+              description: "Visão Geral",
+              icon: Sparkles,
+            },
+            {
+              id: "queue",
+              label: "Confirmar Horários",
+              description: "Hoje & Amanhã",
+              icon: Calendar,
+              badge: queueAppointments.filter((a) => a.status === "pending").length,
+            },
+            {
+              id: "recovery",
+              label: "Resgate com Mimo",
+              description: "Clientes +30d",
+              icon: Gift,
+              badge: inactiveClients.length > 0 ? inactiveClients.length : undefined,
+            },
+            {
+              id: "connection",
+              label: isConnected ? "Aparelho Conectado" : "Conectar Aparelho",
+              description: "Câmera do Celular",
+              icon: Smartphone,
+            },
+            {
+              id: "messages",
+              label: "Personalizar Textos & PIX",
+              description: "Tom de Voz & Links",
+              icon: HeartHandshake,
+            },
+          ].map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition cursor-pointer relative ${
-                  activeTab === tab.id
-                    ? "bg-[var(--primary)] text-white shadow-xs"
-                    : "bg-[var(--background)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                className={`flex-1 min-w-[170px] px-4 py-3 rounded-xl transition text-left cursor-pointer relative flex items-center justify-between gap-3 ${
+                  isActive
+                    ? "bg-gradient-to-r from-[var(--primary)] to-[var(--primary-dark)] text-white shadow-xs"
+                    : "bg-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-rose-50/50 dark:hover:bg-rose-950/20"
                 }`}
               >
-                <tab.icon size={16} />
-                {tab.label}
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                      isActive ? "bg-white/20 text-white" : "bg-rose-100/70 text-[var(--primary)]"
+                    }`}
+                  >
+                    <tab.icon size={16} />
+                  </div>
+                  <div className="truncate">
+                    <span className="font-bold text-xs block leading-tight truncate">
+                      {tab.label}
+                    </span>
+                    <span
+                      className={`text-[10px] block leading-tight ${
+                        isActive ? "text-rose-100" : "text-[var(--muted)]"
+                      }`}
+                    >
+                      {tab.description}
+                    </span>
+                  </div>
+                </div>
+
                 {tab.badge !== undefined && tab.badge > 0 && (
                   <span
-                    className={`px-1.5 py-0.5 rounded-full text-[10px] font-black ${
-                      activeTab === tab.id ? "bg-white text-[var(--primary)]" : "bg-rose-500 text-white"
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                      isActive ? "bg-white text-[var(--primary)]" : "bg-rose-500 text-white"
                     }`}
                   >
                     {tab.badge}
                   </span>
                 )}
               </button>
-            ))}
-          </div>
-
-          {/* Status Simples em Português Claro */}
-          <div className="flex items-center gap-3">
-            {isConnected ? (
-              <div className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-300 shadow-2xs">
-                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>Recepção Conectada: {connectedPhone || salonPhone}</span>
-              </div>
-            ) : (
-              <button
-                onClick={() => setActiveTab("connection")}
-                className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer"
-              >
-                <Smartphone size={14} />
-                <span>Conectar WhatsApp da Recepção</span>
-              </button>
-            )}
-          </div>
+            );
+          })}
         </div>
 
         {/* =========================================================================
-            ABA 1: PILOTO AUTOMÁTICO (O CORAÇÃO DO SALÃO)
+            ABA 1: SECRETÁRIA VIRTUAL (VISÃO GERAL + 6 MENSAGENS + IPHONE CHIC)
             ========================================================================= */}
         {activeTab === "pilot" && (
           <div className="space-y-6">
-            {/* 3 CARDS DE IMPACTO FINANCEIRO */}
+            {/* 3 CARDS DE IMPACTO VISUAL EM FORMATO BOUDOIR / SALÃO */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-500/10 via-[var(--card-bg)] to-emerald-500/5 border border-emerald-200 dark:border-emerald-900/60 shadow-xs flex items-center justify-between">
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-[#fff7f9] via-white to-[#fdf2f7] border border-rose-200/80 shadow-xs flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block mb-1">
-                    Dinheiro Salvo (Faltas Evitadas)
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-rose-700 block mb-1">
+                    Cadeiras Salvas & Lucro Garantido
                   </span>
-                  <h3 className="text-2xl font-black text-[var(--foreground)] tracking-tight">
+                  <h3 className="font-serif text-3xl font-bold text-[var(--foreground)] tracking-tight">
                     R$ {estimatedSavedMoney.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
                   </h3>
-                  <span className="text-[11px] text-[var(--muted)] mt-1 block">
-                    {confirmedCountThisMonth} horários confirmados na Agenda
+                  <span className="text-[11px] text-[var(--muted)] mt-1.5 block">
+                    {confirmedCountThisMonth} atendimentos confirmados este mês
                   </span>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-600 flex items-center justify-center shrink-0">
-                  <DollarSign size={24} />
+                <div className="w-13 h-13 rounded-2xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Crown size={26} />
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl bg-gradient-to-br from-indigo-500/10 via-[var(--card-bg)] to-indigo-500/5 border border-indigo-200 dark:border-indigo-900/60 shadow-xs flex items-center justify-between">
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-[#fbf8ff] via-white to-[#f6f0fd] border border-purple-200/80 shadow-xs flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-300 block mb-1">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 block mb-1">
                     Clientes Prontas para Resgate
                   </span>
-                  <h3 className="text-2xl font-black text-[var(--foreground)] tracking-tight">
+                  <h3 className="font-serif text-3xl font-bold text-[var(--foreground)] tracking-tight">
                     {inactiveClients.length} Clientes
                   </h3>
-                  <span className="text-[11px] text-[var(--muted)] mt-1 block">
-                    Não voltam ao salão há mais de 30 dias
+                  <span className="text-[11px] text-[var(--muted)] mt-1.5 block">
+                    Não voltam há +30 dias — prontas para um mimo
                   </span>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-indigo-500/15 text-indigo-600 flex items-center justify-center shrink-0">
-                  <HeartHandshake size={24} />
+                <div className="w-13 h-13 rounded-2xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Gift size={26} />
                 </div>
               </div>
 
-              <div className="p-5 rounded-3xl bg-gradient-to-br from-pink-500/10 via-[var(--card-bg)] to-pink-500/5 border border-pink-200 dark:border-pink-900/60 shadow-xs flex items-center justify-between">
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-[#fffdf5] via-white to-[#fef8ea] border border-amber-200/80 shadow-xs flex items-center justify-between">
                 <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-pink-800 dark:text-pink-300 block mb-1">
-                    Tempo Economizado na Recepção
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-700 block mb-1">
+                    Horas Livres para Você Cuidar
                   </span>
-                  <h3 className="text-2xl font-black text-[var(--foreground)] tracking-tight">
-                    ~14 Horas / Mês
+                  <h3 className="font-serif text-3xl font-bold text-[var(--foreground)] tracking-tight">
+                    ~15 Horas / Mês
                   </h3>
-                  <span className="text-[11px] text-[var(--muted)] mt-1 block">
-                    Sem precisar digitar mensagens uma a uma
+                  <span className="text-[11px] text-[var(--muted)] mt-1.5 block">
+                    Sem parar o secador para digitar mensagem por mensagem
                   </span>
                 </div>
-                <div className="w-12 h-12 rounded-2xl bg-pink-500/15 text-pink-600 flex items-center justify-center shrink-0">
-                  <Sparkles size={24} />
+                <div className="w-13 h-13 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 shadow-2xs">
+                  <Sparkles size={26} />
                 </div>
               </div>
             </div>
 
-            {/* GRID PRINCIPAL: 6 REGRAS DE OURO + PREVIEW DO CELULAR */}
+            {/* GRID PRINCIPAL: 6 MENSAGENS ENCANTADORAS + IPHONE MOCKUP CHIC */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* COLUNA ESQUERDA: AS 6 REGRAS COM SWITCH LIGA/DESLIGA */}
+              {/* COLUNA ESQUERDA: AS 6 REGRAS COM LINGUAGEM DE SALÃO */}
               <div className="lg:col-span-7 space-y-4">
                 <div className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] shadow-xs space-y-4">
                   <div>
-                    <h3 className="text-base font-bold font-sans tracking-tight text-[var(--foreground)]">
-                      Regras de Ouro do Salão
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary)] block mb-0.5">
+                      Personalização da Secretária
+                    </span>
+                    <h3 className="font-serif text-xl font-bold tracking-tight text-[var(--foreground)]">
+                      Mensagens Automáticas Encantadoras
                     </h3>
-                    <p className="text-xs text-[var(--muted)] mt-0.5">
-                      Ative o que você quer que o salão envie. Clique em uma regra para ver como ela aparece no celular ao lado.
+                    <p className="text-xs text-[var(--muted)] mt-1">
+                      Escolha quais mensagens seu salão deve enviar. Clique em qualquer uma para testar e ver a prévia na tela do celular ao lado.
                     </p>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-3 pt-1">
                     {rules.map((rule) => {
                       const isSelected = selectedRuleId === rule.id;
                       return (
                         <div
                           key={rule.id}
                           onClick={() => setSelectedRuleId(rule.id)}
-                          className={`p-4 rounded-2xl border-2 transition cursor-pointer flex flex-col gap-2.5 ${
+                          className={`p-4 md:p-5 rounded-2xl border-2 transition cursor-pointer flex flex-col gap-3 ${
                             isSelected
-                              ? "border-[var(--primary)] bg-[var(--primary-light)]/20 shadow-xs"
-                              : "border-[var(--card-border)] bg-[var(--background)]/60 hover:border-zinc-300 dark:hover:border-zinc-700"
+                              ? "border-[var(--primary)] bg-gradient-to-r from-rose-50/70 via-white to-pink-50/50 shadow-xs"
+                              : "border-[var(--card-border)] bg-[var(--background)]/60 hover:border-rose-200"
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="flex flex-wrap items-center gap-2 mb-1">
-                                <h4 className="font-bold text-xs text-[var(--foreground)]">
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h4 className="font-bold text-xs md:text-sm text-[var(--foreground)]">
                                   {rule.title}
                                 </h4>
-                                <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                                <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 border border-rose-200/60">
                                   {rule.badge}
                                 </span>
                               </div>
+                              <p className="text-xs text-[var(--foreground)]/80 font-medium leading-relaxed">
+                                {rule.benefit}
+                              </p>
                               <p className="text-[11px] text-[var(--muted)] leading-relaxed">
-                                {rule.impact}
+                                {rule.explanation}
                               </p>
                             </div>
 
@@ -740,13 +810,13 @@ export default function WhatsAppPage() {
                                 e.stopPropagation();
                                 toggleRule(rule.id);
                               }}
-                              className={`w-11 h-6 rounded-full transition cursor-pointer p-0.5 shrink-0 ${
+                              className={`w-12 h-6.5 rounded-full transition cursor-pointer p-0.5 shrink-0 ${
                                 rule.enabled ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-700"
                               }`}
                             >
                               <div
-                                className={`w-5 h-5 rounded-full bg-white transition-transform shadow-xs ${
-                                  rule.enabled ? "translate-x-5" : "translate-x-0"
+                                className={`w-5.5 h-5.5 rounded-full bg-white transition-transform shadow-xs ${
+                                  rule.enabled ? "translate-x-5.5" : "translate-x-0"
                                 }`}
                               />
                             </button>
@@ -754,10 +824,19 @@ export default function WhatsAppPage() {
 
                           {/* Seletor ativo mostra o editor do texto */}
                           {isSelected && (
-                            <div className="pt-2 border-t border-[var(--card-border)] space-y-2" onClick={(e) => e.stopPropagation()}>
-                              <label className="text-[11px] font-bold text-[var(--foreground)] block">
-                                Personalizar texto desta mensagem:
-                              </label>
+                            <div
+                              className="pt-3 border-t border-rose-200/70 space-y-2"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-[var(--foreground)]">
+                                  Texto que a cliente recebe no WhatsApp:
+                                </label>
+                                <span className="text-[10px] text-rose-600 font-semibold">
+                                  Edite livremente abaixo
+                                </span>
+                              </div>
+
                               <textarea
                                 rows={3}
                                 value={rule.template}
@@ -768,16 +847,19 @@ export default function WhatsAppPage() {
                                   setRules(updated);
                                 }}
                                 onBlur={() => saveConfig({ rules })}
-                                className="w-full p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] text-xs outline-none focus:border-[var(--primary)] leading-relaxed"
+                                className="w-full p-3.5 rounded-xl bg-white border border-rose-200 text-xs outline-none focus:border-[var(--primary)] leading-relaxed shadow-2xs"
                               />
-                              <div className="flex items-center justify-between text-[10px] text-[var(--muted)]">
-                                <span>Variáveis aceitas: <code>{"{{cliente}}"}</code>, <code>{"{{servico}}"}</code>, <code>{"{{hora}}"}</code>, <code>{"{{data}}"}</code></span>
+
+                              <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-[var(--muted)]">
+                                <span>
+                                  Campos mágicos: <code>{"{{cliente}}"}</code>, <code>{"{{servico}}"}</code>, <code>{"{{hora}}"}</code>, <code>{"{{data}}"}</code>
+                                </span>
                                 <button
                                   type="button"
                                   onClick={() => handleSendWhatsApp(salonPhone, simulatedMessageText)}
                                   className="text-emerald-600 font-bold hover:underline flex items-center gap-1 cursor-pointer"
                                 >
-                                  <MessageCircle size={12} /> Testar no meu celular
+                                  <MessageCircle size={13} /> Testar no meu celular
                                 </button>
                               </div>
                             </div>
@@ -789,80 +871,79 @@ export default function WhatsAppPage() {
                 </div>
               </div>
 
-              {/* COLUNA DIREITA: MOCKUP DO CELULAR AO VIVO */}
+              {/* COLUNA DIREITA: IPHONE REALISTA ESTILO BEAUTY & VOGUE */}
               <div className="lg:col-span-5 sticky top-6">
                 <div className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] shadow-xs space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--primary)] block">
-                        Visualização da Cliente
+                        Experiência da Cliente
                       </span>
-                      <h4 className="font-bold text-sm text-[var(--foreground)]">
-                        Como chega no WhatsApp:
+                      <h4 className="font-serif text-base font-bold text-[var(--foreground)]">
+                        Como sua cliente enxerga:
                       </h4>
                     </div>
-                    <span className="text-xs text-emerald-600 font-bold flex items-center gap-1">
+                    <span className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-bold flex items-center gap-1.5 shadow-2xs">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                      Ao Vivo
+                      Visualização Real
                     </span>
                   </div>
 
-                  {/* Moldura Realista de Celular WhatsApp */}
-                  <div className="w-full max-w-[340px] mx-auto rounded-[36px] bg-[#111b21] p-3 shadow-2xl border-4 border-zinc-800 text-zinc-100 font-sans">
-                    {/* Barra de Notificação Superior */}
-                    <div className="flex items-center justify-between px-3 py-1 text-[10px] text-zinc-400">
-                      <span>09:41</span>
-                      <div className="flex items-center gap-1">
-                        <span>●●●</span>
-                        <span>100%</span>
-                      </div>
+                  {/* Moldura Elegante de iPhone */}
+                  <div className="w-full max-w-[340px] mx-auto rounded-[42px] bg-[#1a1318] p-3 shadow-2xl border-4 border-rose-200/50 text-zinc-100 font-sans relative">
+                    {/* Dynamic Island */}
+                    <div className="w-24 h-4 bg-black rounded-full mx-auto mb-2 flex items-center justify-end px-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500/80" />
                     </div>
 
                     {/* Topo do WhatsApp com Foto do Salão */}
-                    <div className="flex items-center gap-2.5 p-2 bg-[#202c33] rounded-2xl mb-3">
-                      <div className="w-9 h-9 rounded-full bg-[var(--primary)] text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                    <div className="flex items-center gap-2.5 p-2.5 bg-[#202c33] rounded-2xl mb-3 border border-zinc-700/50">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-tr from-[var(--primary)] to-rose-400 text-white font-serif font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
                         {salonName.slice(0, 2).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h5 className="font-bold text-xs text-white truncate">{salonName}</h5>
-                        <span className="text-[10px] text-emerald-400 block truncate">Online agora</span>
+                        <div className="flex items-center gap-1">
+                          <h5 className="font-bold text-xs text-white truncate">{salonName}</h5>
+                          <CheckCircle2 size={12} className="text-emerald-400 shrink-0" />
+                        </div>
+                        <span className="text-[10px] text-emerald-400 block truncate">Online • Recepção do Salão</span>
                       </div>
                     </div>
 
-                    {/* Fundo de Conversa do WhatsApp */}
-                    <div className="p-3 bg-[#0b141a] rounded-2xl min-h-[260px] flex flex-col justify-end space-y-2 border border-zinc-800/80">
-                      <div className="self-center px-2 py-0.5 rounded-md bg-[#182229] text-[9px] text-zinc-400 font-bold uppercase">
+                    {/* Conversa do WhatsApp com Papel de Parede Acolhedor */}
+                    <div className="p-3 bg-[#0d1418] rounded-2xl min-h-[290px] flex flex-col justify-end space-y-2 border border-zinc-800">
+                      <div className="self-center px-2.5 py-0.5 rounded-md bg-[#182229] text-[9px] text-zinc-400 font-bold uppercase tracking-wider">
                         Hoje
                       </div>
 
                       {/* Balão da Mensagem */}
-                      <div className="self-end max-w-[92%] bg-[#005c4b] text-white p-3 rounded-2xl rounded-tr-xs text-xs shadow-md leading-relaxed space-y-1">
+                      <div className="self-end max-w-[94%] bg-[#005c4b] text-white p-3.5 rounded-2xl rounded-tr-xs text-xs shadow-md leading-relaxed space-y-1.5">
                         <p className="whitespace-pre-wrap text-[11.5px] leading-relaxed">
                           {simulatedMessageText}
                         </p>
-                        <div className="flex items-center justify-end gap-1 text-[9px] text-emerald-200">
+                        <div className="flex items-center justify-end gap-1 text-[9px] text-emerald-200 pt-0.5">
                           <span>09:42</span>
-                          <CheckCircle2 size={11} className="text-cyan-400" />
+                          <span className="text-cyan-300 font-bold">✓✓</span>
                         </div>
                       </div>
                     </div>
 
                     {/* Barra de Digitação */}
-                    <div className="mt-2 p-2 bg-[#202c33] rounded-xl flex items-center justify-between text-zinc-400 text-[11px]">
-                      <span>Mensagem...</span>
-                      <div className="w-6 h-6 rounded-full bg-[#00a884] text-white flex items-center justify-center">
+                    <div className="mt-2.5 p-2 bg-[#202c33] rounded-xl flex items-center justify-between text-zinc-400 text-[11px]">
+                      <span className="italic text-zinc-500">Mariana está digitando...</span>
+                      <div className="w-6 h-6 rounded-full bg-[#00a884] text-white flex items-center justify-center shadow-2xs">
                         <Send size={11} />
                       </div>
                     </div>
                   </div>
 
-                  {/* Botão de Disparo Imediato de Demonstração */}
+                  {/* Botão de Disparo para o Próprio Celular */}
                   <button
                     onClick={() => handleSendWhatsApp(salonPhone, simulatedMessageText)}
-                    className="w-full py-3.5 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-[#25D366]/25 transition cursor-pointer active:scale-[0.98]"
+                    className="w-full py-3.5 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-[#25D366]/20 transition cursor-pointer active:scale-[0.98]"
                   >
                     <MessageCircle size={16} />
-                    Enviar Exemplo para o Meu WhatsApp
+                    <span>Enviar Exemplo para o Meu Celular</span>
                   </button>
                 </div>
               </div>
@@ -871,23 +952,27 @@ export default function WhatsAppPage() {
         )}
 
         {/* =========================================================================
-            ABA 2: FILA DA AGENDA (HOJE & AMANHÃ)
+            ABA 2: CONFIRMAR HORÁRIOS DA AGENDA (HOJE & AMANHÃ)
             ========================================================================= */}
         {activeTab === "queue" && (
           <div className="space-y-4">
-            <div className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-[var(--card-bg)] rounded-3xl p-6 md:p-8 border border-[var(--card-border)] shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <h3 className="text-base font-bold font-sans tracking-tight text-[var(--foreground)]">
-                    Fila de Confirmações da Agenda
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold uppercase tracking-wider mb-1">
+                    <Calendar size={13} />
+                    <span>Fila da Agenda do Salão</span>
+                  </div>
+                  <h3 className="font-serif text-xl md:text-2xl font-bold tracking-tight text-[var(--foreground)]">
+                    Confirmação de Horários com 1 Toque
                   </h3>
-                  <p className="text-xs text-[var(--muted)]">
-                    Envie a confirmação com 1 clique. O agendamento fica verde como <strong>Confirmado</strong> na Agenda na hora!
+                  <p className="text-xs text-[var(--muted)] mt-1">
+                    Ao clicar em <strong>Enviar Confirmação</strong>, a mensagem é enviada e o agendamento já fica marcado como <strong>Confirmado</strong> na Agenda!
                   </p>
                 </div>
 
                 {/* Filtro Hoje vs Amanhã */}
-                <div className="flex items-center gap-2 p-1 bg-[var(--background)] rounded-2xl border border-[var(--card-border)]">
+                <div className="flex items-center gap-2 p-1.5 bg-rose-50/60 dark:bg-zinc-800/60 rounded-2xl border border-rose-200/60">
                   <button
                     onClick={() => setQueueDayFilter("tomorrow")}
                     className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
@@ -911,84 +996,84 @@ export default function WhatsAppPage() {
                 </div>
               </div>
 
-              {/* Busca de Clientes */}
+              {/* Busca por Cliente ou Serviço */}
               <div className="relative">
-                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
+                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400" />
                 <input
                   type="text"
-                  placeholder="Buscar por cliente, serviço ou profissional..."
+                  placeholder="Buscar por cliente, procedimento ou profissional..."
                   value={queueSearch}
                   onChange={(e) => setQueueSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-[var(--background)] border border-[var(--card-border)] text-xs outline-none focus:border-[var(--primary)]"
+                  className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-rose-200 text-xs outline-none focus:border-[var(--primary)] shadow-2xs"
                 />
               </div>
 
               {/* Lista dos Agendamentos */}
               {queueAppointments.length === 0 ? (
-                <div className="py-12 text-center bg-[var(--background)]/60 rounded-2xl border border-dashed border-[var(--card-border)]">
-                  <Calendar size={32} className="mx-auto text-zinc-400 mb-2" />
-                  <h4 className="font-bold text-sm text-[var(--foreground)]">
-                    Nenhum agendamento para {queueDayFilter === "today" ? "hoje" : "amanhã"}
+                <div className="py-16 text-center bg-rose-50/40 rounded-3xl border border-dashed border-rose-200">
+                  <Calendar size={36} className="mx-auto text-rose-300 mb-2" />
+                  <h4 className="font-serif text-base font-bold text-[var(--foreground)]">
+                    Nenhum horário marcado para {queueDayFilter === "today" ? "hoje" : "amanhã"}
                   </h4>
                   <p className="text-xs text-[var(--muted)] mt-1">
-                    Novos horários marcados na Agenda Inteligente aparecerão aqui automaticamente.
+                    Novos horários cadastrados na Agenda Inteligente aparecerão aqui automaticamente.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {queueAppointments.map((apt) => {
                     const isConfirmed = apt.status === "confirmed";
-                    const confirmMsg = `Olá ${apt.clientName}! ✨ Passando para confirmar seu horário ${
+                    const confirmMsg = `Olá ${apt.clientName}! ✨ Passando com carinho para confirmar seu horário ${
                       queueDayFilter === "today" ? "hoje" : "amanhã"
                     } às *${apt.time}* para *${apt.serviceName}* com *${apt.professionalName}* no ${salonName}. Podemos confirmar sua presença? Responda SIM! 💖`;
 
                     return (
                       <div
                         key={apt.id}
-                        className={`p-4 rounded-2xl border transition flex flex-col justify-between gap-3 ${
+                        className={`p-5 rounded-3xl border transition flex flex-col justify-between gap-4 ${
                           isConfirmed
-                            ? "bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900"
-                            : "bg-[var(--background)]/70 border-[var(--card-border)]"
+                            ? "bg-emerald-50/40 border-emerald-200"
+                            : "bg-white border-rose-100 shadow-xs hover:border-rose-300"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="flex items-center gap-2">
-                              <span className="font-mono font-bold text-xs text-[var(--primary)] bg-[var(--primary-light)]/40 px-2 py-0.5 rounded-md">
+                              <span className="font-mono font-bold text-xs text-rose-700 bg-rose-100/70 px-2.5 py-0.5 rounded-lg">
                                 {apt.time}
                               </span>
-                              <h4 className="font-bold text-sm text-[var(--foreground)]">
+                              <h4 className="font-serif font-bold text-base text-[var(--foreground)]">
                                 {apt.clientName}
                               </h4>
                             </div>
-                            <p className="text-xs text-[var(--muted)] mt-1">
+                            <p className="text-xs text-[var(--muted)] mt-1.5">
                               <strong>{apt.serviceName}</strong> • {apt.professionalName} • R$ {apt.price?.toFixed(2)}
                             </p>
                           </div>
 
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
+                            className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
                               isConfirmed
-                                ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
-                                : "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300"
+                                ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                : "bg-amber-100 text-amber-800 border border-amber-200"
                             }`}
                           >
                             {isConfirmed ? "✓ Confirmado" : "Pendente"}
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between pt-2 border-t border-[var(--card-border)]">
+                        <div className="flex items-center justify-between pt-3 border-t border-rose-100/80">
                           <span className="text-[11px] text-[var(--muted)]">
-                            Tel: {apt.clientPhone || "Sem telefone"}
+                            Tel: {apt.clientPhone || "Sem telefone cadastrado"}
                           </span>
 
                           <button
                             type="button"
                             onClick={() => handleSendWhatsApp(apt.clientPhone, confirmMsg, apt.id)}
-                            className="px-3.5 py-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-[0.98]"
+                            className="px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs font-bold flex items-center gap-1.5 transition cursor-pointer shadow-xs active:scale-[0.98]"
                           >
-                            <MessageCircle size={14} />
-                            {isConfirmed ? "Reenviar Confirmação" : "Confirmar no Zap"}
+                            <MessageCircle size={15} />
+                            <span>{isConfirmed ? "Reenviar no Zap" : "Confirmar no Zap"}</span>
                           </button>
                         </div>
                       </div>
@@ -1001,44 +1086,42 @@ export default function WhatsAppPage() {
         )}
 
         {/* =========================================================================
-            ABA 3: RESGATE DE CLIENTES INATIVAS (+30 DIAS)
+            ABA 3: RESGATE DE CLIENTES COM MIMO (+30 DIAS)
             ========================================================================= */}
         {activeTab === "recovery" && (
           <div className="space-y-4">
-            <div className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="bg-[var(--card-bg)] rounded-3xl p-6 md:p-8 border border-[var(--card-border)] shadow-xs space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-pink-700 bg-pink-100 dark:bg-pink-950 dark:text-pink-300 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
-                      <HeartHandshake size={13} />
-                      Recorrência & Faturamento
-                    </span>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 text-pink-800 text-[11px] font-bold uppercase tracking-wider mb-1">
+                    <Heart size={13} />
+                    <span>Fidelidade & Amor às Clientes</span>
                   </div>
-                  <h3 className="text-base font-bold font-sans tracking-tight text-[var(--foreground)]">
-                    Resgate de Clientes que não voltam há +30 Dias
+                  <h3 className="font-serif text-xl md:text-2xl font-bold tracking-tight text-[var(--foreground)]">
+                    Resgate de Clientes Ausentes (+30 Dias)
                   </h3>
-                  <p className="text-xs text-[var(--muted)]">
-                    Pesquisas do setor de beleza mostram que até <strong>40% das clientes voltam</strong> quando recebem um convite carinhoso do salão.
+                  <p className="text-xs text-[var(--muted)] mt-1 max-w-2xl leading-relaxed">
+                    Clientes de salão muitas vezes esquecem de marcar com a correria da rotina. Um convite carinhoso com mimo tem até <strong>40% de taxa de retorno</strong>!
                   </p>
                 </div>
 
-                <span className="px-4 py-2 rounded-xl bg-pink-50 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300 border border-pink-200 text-xs font-bold">
-                  {inactiveClients.length} Clientes para Resgatar
+                <span className="px-4 py-2 rounded-2xl bg-pink-50 text-pink-700 border border-pink-200 text-xs font-bold shrink-0">
+                  {inactiveClients.length} Clientes para Encantar
                 </span>
               </div>
 
               {inactiveClients.length === 0 ? (
-                <div className="py-12 text-center bg-[var(--background)]/60 rounded-2xl border border-dashed border-[var(--card-border)]">
-                  <CheckCircle2 size={32} className="mx-auto text-emerald-500 mb-2" />
-                  <h4 className="font-bold text-sm text-[var(--foreground)]">
+                <div className="py-16 text-center bg-pink-50/40 rounded-3xl border border-dashed border-pink-200">
+                  <CheckCircle2 size={36} className="mx-auto text-emerald-500 mb-2" />
+                  <h4 className="font-serif text-base font-bold text-[var(--foreground)]">
                     Parabéns! Todas as suas clientes estão ativas
                   </h4>
                   <p className="text-xs text-[var(--muted)] mt-1">
-                    Nenhuma cliente cadastrada está sem visita há mais de 30 dias.
+                    Nenhuma cliente cadastrada no seu salão está sem visita há mais de 30 dias.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {inactiveClients.map((client) => {
                     const daysAgo = Math.floor(
                       (Date.now() - new Date(client.lastVisit).getTime()) / (1000 * 60 * 60 * 24)
@@ -1048,28 +1131,29 @@ export default function WhatsAppPage() {
                     return (
                       <div
                         key={client.id}
-                        className="p-4 rounded-2xl bg-[var(--background)]/70 border border-[var(--card-border)] flex flex-col justify-between gap-3"
+                        className="p-5 rounded-3xl bg-white border border-rose-100 shadow-xs flex flex-col justify-between gap-4"
                       >
                         <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <h4 className="font-bold text-sm text-[var(--foreground)] truncate">
+                          <div className="flex items-center justify-between mb-1.5">
+                            <h4 className="font-serif font-bold text-base text-[var(--foreground)] truncate">
                               {client.name}
                             </h4>
-                            <span className="text-[10px] font-bold text-rose-700 bg-rose-100 dark:bg-rose-950 dark:text-rose-300 px-2 py-0.5 rounded-full shrink-0">
-                              Há {daysAgo} dias sumida
+                            <span className="text-[10px] font-bold text-rose-700 bg-rose-100 px-2.5 py-0.5 rounded-full shrink-0">
+                              Há {daysAgo} dias
                             </span>
                           </div>
                           <p className="text-[11px] text-[var(--muted)]">
-                            Última visita: {client.lastVisit ? new Date(client.lastVisit).toLocaleDateString("pt-BR") : "Desconhecido"} • {client.visits || 1} visitas
+                            Última visita: {client.lastVisit ? new Date(client.lastVisit).toLocaleDateString("pt-BR") : "Não registrada"} • {client.visits || 1} visitas
                           </p>
                         </div>
 
                         <button
                           type="button"
                           onClick={() => handleSendWhatsApp(client.phone, recoveryMsg)}
-                          className="w-full py-2.5 rounded-xl bg-pink-600 hover:bg-pink-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition cursor-pointer shadow-xs active:scale-[0.98]"
+                          className="w-full py-3 rounded-2xl bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer shadow-xs active:scale-[0.98]"
                         >
-                          <Gift size={14} /> Enviar Convite com Mimo
+                          <Gift size={15} />
+                          <span>Enviar Convite com Mimo no Zap</span>
                         </button>
                       </div>
                     );
@@ -1081,33 +1165,33 @@ export default function WhatsAppPage() {
         )}
 
         {/* =========================================================================
-            ABA 4: CONECTAR APARELHO DA RECEPÇÃO
+            ABA 4: CONECTAR O WHATSAPP DO SALÃO (RECEPCIONISTA OFICIAL)
             ========================================================================= */}
         {activeTab === "connection" && (
           <div className="space-y-6">
             {isConnected ? (
-              <div className="bg-gradient-to-r from-emerald-500/10 via-teal-500/5 to-emerald-500/10 border-2 border-emerald-300/80 dark:border-emerald-800 rounded-3xl p-6 md:p-8 shadow-sm">
+              <div className="bg-gradient-to-r from-emerald-50 via-teal-50/50 to-emerald-50 border-2 border-emerald-300 rounded-3xl p-6 md:p-8 shadow-sm">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                   <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shadow-lg shadow-[#25D366]/30 shrink-0">
+                    <div className="w-14 h-14 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shadow-lg shadow-[#25D366]/25 shrink-0">
                       <MessageCircle size={32} />
                     </div>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-900 dark:text-emerald-300 bg-emerald-200/70 dark:bg-emerald-950 px-2.5 py-0.5 rounded-full flex items-center gap-1.5">
+                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-900 bg-emerald-200/80 px-3 py-0.5 rounded-full flex items-center gap-1.5">
                           <CheckCircle2 size={13} />
-                          Sessão Ativa & Sincronizada
+                          WhatsApp Conectado & Ativo
                         </span>
                       </div>
-                      <h2 className="text-xl md:text-2xl font-bold font-sans tracking-tight text-[var(--foreground)]">
-                        WhatsApp do Salão Conectado
+                      <h2 className="font-serif text-2xl font-bold tracking-tight text-[var(--foreground)]">
+                        Recepção do Salão Sincronizada
                       </h2>
                       <p className="text-xs md:text-sm text-[var(--muted)] mt-1">
                         Número conectado: <strong className="text-[var(--foreground)]">{connectedPhone || salonPhone || "WhatsApp Oficial"}</strong>
                         {connectedAt ? ` • Conectado em ${connectedAt}` : ""}
                       </p>
-                      <p className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold mt-1.5 flex items-center gap-1">
-                        <Zap size={14} /> Envios automáticos de confirmações e lembretes estão habilitados em segundo plano.
+                      <p className="text-xs text-emerald-700 font-semibold mt-1.5 flex items-center gap-1">
+                        <Sparkles size={14} /> Envios de confirmações e resgate de clientes habilitados.
                       </p>
                     </div>
                   </div>
@@ -1115,14 +1199,14 @@ export default function WhatsAppPage() {
                   <div className="flex flex-col sm:flex-row gap-3 shrink-0">
                     <button
                       onClick={() => handleSendWhatsApp(salonPhone || profile?.phone || "", simulatedMessageText)}
-                      className="px-5 py-3 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-[#25D366]/25 transition cursor-pointer active:scale-[0.98]"
+                      className="px-5 py-3 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm shadow-[#25D366]/20 transition cursor-pointer active:scale-[0.98]"
                     >
-                      <MessageCircle size={17} />
+                      <MessageCircle size={16} />
                       Testar Disparo Agora
                     </button>
                     <button
                       onClick={handleDisconnect}
-                      className="px-4 py-3 rounded-2xl bg-white dark:bg-zinc-800 border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
+                      className="px-4 py-3 rounded-2xl bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 font-bold text-xs flex items-center justify-center gap-2 transition cursor-pointer"
                     >
                       <LogOut size={16} />
                       Desconectar Aparelho
@@ -1133,22 +1217,26 @@ export default function WhatsAppPage() {
             ) : (
               <div className="bg-[var(--card-bg)] rounded-3xl p-6 md:p-8 border border-[var(--card-border)] shadow-xs space-y-6">
                 <div>
-                  <h3 className="text-lg md:text-xl font-bold font-sans tracking-tight text-[var(--foreground)]">
-                    Conectar WhatsApp da Recepção
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold uppercase tracking-wider mb-1">
+                    <Smartphone size={13} />
+                    <span>Conexão em 10 Segundos</span>
+                  </div>
+                  <h3 className="font-serif text-xl md:text-2xl font-bold tracking-tight text-[var(--foreground)]">
+                    Conectar o WhatsApp da sua Recepção
                   </h3>
                   <p className="text-xs md:text-sm text-[var(--muted)] mt-1 max-w-2xl leading-relaxed">
-                    Aponte a câmera em <strong>Aparelhos Conectados</strong> no seu celular para conectar o WhatsApp oficial ao BellaMais em 10 segundos, exatamente igual ao WhatsApp Web.
+                    Aponte a câmera do celular que sua recepção usa para falar com as clientes. O processo é 100% seguro, oficial e exatamente igual ao WhatsApp Web.
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                  {/* QR Code */}
-                  <div className="lg:col-span-5 flex flex-col items-center text-center p-6 bg-[var(--background)]/60 rounded-3xl border border-[var(--card-border)]">
-                    <div className="relative p-4 bg-white rounded-2xl shadow-md border-2 border-emerald-500/20">
+                  {/* QR Code com Borda Feminina */}
+                  <div className="lg:col-span-5 flex flex-col items-center text-center p-6 bg-gradient-to-b from-rose-50/50 to-white rounded-3xl border border-rose-200">
+                    <div className="relative p-4 bg-white rounded-2xl shadow-md border-2 border-rose-200/80">
                       {isLoadingQr ? (
-                        <div className="w-[220px] h-[220px] flex flex-col items-center justify-center text-zinc-400 gap-2">
+                        <div className="w-[220px] h-[220px] flex flex-col items-center justify-center text-rose-400 gap-2">
                           <RefreshCw size={32} className="animate-spin text-[var(--primary)]" />
-                          <span className="text-xs font-bold">Gerando QR Code oficial...</span>
+                          <span className="text-xs font-bold text-[var(--foreground)]">Gerando QR Code seguro...</span>
                         </div>
                       ) : qrCodeDataUrl && countdown > 0 ? (
                         <div className="flex flex-col items-center">
@@ -1157,8 +1245,8 @@ export default function WhatsAppPage() {
                             alt="QR Code WhatsApp"
                             className="w-[220px] h-[220px] object-contain rounded-lg"
                           />
-                          <span className="text-[11px] font-semibold text-zinc-500 mt-2">
-                            Atualiza em <strong>{countdown}s</strong>
+                          <span className="text-[11px] font-semibold text-rose-700 mt-2">
+                            Atualizando automaticamente em <strong>{countdown}s</strong>
                           </span>
                         </div>
                       ) : (
@@ -1180,12 +1268,12 @@ export default function WhatsAppPage() {
                         type="button"
                         onClick={handleConfirmConnection}
                         disabled={isCheckingConnection || isLoadingQr}
-                        className="w-full py-3 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer active:scale-[0.99] disabled:opacity-60"
+                        className="w-full py-3 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer active:scale-[0.99] disabled:opacity-60"
                       >
                         {isCheckingConnection ? (
                           <>
                             <RefreshCw size={16} className="animate-spin" />
-                            <span>Verificando conexão...</span>
+                            <span>Verificando no WhatsApp...</span>
                           </>
                         ) : (
                           <>
@@ -1206,26 +1294,40 @@ export default function WhatsAppPage() {
                     </div>
                   </div>
 
-                  {/* Passo a Passo */}
+                  {/* 3 Passos Simples com Visual Claro */}
                   <div className="lg:col-span-7 space-y-4">
-                    <h4 className="text-sm font-bold text-[var(--foreground)]">Como ler no celular:</h4>
+                    <h4 className="font-serif text-base font-bold text-[var(--foreground)]">
+                      3 Passos simples no seu celular:
+                    </h4>
                     <div className="space-y-3">
-                      <div className="p-3.5 rounded-2xl bg-[var(--background)]/70 border border-[var(--card-border)] flex items-center gap-3">
-                        <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">1</span>
-                        <p className="text-xs text-[var(--foreground)]">Abra o WhatsApp no celular da sua recepção.</p>
+                      <div className="p-4 rounded-2xl bg-white border border-rose-100 shadow-2xs flex items-center gap-3.5">
+                        <span className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 font-bold text-xs flex items-center justify-center shrink-0">
+                          1
+                        </span>
+                        <p className="text-xs text-[var(--foreground)] leading-relaxed">
+                          Abra o <strong>WhatsApp</strong> no celular que atende suas clientes.
+                        </p>
                       </div>
-                      <div className="p-3.5 rounded-2xl bg-[var(--background)]/70 border border-[var(--card-border)] flex items-center gap-3">
-                        <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">2</span>
-                        <p className="text-xs text-[var(--foreground)]">Toque em <strong>Configurações</strong> &gt; <strong>Aparelhos Conectados</strong>.</p>
+                      <div className="p-4 rounded-2xl bg-white border border-rose-100 shadow-2xs flex items-center gap-3.5">
+                        <span className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 font-bold text-xs flex items-center justify-center shrink-0">
+                          2
+                        </span>
+                        <p className="text-xs text-[var(--foreground)] leading-relaxed">
+                          Toque em <strong>Configurações</strong> (no iPhone) ou nos <strong>3 pontinhos</strong> (no Android) e selecione <strong>Aparelhos Conectados</strong>.
+                        </p>
                       </div>
-                      <div className="p-3.5 rounded-2xl bg-[var(--background)]/70 border border-[var(--card-border)] flex items-center gap-3">
-                        <span className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center justify-center shrink-0">3</span>
-                        <p className="text-xs text-[var(--foreground)]">Toque em <strong>Conectar um Aparelho</strong> e aponte para o QR Code ao lado.</p>
+                      <div className="p-4 rounded-2xl bg-white border border-rose-100 shadow-2xs flex items-center gap-3.5">
+                        <span className="w-8 h-8 rounded-xl bg-rose-100 text-rose-800 font-bold text-xs flex items-center justify-center shrink-0">
+                          3
+                        </span>
+                        <p className="text-xs text-[var(--foreground)] leading-relaxed">
+                          Toque em <strong>Conectar um Aparelho</strong> e aponte a câmera para o QR Code ao lado.
+                        </p>
                       </div>
                     </div>
 
-                    <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 text-xs text-emerald-900 dark:text-emerald-300">
-                      💡 <strong>Dica do Salão:</strong> Mesmo se você não conectar o aparelho agora, os botões de envio na <strong>Agenda</strong> e nos <strong>Clientes</strong> sempre funcionam com 1 clique direto pelo navegador!
+                    <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+                      💡 <strong>Dica de Praticidade:</strong> Mesmo antes de conectar o aparelho, todos os botões de envio na <strong>Agenda</strong> e nos <strong>Clientes</strong> sempre funcionam com 1 toque direto pelo navegador do seu computador ou celular!
                     </div>
                   </div>
                 </div>
@@ -1235,63 +1337,131 @@ export default function WhatsAppPage() {
         )}
 
         {/* =========================================================================
-            ABA 5: AVANÇADO & DIAGNÓSTICO
+            ABA 5: PERSONALIZAR TEXTOS, CHAVE PIX & AVALIAÇÃO GOOGLE
             ========================================================================= */}
-        {activeTab === "advanced" && (
-          <div className="space-y-4">
-            <div className="bg-[var(--card-bg)] rounded-3xl p-6 border border-[var(--card-border)] shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <h3 className="text-base font-bold font-sans tracking-tight text-[var(--foreground)]">
-                    Diagnóstico Técnico & Console
-                  </h3>
-                  <p className="text-xs text-[var(--muted)]">
-                    Informações para suporte técnico e status dos sockets do Baileys
-                  </p>
+        {activeTab === "messages" && (
+          <div className="space-y-6">
+            <div className="bg-[var(--card-bg)] rounded-3xl p-6 md:p-8 border border-[var(--card-border)] shadow-xs space-y-6">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-100 text-rose-800 text-[11px] font-bold uppercase tracking-wider mb-1">
+                  <HeartHandshake size={13} />
+                  <span>Configurações do Salão</span>
+                </div>
+                <h3 className="font-serif text-xl md:text-2xl font-bold tracking-tight text-[var(--foreground)]">
+                  Dados do Salão para as Mensagens
+                </h3>
+                <p className="text-xs text-[var(--muted)] mt-1">
+                  Preencha os dados abaixo para que a secretária virtual preencha sua chave PIX e seu link de avaliação automaticamente nos textos.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[var(--foreground)]">
+                    Telefone WhatsApp da Recepção:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 11999998888"
+                    value={salonPhone}
+                    onChange={(e) => setSalonPhone(e.target.value)}
+                    onBlur={() => saveConfig({ salonPhone })}
+                    className="w-full p-3 rounded-xl bg-white border border-rose-200 text-xs outline-none focus:border-[var(--primary)] shadow-2xs"
+                  />
+                  <span className="text-[10px] text-[var(--muted)]">Com DDD (apenas números)</span>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={async () => {
-                      setIsRunningDiagnostic(true);
-                      try {
-                        const res = await fetch("/api/whatsapp/connect", {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ action: "diagnostic" }),
-                        });
-                        const data = await res.json();
-                        alert(`Diagnóstico concluído! Status Baileys: ${data.baileysStatus?.connectionState || "ok"}`);
-                      } finally {
-                        setIsRunningDiagnostic(false);
-                      }
-                    }}
-                    disabled={isRunningDiagnostic}
-                    className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  >
-                    <Activity size={14} className={isRunningDiagnostic ? "animate-spin" : ""} />
-                    {isRunningDiagnostic ? "Verificando..." : "Testar Conexão"}
-                  </button>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[var(--foreground)]">
+                    Chave PIX (para sinal de garantia):
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: CNPJ, celular ou e-mail"
+                    value={pixKey}
+                    onChange={(e) => setPixKey(e.target.value)}
+                    onBlur={() => saveConfig({ pixKey })}
+                    className="w-full p-3 rounded-xl bg-white border border-rose-200 text-xs outline-none focus:border-[var(--primary)] shadow-2xs"
+                  />
+                  <span className="text-[10px] text-[var(--muted)]">Usada na mensagem de sinal</span>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-[var(--foreground)]">
+                    Link do Google Meu Negócio:
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: g.page/r/seusalao"
+                    value={googleReviewLink}
+                    onChange={(e) => setGoogleReviewLink(e.target.value)}
+                    onBlur={() => saveConfig({ googleReviewLink })}
+                    className="w-full p-3 rounded-xl bg-white border border-rose-200 text-xs outline-none focus:border-[var(--primary)] shadow-2xs"
+                  />
+                  <span className="text-[10px] text-[var(--muted)]">Para avaliação 5 estrelas</span>
                 </div>
               </div>
 
-              {/* Terminal View */}
-              <div className="bg-[#0b0f19] text-zinc-200 font-mono text-xs rounded-2xl p-4 border border-zinc-800 shadow-inner max-h-[360px] overflow-y-auto space-y-1.5">
-                <div className="text-zinc-500 pb-2 border-b border-zinc-800 text-[10px]">
-                  bellamais-engine • Baileys Multi-Device v7.0 • Logs em tempo real
+              {savedSuccess && (
+                <div className="p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold flex items-center gap-2">
+                  <Check size={16} /> Dados salvos com sucesso!
                 </div>
-                {consoleLogs.length === 0 ? (
-                  <div className="py-8 text-center text-zinc-500">Nenhum evento registrado ainda.</div>
-                ) : (
-                  consoleLogs.map((l) => (
-                    <div key={l.id} className="flex items-start gap-2 text-[11px]">
-                      <span className="text-zinc-500 shrink-0">[{l.timestamp}]</span>
-                      <span className="text-emerald-400 font-bold shrink-0">[{l.source}]</span>
-                      <span className={l.level === "error" ? "text-rose-400" : "text-zinc-300"}>
-                        {l.message}
-                      </span>
+              )}
+
+              {/* Seção Colapsável de Diagnóstico para Suporte Técnico */}
+              <div className="pt-6 border-t border-rose-100">
+                <button
+                  type="button"
+                  onClick={() => setShowTechnicalDiagnostics(!showTechnicalDiagnostics)}
+                  className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--foreground)] flex items-center gap-2 cursor-pointer py-1"
+                >
+                  <Settings size={14} />
+                  <span>{showTechnicalDiagnostics ? "Ocultar Informações Técnicas" : "Ver Informações Técnicas & Suporte"}</span>
+                  {showTechnicalDiagnostics ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+
+                {showTechnicalDiagnostics && (
+                  <div className="mt-4 p-5 rounded-2xl bg-zinc-950 text-zinc-300 font-mono text-xs space-y-3">
+                    <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+                      <span className="text-zinc-400 text-[11px]">Baileys Multi-Device Engine • Console de Eventos</span>
+                      <button
+                        onClick={async () => {
+                          setIsRunningDiagnostic(true);
+                          try {
+                            const res = await fetch("/api/whatsapp/connect", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ action: "diagnostic" }),
+                            });
+                            const data = await res.json();
+                            alert(`Diagnóstico concluído! Status Baileys: ${data.baileysStatus?.connectionState || "ok"}`);
+                          } finally {
+                            setIsRunningDiagnostic(false);
+                          }
+                        }}
+                        disabled={isRunningDiagnostic}
+                        className="px-3 py-1 rounded-lg bg-[var(--primary)] text-white text-[11px] font-bold cursor-pointer"
+                      >
+                        {isRunningDiagnostic ? "Verificando..." : "Testar Sockets"}
+                      </button>
                     </div>
-                  ))
+
+                    <div className="max-h-[220px] overflow-y-auto space-y-1.5 text-[11px]">
+                      {consoleLogs.length === 0 ? (
+                        <div className="text-zinc-500 py-3 text-center">Nenhum evento registrado ainda.</div>
+                      ) : (
+                        consoleLogs.map((l) => (
+                          <div key={l.id} className="flex items-start gap-2">
+                            <span className="text-zinc-500 shrink-0">[{l.timestamp}]</span>
+                            <span className="text-emerald-400 shrink-0">[{l.source}]</span>
+                            <span className={l.level === "error" ? "text-rose-400" : "text-zinc-300"}>
+                              {l.message}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
