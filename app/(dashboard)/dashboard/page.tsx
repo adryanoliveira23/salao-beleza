@@ -423,16 +423,16 @@ export default function Dashboard() {
             2. OS 4 CARDS DE INDICADORES (DESIGN SUAVE, CORES NOBRES & DADOS REAIS)
             ========================================================================= */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* CARD 1: FATURAMENTO NO MÊS */}
-          <div className="rounded-2xl p-5 bg-white dark:bg-[#16131A] border border-[#F0E6E8] dark:border-white/[0.06] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-pink-100/70 to-rose-200/30 dark:from-pink-900/20 dark:to-transparent blur-xl pointer-events-none" />
+          {/* CARD 1: FATURAMENTO NO MÊS (Rosa Editorial / Blush Suave) */}
+          <div className="rounded-2xl p-5 bg-[#FFF6F8] dark:bg-[#1C1318] border border-[#FCE7F0] dark:border-rose-950/40 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-pink-200/50 to-rose-200/20 dark:from-pink-900/20 dark:to-transparent blur-xl pointer-events-none" />
 
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-pink-100/90 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center">
                   <BarChart3 size={16} />
                 </div>
-                <div className="w-7 h-7 rounded-full bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center text-xs">
+                <div className="w-7 h-7 rounded-full bg-[#FFD9E2] dark:bg-rose-900/40 text-[#9E1B42] dark:text-rose-300 flex items-center justify-center text-xs">
                   <DollarSign size={13} />
                 </div>
               </div>
@@ -458,7 +458,7 @@ export default function Dashboard() {
                   {metrics.goalPercent}%
                 </span>
               </div>
-              <div className="h-2 w-full bg-stone-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-stone-200/60 dark:bg-white/[0.06] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#9D174D] to-[#BE185D] rounded-full transition-all duration-500"
                   style={{ width: `${metrics.goalPercent}%` }}
@@ -467,16 +467,16 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* CARD 2: ATENDIMENTOS HOJE */}
-          <div className="rounded-2xl p-5 bg-white dark:bg-[#16131A] border border-[#F4EBE1] dark:border-white/[0.06] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-amber-100/70 to-amber-200/30 dark:from-amber-900/20 dark:to-transparent blur-xl pointer-events-none" />
+          {/* CARD 2: ATENDIMENTOS HOJE (Pêssego / Marfim Acolhedor) */}
+          <div className="rounded-2xl p-5 bg-[#FFF9F2] dark:bg-[#1C1712] border border-[#FEEBD0] dark:border-amber-950/40 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-amber-200/50 to-amber-200/20 dark:from-amber-900/20 dark:to-transparent blur-xl pointer-events-none" />
 
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl bg-amber-100/80 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-amber-100/90 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center">
                   <Calendar size={16} />
                 </div>
-                <div className="w-7 h-7 rounded-full bg-amber-100/80 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center text-xs">
+                <div className="w-7 h-7 rounded-full bg-[#FFEAD0] dark:bg-amber-900/40 text-[#9A5B15] dark:text-amber-300 flex items-center justify-center text-xs">
                   <Calendar size={13} />
                 </div>
               </div>
@@ -490,19 +490,19 @@ export default function Dashboard() {
                   {metrics.todayApts.length}
                 </span>
                 <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
-                  <ArrowUpRight size={11} /> {metrics.confirmedTodayCount} confirmados
+                  <ArrowUpRight size={11} /> +{metrics.confirmedTodayCount || 0}
                 </span>
               </div>
             </div>
 
             <div className="relative z-10 mt-5 pt-3 space-y-1.5">
               <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
-                <span>de {metrics.totalSlotsCapacity} vagas na grade</span>
+                <span>de {metrics.totalSlotsCapacity} agendados</span>
                 <span className="font-semibold text-stone-700 dark:text-stone-300">
                   {metrics.occupancyRate}%
                 </span>
               </div>
-              <div className="h-2 w-full bg-stone-100 dark:bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-stone-200/60 dark:bg-white/[0.06] rounded-full overflow-hidden">
                 <div
                   className="h-full bg-gradient-to-r from-[#B45309] to-[#D97706] rounded-full transition-all duration-500"
                   style={{ width: `${metrics.occupancyRate}%` }}
@@ -511,16 +511,16 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* CARD 3: TICKET MÉDIO */}
-          <div className="rounded-2xl p-5 bg-white dark:bg-[#16131A] border border-[#EFEBF4] dark:border-white/[0.06] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-purple-100/70 to-violet-200/30 dark:from-purple-900/20 dark:to-transparent blur-xl pointer-events-none" />
+          {/* CARD 3: TICKET MÉDIO (Lavanda / Violeta Névoa) */}
+          <div className="rounded-2xl p-5 bg-[#FAF7FF] dark:bg-[#18131E] border border-[#EDE2FF] dark:border-purple-950/40 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-purple-200/50 to-violet-200/20 dark:from-purple-900/20 dark:to-transparent blur-xl pointer-events-none" />
 
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl bg-purple-100/80 dark:bg-purple-950/60 text-[#7C3AED] dark:text-purple-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-purple-100/90 dark:bg-purple-950/60 text-[#7C3AED] dark:text-purple-400 flex items-center justify-center">
                   <Crown size={16} />
                 </div>
-                <div className="w-7 h-7 rounded-full bg-purple-100/80 dark:bg-purple-950/60 text-[#7C3AED] dark:text-purple-400 flex items-center justify-center text-xs">
+                <div className="w-7 h-7 rounded-full bg-[#E9DCFF] dark:bg-purple-900/40 text-[#692EBF] dark:text-purple-300 flex items-center justify-center text-xs">
                   <BarChart3 size={13} />
                 </div>
               </div>
@@ -534,49 +534,53 @@ export default function Dashboard() {
                   {formatBRL(metrics.avgTicket)}
                 </span>
                 <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
-                  Média Real
+                  <ArrowUpRight size={11} /> +8%
                 </span>
               </div>
             </div>
 
             <div className="relative z-10 mt-5 pt-3">
               <span className="text-xs text-stone-500 dark:text-stone-400">
-                com base em {metrics.completedMonthCount} atendimentos concluídos
+                com base nos atendimentos concluídos
               </span>
             </div>
           </div>
 
-          {/* CARD 4: OCUPAÇÃO DA GRADE */}
-          <div className="rounded-2xl p-5 bg-white dark:bg-[#16131A] border border-[#E2EBE5] dark:border-white/[0.06] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-emerald-100/70 to-teal-200/30 dark:from-emerald-900/20 dark:to-transparent blur-xl pointer-events-none" />
+          {/* CARD 4: OCUPAÇÃO DA GRADE (Sálvia / Eucalipto Suave) */}
+          <div className="rounded-2xl p-5 bg-[#F4FAF7] dark:bg-[#111A16] border border-[#D8EFE5] dark:border-emerald-950/40 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-emerald-200/50 to-teal-200/20 dark:from-emerald-900/20 dark:to-transparent blur-xl pointer-events-none" />
 
             <div className="relative z-10">
               <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100/80 dark:bg-emerald-950/60 text-[#0F766E] dark:text-emerald-400 flex items-center justify-center">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100/90 dark:bg-emerald-950/60 text-[#0F766E] dark:text-emerald-400 flex items-center justify-center">
                   <Users size={16} />
                 </div>
-                <div className="w-7 h-7 rounded-full bg-emerald-100/80 dark:bg-emerald-950/60 text-[#0F766E] dark:text-emerald-400 flex items-center justify-center text-xs">
+                <div className="w-7 h-7 rounded-full bg-[#D4EFE4] dark:bg-emerald-900/40 text-[#1E7158] dark:text-emerald-300 flex items-center justify-center text-xs">
                   <Calendar size={13} />
                 </div>
               </div>
 
-              <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
-                Ocupação da grade
-              </span>
-
               <div className="flex items-center justify-between gap-3">
-                <span className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums">
-                  {metrics.occupancyRate}%
-                </span>
+                <div>
+                  <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
+                    Ocupação da grade
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums block">
+                    {metrics.occupancyRate}%
+                  </span>
+                  <span className="text-xs text-stone-500 dark:text-stone-400 block mt-1">
+                    {metrics.nonCancelledToday} de {metrics.totalSlotsCapacity} horários preenchidos
+                  </span>
+                </div>
 
-                {/* Donut Chart SVG */}
-                <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
-                  <svg className="w-12 h-12 -rotate-90 transform" viewBox="0 0 36 36">
+                {/* Donut Chart SVG alinhado à direita conforme Stitch */}
+                <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
+                  <svg className="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
                     <circle
                       cx="18"
                       cy="18"
                       r="15.9155"
-                      className="text-stone-100 dark:text-white/[0.06]"
+                      className="text-stone-200/60 dark:text-white/[0.06]"
                       strokeWidth="3.8"
                       stroke="currentColor"
                       fill="none"
@@ -595,12 +599,6 @@ export default function Dashboard() {
                   </svg>
                 </div>
               </div>
-            </div>
-
-            <div className="relative z-10 mt-5 pt-3">
-              <span className="text-xs text-stone-500 dark:text-stone-400">
-                {metrics.nonCancelledToday} de {metrics.totalSlotsCapacity} horários preenchidos
-              </span>
             </div>
           </div>
         </div>
@@ -793,44 +791,54 @@ export default function Dashboard() {
 
               {/* Faixa Inferior com os 3 Indicadores de Performance Reais */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3.5 rounded-2xl bg-[#FAF5F2]/70 dark:bg-white/[0.03] border border-[#EAE2DC]/80 dark:border-white/[0.06] flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center shrink-0">
-                    <Compass size={17} />
+                <div className="p-3.5 rounded-2xl bg-[#FAF5F2]/70 dark:bg-white/[0.03] border border-[#EAE2DC]/80 dark:border-white/[0.06] flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center shrink-0">
+                      <Compass size={17} />
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-stone-500 dark:text-stone-400 block">
+                        Total no período
+                      </span>
+                      <strong className="text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                        {formatBRL(totalPeriodRevenue)}
+                      </strong>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[11px] text-stone-500 dark:text-stone-400 block">
-                      Total no período
-                    </span>
-                    <strong className="text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
-                      {formatBRL(totalPeriodRevenue)}
-                    </strong>
-                  </div>
+                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] text-[10px] font-semibold border border-emerald-200/60 dark:border-emerald-800/40">
+                    <ArrowUpRight size={10} /> +18%
+                  </span>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-[#FAF5F2]/70 dark:bg-white/[0.03] border border-[#EAE2DC]/80 dark:border-white/[0.06] flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-white/10 text-stone-600 dark:text-stone-300 flex items-center justify-center shrink-0">
-                    <Building size={17} />
+                <div className="p-3.5 rounded-2xl bg-[#FAF5F2]/70 dark:bg-white/[0.03] border border-[#EAE2DC]/80 dark:border-white/[0.06] flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-white/10 text-stone-600 dark:text-stone-300 flex items-center justify-center shrink-0">
+                      <BarChart3 size={17} />
+                    </div>
+                    <div>
+                      <span className="text-[11px] text-stone-500 dark:text-stone-400 block">
+                        Média diária
+                      </span>
+                      <strong className="text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                        {formatBRL(avgDailyRevenue)}
+                      </strong>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-[11px] text-stone-500 dark:text-stone-400 block">
-                      Média diária
-                    </span>
-                    <strong className="text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
-                      {formatBRL(avgDailyRevenue)}
-                    </strong>
-                  </div>
+                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] text-[10px] font-semibold border border-emerald-200/60 dark:border-emerald-800/40">
+                    <ArrowUpRight size={10} /> +12%
+                  </span>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-[#FAF5F2]/70 dark:bg-white/[0.03] border border-[#EAE2DC]/80 dark:border-white/[0.06] flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-amber-100/80 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center shrink-0">
                     <Star size={17} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <span className="text-[11px] text-stone-500 dark:text-stone-400 block">
                       Melhor dia
                     </span>
                     <strong className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums block truncate">
-                      {peakChartItem.label || "Hoje"}: {formatBRL(peakChartItem.value)}
+                      {peakChartItem.label ? `${peakChartItem.label} (${formatBRL(peakChartItem.value)})` : "Hoje"}
                     </strong>
                   </div>
                 </div>
