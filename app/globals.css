@@ -5,8 +5,8 @@
 :root {
   /* Paleta BellaMais Glow 2026: Feminina, Vibrante & Cheia de Energia
      Fundo aquecido de porcelana suave, cartões com bordas sutis em quartzo rosa, acentos vivos em framboesa vibrante e esmeralda */
-  --background: #fdfaf8;
-  --foreground: #1a1218;
+  --background: #faf5f2;
+  --foreground: #20181b;
 
   --primary: #be185d;
   --primary-dark: #9d174d;
@@ -27,20 +27,20 @@
   --beige-card: #ffffff;
   --surface: #ffffff;
   --surface-hover: #fdf4f8;
-  --border-subtle: #f0e3eb;
+  --border-subtle: #eae2dc;
   --grey-text: #73646d;
   --dark-text: #1a1218;
 
   --card-bg: #ffffff;
-  --card-border: #eedee7;
-  --muted: #73646d;
+  --card-border: #eae2dc;
+  --muted: #706268;
 }
 
 html.dark,
 [data-theme="dark"] {
   /* Modo Escuro Premium: Slate/Obsidian Neutro e Limpo com Destaques Vivos em Rosa Radiante e Esmeralda */
-  --background: #090a0f;
-  --foreground: #f8fafc;
+  --background: #0e0c10;
+  --foreground: #f6eef2;
 
   --primary: #f43f5e;
   --primary-dark: #fb7185;
@@ -65,7 +65,7 @@ html.dark,
   --grey-text: #94a3b8;
   --dark-text: #f8fafc;
 
-  --card-bg: #12141c;
+  --card-bg: #161218;
   --card-border: rgba(255, 255, 255, 0.08);
   --muted: #94a3b8;
 }
