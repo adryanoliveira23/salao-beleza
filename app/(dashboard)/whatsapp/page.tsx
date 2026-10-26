@@ -31,10 +31,12 @@ import {
   Activity,
   Layers,
   ArrowRight,
+  ArrowUpRight,
   UserCheck,
   Radio,
   FileText,
   RotateCcw,
+  MoreVertical,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
@@ -43,6 +45,7 @@ import { db } from "@/app/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { soundEffects } from "@/lib/soundEffects";
 import { useToast } from "@/contexts/ToastContext";
+import { formatBRL } from "@/lib/formatters";
 
 export interface AutomationRule {
   id: "confirm_24h" | "reminder_2h" | "instant_booking" | "post_review";
@@ -65,7 +68,7 @@ const DEFAULT_AUTOMATION_RULES: AutomationRule[] = [
     scheduleInfo: "Automático no agendamento",
     enabled: true,
     template:
-      "Olá [Nome da Cliente]! 💕 Seu agendamento foi realizado com sucesso!\n\n💅 Procedimento: *[Procedimento]*\n📅 Data: *[Data]* às *[Horário]*\n👤 Especialista: *[Profissional]*\n📍 Salão: *[Nome do Salão]*\n\nEstamos ansiosas para cuidar de você! ✨",
+      "Olá [Nome da Cliente]! 💕 Seu agendamento foi realizado com sucesso!\n\n💅 Procedimento: [Procedimento]\n📅 Data: [Data] às [Horário]\n👤 Especialista: [Profissional]\n📍 Salão: [Nome do Salão]\n\nEstamos ansiosas para cuidar de você! ✨",
   },
   {
     id: "confirm_24h",
@@ -76,7 +79,7 @@ const DEFAULT_AUTOMATION_RULES: AutomationRule[] = [
     scheduleInfo: "Disparo automático às 08:00 na véspera",
     enabled: true,
     template:
-      "Oi, [Nome da Cliente]! Passando com carinho para confirmar seu horário amanhã ([Data]) às *[Horário]* para *[Procedimento]* aqui no [Nome do Salão].\n\nPodemos confirmar sua presença?\n👉 Responda *SIM* para confirmar ou *NÃO* para reagendar.",
+      "Oi, [Nome da Cliente]! Passando com carinho para confirmar seu horário amanhã ([Data]) às [Horário] para [Procedimento] aqui no [Nome do Salão].\n\nPodemos confirmar sua presença?\n👉 Responda SIM para confirmar ou NÃO para reagendar.",
   },
   {
     id: "reminder_2h",
@@ -87,7 +90,7 @@ const DEFAULT_AUTOMATION_RULES: AutomationRule[] = [
     scheduleInfo: "Disparo 2h antes de cada horário",
     enabled: true,
     template:
-      "Oi, [Nome da Cliente]! 🌸 Sua bancada já está higienizada e seu cafezinho te esperando!\n\nLembrando que seu horário de *[Procedimento]* é hoje às *[Horário]*. Até daqui a pouco no [Nome do Salão]!",
+      "Oi, [Nome da Cliente]! 🌸 Sua bancada já está higienizada e seu cafezinho te esperando!\n\nLembrando que seu horário de [Procedimento] é hoje às [Horário]. Até daqui a pouco no [Nome do Salão]!",
   },
   {
     id: "post_review",
@@ -102,43 +105,17 @@ const DEFAULT_AUTOMATION_RULES: AutomationRule[] = [
   },
 ];
 
-function fillTemplate(
-  tpl: string,
-  data: {
-    clientName?: string;
-    serviceName?: string;
-    professionalName?: string;
-    date?: string;
-    time?: string;
-    salonName?: string;
-    reviewLink?: string;
-    pixKey?: string;
-  }
-): string {
-  if (!tpl) return "";
-  return tpl
-    .replace(/\[Nome da Cliente\]|\[cliente\]|\{\{cliente\}\}/gi, data.clientName || "Maria")
-    .replace(/\[Procedimento\]|\[serviço\]|\[servico\]|\{\{servico\}\}/gi, data.serviceName || "Corte & Escova")
-    .replace(/\[Profissional\]|\{\{profissional\}\}/gi, data.professionalName || "Camila")
-    .replace(/\[Data\]|\{\{data\}\}/gi, data.date || "Hoje")
-    .replace(/\[Horário\]|\[hora\]|\{\{horario\}\}/gi, data.time || "14:00")
-    .replace(/\[Nome do Salão\]|\[Salão\]|\{\{salao\}\}/gi, data.salonName || "Studio de Beleza")
-    .replace(/\[Link do Google\]|\{\{link_avaliacao\}\}/gi, data.reviewLink || "g.page/r/seusalao")
-    .replace(/\[Chave PIX\]|\{\{pix\}\}/gi, data.pixKey || "(Chave PIX)");
-}
-
 export default function WhatsAppPage() {
   const { user, profile } = useAuth();
   const { appointments, updateAppointment } = useSalonData();
   const toast = useToast();
 
-  // Abas Simplificadas e Objetivas (Apenas 3)
+  // Abas
   const [activeTab, setActiveTab] = useState<"timeline" | "rules" | "connection">("timeline");
 
   // Estado da Conexão
   const [isConnected, setIsConnected] = useState(false);
   const [connectedPhone, setConnectedPhone] = useState("");
-  const [connectedAt, setConnectedAt] = useState("");
 
   // Piloto Automático Ativo
   const [autoPilotEnabled, setAutoPilotEnabled] = useState(true);
@@ -157,19 +134,7 @@ export default function WhatsAppPage() {
   const [googleReviewLink, setGoogleReviewLink] = useState("");
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
 
-  // Feed de Atividades do Robô (Timeline ao Vivo)
-  const [robotEvents, setRobotEvents] = useState<
-    Array<{
-      id: string;
-      time: string;
-      type: "send" | "confirm" | "cancel" | "scheduled";
-      clientName: string;
-      service: string;
-      message: string;
-    }>
-  >([]);
-
-  const salonName = profile?.salon_name || "Meu Salão";
+  const salonName = profile?.salon_name || "Studio Glow";
 
   // Datas
   const todayStr = useMemo(() => new Date().toISOString().split("T")[0], []);
@@ -192,7 +157,7 @@ export default function WhatsAppPage() {
       .sort((a, b) => a.time.localeCompare(b.time));
   }, [appointments, tomorrowStr]);
 
-  // Estatísticas Reais de Impacto
+  // Estatísticas Reais
   const confirmedToday = useMemo(() => {
     return todayAppointments.filter((a) => a.status === "confirmed").length;
   }, [todayAppointments]);
@@ -298,12 +263,12 @@ export default function WhatsAppPage() {
         setConnectedPhone(data.phoneNumber || salonPhone || "WhatsApp Ativo");
         toast.success(
           "WhatsApp conectado com sucesso! O robô agora está ativo e disparando sozinho.",
-          "Conectado com Sucesso"
+          "Conectado com Sucesso",
         );
       } else {
         toast.warning(
           data.message || "Aparelho ainda não detectado. Aponte a câmera para o QR Code.",
-          "Aguardando Conexão"
+          "Aguardando Conexão",
         );
       }
     } finally {
@@ -326,9 +291,7 @@ export default function WhatsAppPage() {
     } catch (e) {}
   };
 
-  // =========================================================================
-  // EXECUÇÃO IMEDIATA DO PILOTO AUTOMÁTICO (EM SEGUNDO PLANO)
-  // =========================================================================
+  // Executar automação
   const handleRunAutomation = async () => {
     setIsProcessing(true);
     soundEffects.playClick();
@@ -362,7 +325,6 @@ export default function WhatsAppPage() {
 
       const data = await res.json();
       if (data.ok) {
-        // Atualiza appointments confirmados
         if (data.dispatched && Array.isArray(data.dispatched)) {
           for (const item of data.dispatched) {
             updateAppointment(item.appointmentId, {
@@ -372,12 +334,12 @@ export default function WhatsAppPage() {
         }
         toast.success(
           data.message || "O robô processou a agenda e disparou as mensagens pendentes!",
-          "Automação Executada"
+          "Automação Executada",
         );
       } else {
         toast.warning(
           data.message || "Conecte o WhatsApp na aba 'Conexão' para que o robô envie automaticamente.",
-          "WhatsApp Não Conectado"
+          "WhatsApp Não Conectado",
         );
       }
     } catch (e) {
@@ -388,167 +350,184 @@ export default function WhatsAppPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-full bg-gradient-to-br from-[#fff7f9] via-[#fdf5f8] to-[#faf0f5] dark:from-[#090a0f] dark:via-[#0e1017] dark:to-[#12141c] font-sans text-zinc-900 dark:text-zinc-100 transition-colors">
+    <div className="flex flex-col min-h-full bg-[#FAF5F2] dark:bg-[#0E0C10] text-[#20181B] dark:text-[#F6EEF2] transition-colors duration-200 font-sans">
       <Header title="Automação do WhatsApp" />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6 max-w-[1400px] w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 max-w-[1440px] w-full mx-auto">
         {/* =========================================================================
-            HERO VIBRANTE: STATUS DO PILOTO AUTOMÁTICO (O CENTRO DE COMANDO)
+            1. BARRA SUPERIOR EDITORIAL: STATUS DO ROBÔ & AÇÃO RÁPIDA
             ========================================================================= */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-rose-600 via-pink-600 to-rose-700 text-white p-6 sm:p-8 shadow-[0_16px_36px_-6px_rgba(244,63,94,0.35)]">
-          {/* Luzes decorativas */}
-          <div className="absolute -right-12 -top-12 w-64 h-64 rounded-full bg-white/15 blur-2xl pointer-events-none" />
-          <div className="absolute right-1/3 -bottom-10 w-44 h-44 rounded-full bg-rose-400/20 blur-xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="space-y-3 max-w-2xl">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-extrabold uppercase tracking-wider">
-                  <Bot size={13} className="animate-pulse" />
-                  <span>Piloto Automático WhatsApp</span>
-                </span>
-
-                {isConnected ? (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-400/30 text-emerald-100 border border-emerald-300/40 text-[11px] font-bold">
-                    <span className="w-2 h-2 rounded-full bg-emerald-300 animate-ping" />
-                    Robô Online & Operando 24h
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/30 text-amber-100 border border-amber-300/40 text-[11px] font-bold">
-                    <AlertCircle size={12} />
-                    WhatsApp Desconectado
-                  </span>
-                )}
-              </div>
-
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
-                {isConnected
-                  ? "Sua Agenda Está no Piloto Automático"
-                  : "Conecte seu WhatsApp para Automatizar Tudo"}
-              </h1>
-
-              <p className="text-xs sm:text-sm text-rose-100 leading-relaxed font-medium">
-                {isConnected
-                  ? "O robô cuida de tudo sozinho nos bastidores: confirmações 24h na véspera, lembretes de bancada pronta e cancelamentos automáticos caso a cliente desmarque."
-                  : "Sem precisar ficar digitando mensagem por mensagem. O robô dispara as confirmações sozinho e atualiza os horários na agenda para você faturar mais."}
-              </p>
-            </div>
-
-            {/* Ações do Hero */}
-            <div className="shrink-0 flex flex-col sm:flex-row lg:flex-col items-stretch sm:items-center lg:items-end gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl bg-white dark:bg-[#16131A] border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)]">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
               {isConnected ? (
-                <>
-                  <button
-                    type="button"
-                    onClick={handleRunAutomation}
-                    disabled={isProcessing}
-                    className="px-6 py-3.5 rounded-2xl bg-white hover:bg-rose-50 text-rose-600 font-extrabold text-xs flex items-center justify-center gap-2 shadow-xl shadow-black/10 transition cursor-pointer active:scale-95 disabled:opacity-60"
-                  >
-                    <Zap size={16} className={isProcessing ? "animate-spin" : "fill-rose-600"} />
-                    <span>{isProcessing ? "Robô Processando..." : "⚡ Rodar Automação Agora"}</span>
-                  </button>
-
-                  <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-black/20 text-rose-100 text-xs font-semibold">
-                    <Smartphone size={14} />
-                    <span>{connectedPhone || "Conectado"}</span>
-                  </div>
-                </>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] border border-emerald-200/60 dark:border-emerald-800/40 text-xs font-bold">
+                  <span className="w-2 h-2 rounded-full bg-[#15803D] dark:bg-[#4ADE80] animate-pulse" />
+                  Robô Conectado & Ativo 24h
+                </span>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    soundEffects.playPop();
-                    setActiveTab("connection");
-                  }}
-                  className="px-6 py-4 rounded-2xl bg-white hover:bg-rose-50 text-rose-700 font-extrabold text-sm flex items-center justify-center gap-2.5 shadow-xl transition cursor-pointer active:scale-95"
-                >
-                  <QrCode size={18} />
-                  <span>Escanear QR Code para Ativar Robô</span>
-                </button>
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 dark:bg-amber-950/40 text-[#B45309] dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40 text-xs font-bold">
+                  <AlertCircle size={13} />
+                  WhatsApp Desconectado
+                </span>
+              )}
+              {connectedPhone && (
+                <span className="text-xs text-stone-500 font-medium">
+                  • {connectedPhone}
+                </span>
               )}
             </div>
+
+            <h1 className="text-lg sm:text-xl font-bold tracking-tight text-stone-900 dark:text-stone-100 mt-1">
+              Piloto Automático de Mensagens & Confirmações
+            </h1>
+            <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+              Disparos programados para confirmação 24h na véspera, lembretes de bancada e fidelização.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            {isConnected ? (
+              <button
+                type="button"
+                onClick={handleRunAutomation}
+                disabled={isProcessing}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7B1832] hover:bg-[#621327] text-white text-xs font-bold transition shadow-[0_2px_8px_rgba(123,24,50,0.25)] active:scale-95 cursor-pointer disabled:opacity-60"
+              >
+                <Zap size={14} className={isProcessing ? "animate-spin" : "fill-white"} />
+                <span>{isProcessing ? "Processando..." : "Sincronizar e Disparar"}</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  soundEffects.playPop();
+                  setActiveTab("connection");
+                }}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#7B1832] hover:bg-[#621327] text-white text-xs font-bold transition shadow-[0_2px_8px_rgba(123,24,50,0.25)] active:scale-95 cursor-pointer"
+              >
+                <QrCode size={14} />
+                <span>Conectar WhatsApp</span>
+              </button>
+            )}
           </div>
         </div>
 
         {/* =========================================================================
-            3 CARDS VIBRANTES DE IMPACTO (SEM CARDS INÚTEIS)
+            2. OS 3 CARDS DE IMPACTO COM PROPORÇÃO HARMONIOSA & GLOW SUTIL
             ========================================================================= */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {/* Card 1: Faturamento Protegido */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#12141c] border border-rose-200/80 dark:border-white/[0.08] shadow-[0_8px_24px_-4px_rgba(244,63,94,0.12)] flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-rose-600 dark:text-rose-400 block mb-1">
+          <div className="rounded-2xl p-5 bg-white dark:bg-[#16131A] border border-[#F0E6E8] dark:border-white/[0.06] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-pink-100/70 to-rose-200/30 dark:from-pink-900/20 dark:to-transparent blur-xl pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-8 h-8 rounded-xl bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center">
+                  <DollarSign size={16} />
+                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
+                  <ArrowUpRight size={11} /> Protegido
+                </span>
+              </div>
+
+              <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
                 Faturamento Salvo do Salão
               </span>
-              <h3 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                R$ {savedRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-              </h3>
-              <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 block">
-                Em horários confirmados automaticamente
-              </span>
+
+              <div className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums">
+                {formatBRL(savedRevenue)}
+              </div>
             </div>
-            <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-rose-500/25 shrink-0">
-              <Crown size={24} />
+
+            <div className="relative z-10 mt-4 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+              <span className="text-xs text-stone-500 dark:text-stone-400">
+                Em horários confirmados automaticamente pelo robô
+              </span>
             </div>
           </div>
 
-          {/* Card 2: Horários de Hoje */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#12141c] border border-emerald-200/80 dark:border-white/[0.08] shadow-[0_8px_24px_-4px_rgba(16,185,129,0.12)] flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block mb-1">
+          {/* Card 2: Confirmados Hoje */}
+          <div className="rounded-2xl p-5 bg-white dark:bg-[#16131A] border border-[#E2EBE5] dark:border-white/[0.06] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-emerald-100/70 to-teal-200/30 dark:from-emerald-900/20 dark:to-transparent blur-xl pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-8 h-8 rounded-xl bg-emerald-100/80 dark:bg-emerald-950/60 text-[#0F766E] dark:text-emerald-400 flex items-center justify-center">
+                  <CheckCircle2 size={16} />
+                </div>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
+                  {todayAppointments.length > 0
+                    ? `${Math.round((confirmedToday / todayAppointments.length) * 100)}% presenças`
+                    : "100% presenças"}
+                </span>
+              </div>
+
+              <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
                 Confirmados Hoje
               </span>
-              <h3 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
-                {confirmedToday} / {todayAppointments.length}
-              </h3>
-              <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 block">
-                {todayAppointments.length === 0
-                  ? "Nenhum horário hoje"
-                  : `${Math.round((confirmedToday / (todayAppointments.length || 1)) * 100)}% de comparecimento`}
-              </span>
+
+              <div className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums">
+                {confirmedToday} de {todayAppointments.length}
+              </div>
             </div>
-            <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0">
-              <CheckCircle2 size={24} />
+
+            <div className="relative z-10 mt-4 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+              <span className="text-xs text-stone-500 dark:text-stone-400">
+                Clientes que já confirmaram presença para hoje
+              </span>
             </div>
           </div>
 
-          {/* Card 3: Lembretes de Véspera */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-[#12141c] border border-purple-200/80 dark:border-white/[0.08] shadow-[0_8px_24px_-4px_rgba(168,85,247,0.12)] flex items-center justify-between">
-            <div>
-              <span className="text-[11px] font-extrabold uppercase tracking-wider text-purple-600 dark:text-purple-400 block mb-1">
+          {/* Card 3: Fila de Véspera */}
+          <div className="rounded-2xl p-5 bg-white dark:bg-[#16131A] border border-[#F4EBE1] dark:border-white/[0.06] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
+            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-amber-100/70 to-amber-200/30 dark:from-amber-900/20 dark:to-transparent blur-xl pointer-events-none" />
+
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-3">
+                <div className="w-8 h-8 rounded-xl bg-amber-100/80 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center">
+                  <Clock size={16} />
+                </div>
+                <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 px-2.5 py-0.5 rounded-full border border-amber-200/60 dark:border-amber-800/40">
+                  Amanhã
+                </span>
+              </div>
+
+              <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
                 Fila de Véspera (Amanhã)
               </span>
-              <h3 className="text-3xl font-extrabold text-zinc-900 dark:text-white tracking-tight">
+
+              <div className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums">
                 {pendingTomorrow} Lembretes
-              </h3>
-              <span className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 block">
-                Programados para envio automático às 08:00
-              </span>
+              </div>
             </div>
-            <div className="w-13 h-13 rounded-2xl bg-gradient-to-br from-purple-500 to-pink-600 text-white flex items-center justify-center shadow-lg shadow-purple-500/25 shrink-0">
-              <Bot size={24} />
+
+            <div className="relative z-10 mt-4 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+              <span className="text-xs text-stone-500 dark:text-stone-400">
+                Disparos programados para amanhã às 08:00
+              </span>
             </div>
           </div>
         </div>
 
         {/* =========================================================================
-            MENU DE NAVEGAÇÃO: 3 ABAS OBJETIVAS
+            3. SELETOR DE ABAS TIPO PÍLULA (COMPACTO E ELEGANTE)
             ========================================================================= */}
-        <div className="flex items-center gap-2 p-1.5 rounded-2xl bg-white dark:bg-[#12141c] border border-zinc-200/80 dark:border-white/[0.08] shadow-xs max-w-xl">
+        <div className="flex items-center p-1 rounded-full bg-stone-100 dark:bg-[#201822] text-xs max-w-md">
           <button
             type="button"
             onClick={() => {
               soundEffects.playPop();
               setActiveTab("timeline");
             }}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+            className={`flex-1 py-1.5 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "timeline"
-                ? "bg-rose-600 text-white shadow-sm"
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-white/5"
+                ? "bg-[#7B1832] text-white shadow-xs"
+                : "text-stone-600 dark:text-stone-400 hover:text-stone-900"
             }`}
           >
-            <Activity size={15} />
-            <span>Linha do Tempo do Robô</span>
+            <Activity size={14} />
+            <span>Fila & Monitoramento</span>
           </button>
 
           <button
@@ -557,14 +536,14 @@ export default function WhatsAppPage() {
               soundEffects.playPop();
               setActiveTab("rules");
             }}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+            className={`flex-1 py-1.5 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "rules"
-                ? "bg-rose-600 text-white shadow-sm"
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-white/5"
+                ? "bg-[#7B1832] text-white shadow-xs"
+                : "text-stone-600 dark:text-stone-400 hover:text-stone-900"
             }`}
           >
-            <Settings size={15} />
-            <span>Regras & Textos</span>
+            <Settings size={14} />
+            <span>Mensagens & Textos</span>
           </button>
 
           <button
@@ -573,93 +552,95 @@ export default function WhatsAppPage() {
               soundEffects.playPop();
               setActiveTab("connection");
             }}
-            className={`flex-1 py-3 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
+            className={`flex-1 py-1.5 px-3 rounded-full text-xs font-bold transition flex items-center justify-center gap-1.5 cursor-pointer ${
               activeTab === "connection"
-                ? "bg-rose-600 text-white shadow-sm"
-                : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white hover:bg-zinc-50 dark:hover:bg-white/5"
+                ? "bg-[#7B1832] text-white shadow-xs"
+                : "text-stone-600 dark:text-stone-400 hover:text-stone-900"
             }`}
           >
-            <Smartphone size={15} />
+            <Smartphone size={14} />
             <span>Conexão WhatsApp</span>
           </button>
         </div>
 
         {/* =========================================================================
-            ABA 1: LINHA DO TEMPO DA AUTOMAÇÃO (O FEED DO ROBÔ)
+            ABA 1: FILA DE ATENDIMENTOS & MONITORAMENTO
             ========================================================================= */}
         {activeTab === "timeline" && (
           <div className="space-y-6">
-            {/* Bloco de Agendamentos do Dia com Status Semafórico */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-[#12141c] border border-rose-200/80 dark:border-white/[0.08] shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-zinc-100 dark:border-white/10">
-                <div>
-                  <h3 className="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white flex items-center gap-2">
-                    <Calendar size={18} className="text-rose-600" />
-                    <span>Monitoramento da Agenda de Hoje</span>
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    O robô acompanha cada cliente e envia lembrete 2h antes de cada procedimento.
-                  </p>
+            {/* Bloco de Atendimentos de Hoje com barra lateral de status */}
+            <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 sm:p-6 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100 dark:border-white/[0.06]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center">
+                    <Calendar size={15} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
+                      Monitoramento da Agenda de Hoje
+                    </h3>
+                    <p className="text-[11px] text-stone-400">
+                      O robô acompanha cada cliente e envia lembrete 2h antes do procedimento.
+                    </p>
+                  </div>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleRunAutomation}
                   disabled={isProcessing}
-                  className="px-4 py-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 hover:bg-rose-100 text-rose-700 dark:text-rose-300 text-xs font-bold flex items-center justify-center gap-2 transition cursor-pointer self-start sm:self-auto"
+                  className="px-3.5 py-1.5 rounded-full bg-stone-100 dark:bg-white/10 hover:bg-stone-200 text-stone-700 dark:text-stone-200 text-xs font-bold transition flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
                 >
                   <RefreshCw size={13} className={isProcessing ? "animate-spin" : ""} />
-                  <span>Sincronizar e Disparar Pendentes</span>
+                  <span>Sincronizar Pendentes</span>
                 </button>
               </div>
 
               {todayAppointments.length === 0 ? (
-                <div className="py-12 text-center text-zinc-400 text-xs">
-                  Nenhum horário marcado para hoje. Quando clientes agendarem, eles aparecerão aqui vigiados pelo robô.
+                <div className="py-8 text-center text-stone-400 text-xs">
+                  Nenhum horário marcado para hoje até o momento. Quando clientes agendarem, eles aparecerão aqui monitorados pelo robô.
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                <div className="space-y-2.5">
                   {todayAppointments.map((apt) => {
                     const isConfirmed = apt.status === "confirmed";
                     return (
                       <div
                         key={apt.id}
-                        className={`p-4 rounded-2xl border transition flex flex-col justify-between gap-3 ${
-                          isConfirmed
-                            ? "bg-emerald-50/40 dark:bg-emerald-950/15 border-emerald-200 dark:border-emerald-500/20"
-                            : "bg-zinc-50/60 dark:bg-white/[0.02] border-zinc-200/80 dark:border-white/10"
-                        }`}
+                        className="p-3 rounded-xl bg-[#FAF5F2]/50 dark:bg-white/[0.02] border border-[#EAE2DC]/60 dark:border-white/[0.04] hover:bg-white dark:hover:bg-[#1C1822] transition flex items-center justify-between gap-3"
                       >
-                        <div className="flex items-start justify-between gap-2">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-lg bg-zinc-200 dark:bg-white/10 text-zinc-800 dark:text-zinc-200">
-                                {apt.time}
-                              </span>
-                              <strong className="text-sm font-extrabold text-zinc-900 dark:text-white">
-                                {apt.clientName}
-                              </strong>
-                            </div>
-                            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
-                              {apt.serviceName} • R$ {apt.price?.toFixed(2)}
-                            </p>
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div
+                            className={`w-1 h-8 rounded-full ${
+                              isConfirmed ? "bg-[#15803D]" : "bg-[#D97706]"
+                            } shrink-0`}
+                          />
+
+                          <div className="min-w-[50px] shrink-0">
+                            <span className="text-xs font-bold text-stone-800 dark:text-stone-200 block">
+                              {apt.time}
+                            </span>
                           </div>
 
+                          <div className="truncate">
+                            <h4 className="text-xs font-bold text-stone-900 dark:text-stone-100 truncate">
+                              {apt.clientName}
+                            </h4>
+                            <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
+                              {apt.serviceName} • {formatBRL(apt.price || 0)}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0">
                           <span
-                            className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase shrink-0 ${
+                            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
                               isConfirmed
-                                ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300"
-                                : "bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300"
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-200/50"
+                                : "bg-amber-50 text-amber-700 border-amber-200/50"
                             }`}
                           >
                             {isConfirmed ? "Confirmado" : "Aguardando"}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between text-[11px] text-zinc-500 dark:text-zinc-400 pt-2 border-t border-zinc-200/50 dark:border-white/5">
-                          <span className="flex items-center gap-1">
-                            <Bot size={12} className="text-rose-500" />
-                            {isConfirmed ? "Presença confirmada" : "Lembrete 2h programado"}
                           </span>
 
                           <button
@@ -667,15 +648,16 @@ export default function WhatsAppPage() {
                             onClick={() => {
                               const clean = (apt.clientPhone || "").replace(/\D/g, "");
                               const num = clean.length <= 11 ? `55${clean}` : clean;
-                              const text = `Oi, ${apt.clientName}! Passando para lembrar do seu horário hoje às ${apt.time} para ${apt.serviceName}!`;
+                              const text = `Oi, ${apt.clientName}! Passando para confirmar seu horário hoje às ${apt.time} para ${apt.serviceName}!`;
                               window.open(
                                 `https://api.whatsapp.com/send?phone=${num}&text=${encodeURIComponent(text)}`,
-                                "_blank"
+                                "_blank",
                               );
                             }}
-                            className="text-rose-600 dark:text-rose-400 font-bold hover:underline flex items-center gap-1 cursor-pointer"
+                            className="p-1.5 rounded-lg text-[#15803D] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                            title="Conversar no WhatsApp"
                           >
-                            Abrir Chat <ExternalLink size={11} />
+                            <MessageCircle size={15} />
                           </button>
                         </div>
                       </div>
@@ -686,24 +668,29 @@ export default function WhatsAppPage() {
             </div>
 
             {/* Agendamentos de Amanhã (Fila de 24h) */}
-            <div className="p-6 rounded-3xl bg-white dark:bg-[#12141c] border border-rose-200/80 dark:border-white/[0.08] shadow-xs space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-extrabold text-base sm:text-lg text-zinc-900 dark:text-white flex items-center gap-2">
-                    <Clock size={18} className="text-purple-600" />
-                    <span>Fila de Véspera (Disparo Automático Amanhã)</span>
-                  </h3>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                    Clientes agendadas para amanhã que receberão a mensagem de confirmação 24h.
-                  </p>
+            <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 sm:p-6 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-white/[0.06]">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-amber-100/80 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center">
+                    <Clock size={15} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
+                      Fila de Véspera (Disparo Automático Amanhã)
+                    </h3>
+                    <p className="text-[11px] text-stone-400">
+                      Clientes agendadas para amanhã que receberão a confirmação de 24h.
+                    </p>
+                  </div>
                 </div>
-                <span className="text-xs font-bold text-purple-600 bg-purple-50 dark:bg-purple-500/10 px-3 py-1 rounded-full">
+
+                <span className="text-xs font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/40 px-3 py-1 rounded-full border border-amber-200/50">
                   {tomorrowAppointments.length} horários amanhã
                 </span>
               </div>
 
               {tomorrowAppointments.length === 0 ? (
-                <div className="py-8 text-center text-zinc-400 text-xs">
+                <div className="py-6 text-center text-stone-400 text-xs">
                   Nenhum horário marcado para amanhã até o momento.
                 </div>
               ) : (
@@ -711,25 +698,23 @@ export default function WhatsAppPage() {
                   {tomorrowAppointments.map((apt) => (
                     <div
                       key={apt.id}
-                      className="p-3.5 rounded-2xl bg-zinc-50/60 dark:bg-white/[0.02] border border-zinc-200/80 dark:border-white/10 flex items-center justify-between gap-3 text-xs"
+                      className="p-3 rounded-xl bg-[#FAF5F2]/50 dark:bg-white/[0.02] border border-[#EAE2DC]/60 dark:border-white/[0.04] flex items-center justify-between gap-3 text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="font-mono font-bold text-xs text-zinc-700 dark:text-zinc-300">
+                        <span className="font-bold text-stone-800 dark:text-stone-200">
                           {apt.time}
                         </span>
                         <div>
-                          <strong className="text-zinc-900 dark:text-white block font-bold">
+                          <strong className="text-stone-900 dark:text-stone-100 block font-bold">
                             {apt.clientName}
                           </strong>
-                          <span className="text-zinc-500">{apt.serviceName}</span>
+                          <span className="text-stone-500">{apt.serviceName}</span>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-500/15 px-2.5 py-0.5 rounded-full">
-                          Robô cuidará às 08:00
-                        </span>
-                      </div>
+                      <span className="text-[10px] font-bold text-[#15803D] bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200/50">
+                        Robô enviará às 08:00
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -739,273 +724,252 @@ export default function WhatsAppPage() {
         )}
 
         {/* =========================================================================
-            ABA 2: REGRAS & TEXTOS DAS MENSAGENS (LIMPO, COMPACTO E SEM POLUIÇÃO)
+            ABA 2: REGRAS & TEXTOS DAS MENSAGENS (LIMPO E SEM POLUIÇÃO)
             ========================================================================= */}
         {activeTab === "rules" && (
-          <div className="space-y-6">
-            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#12141c] border border-rose-200/80 dark:border-white/[0.08] shadow-xs space-y-6">
-              <div>
-                <h3 className="font-extrabold text-xl text-zinc-900 dark:text-white">
-                  Regras do Piloto Automático
-                </h3>
-                <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                  Ative ou desative as mensagens e personalize o texto que a cliente recebe. O robô preenche o nome, horário e serviço sozinho.
-                </p>
-              </div>
+          <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 sm:p-6 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-6">
+            <div>
+              <h3 className="font-bold text-base sm:text-lg text-stone-900 dark:text-stone-100">
+                Regras do Piloto Automático
+              </h3>
+              <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">
+                Ative ou desative as mensagens e edite o texto como preferir. O robô preenche o nome e horário sozinho.
+              </p>
+            </div>
 
-              {/* Grid das 4 Regras Essenciais */}
-              <div className="space-y-4">
-                {rules.map((rule) => {
-                  const isEditing = editingRuleId === rule.id;
-                  return (
-                    <div
-                      key={rule.id}
-                      className={`p-5 rounded-2xl border transition space-y-3 ${
-                        rule.enabled
-                          ? "bg-white dark:bg-[#181b26] border-rose-200/80 dark:border-white/10 shadow-xs"
-                          : "bg-zinc-50/50 dark:bg-white/[0.01] border-zinc-200/60 dark:border-white/5 opacity-70"
-                      }`}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="space-y-0.5">
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-extrabold text-sm text-zinc-900 dark:text-white">
-                              {rule.title}
-                            </h4>
-                            <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-rose-50 dark:bg-rose-500/10 text-rose-700 dark:text-rose-300">
-                              {rule.badge}
-                            </span>
-                          </div>
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">{rule.subtitle}</p>
+            <div className="space-y-4">
+              {rules.map((rule) => {
+                const isEditing = editingRuleId === rule.id;
+                return (
+                  <div
+                    key={rule.id}
+                    className="p-4 rounded-xl border border-[#EAE2DC] dark:border-white/[0.08] bg-[#FAF5F2]/40 dark:bg-white/[0.02] space-y-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-bold text-xs sm:text-sm text-stone-900 dark:text-stone-100">
+                            {rule.title}
+                          </h4>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-stone-100 dark:bg-white/10 text-stone-700 dark:text-stone-300">
+                            {rule.badge}
+                          </span>
                         </div>
+                        <p className="text-xs text-stone-500 mt-0.5">{rule.subtitle}</p>
+                      </div>
 
-                        {/* Switch Liga/Desliga */}
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              soundEffects.playPop();
+                      {/* Switch Liga/Desliga */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundEffects.playPop();
+                          const updated = rules.map((r) =>
+                            r.id === rule.id ? { ...r, enabled: !r.enabled } : r,
+                          );
+                          setRules(updated);
+                          saveSettings({ rules: updated });
+                        }}
+                        className={`w-11 h-6 rounded-full transition cursor-pointer p-0.5 shrink-0 ${
+                          rule.enabled ? "bg-[#15803D]" : "bg-stone-300 dark:bg-stone-700"
+                        }`}
+                      >
+                        <div
+                          className={`w-5 h-5 rounded-full bg-white shadow-xs transform transition ${
+                            rule.enabled ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Caixa de Texto */}
+                    <div className="pt-2 border-t border-stone-200/60 dark:border-white/[0.06] space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="font-semibold text-stone-600 dark:text-stone-300">
+                          Mensagem que a cliente recebe:
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setEditingRuleId(isEditing ? null : rule.id)}
+                          className="text-[#BE185D] dark:text-rose-400 font-bold hover:underline cursor-pointer"
+                        >
+                          {isEditing ? "Salvar Texto" : "Editar Texto"}
+                        </button>
+                      </div>
+
+                      {isEditing ? (
+                        <div className="space-y-2">
+                          <textarea
+                            rows={4}
+                            value={rule.template}
+                            onChange={(e) => {
                               const updated = rules.map((r) =>
-                                r.id === rule.id ? { ...r, enabled: !r.enabled } : r
+                                r.id === rule.id ? { ...r, template: e.target.value } : r,
                               );
                               setRules(updated);
-                              saveSettings({ rules: updated });
                             }}
-                            className={`w-12 h-6.5 rounded-full transition cursor-pointer p-0.5 shrink-0 ${
-                              rule.enabled ? "bg-emerald-500" : "bg-zinc-300 dark:bg-zinc-700"
-                            }`}
-                          >
-                            <div
-                              className={`w-5.5 h-5.5 rounded-full bg-white shadow-md transform transition ${
-                                rule.enabled ? "translate-x-5.5" : "translate-x-0"
-                              }`}
-                            />
-                          </button>
+                            onBlur={() => saveSettings({ rules })}
+                            className="w-full p-3 rounded-xl bg-white dark:bg-[#12141c] border border-stone-300 dark:border-white/15 text-xs text-stone-900 dark:text-stone-100 outline-none focus:ring-1 focus:ring-[#BE185D] leading-relaxed"
+                          />
                         </div>
-                      </div>
-
-                      {/* Caixa de Texto do Modelo */}
-                      <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-white/5">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-bold text-zinc-600 dark:text-zinc-300">
-                            Texto enviado pelo robô:
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => setEditingRuleId(isEditing ? null : rule.id)}
-                            className="text-rose-600 dark:text-rose-400 font-bold hover:underline cursor-pointer"
-                          >
-                            {isEditing ? "Concluir Edição" : "Editar Texto"}
-                          </button>
+                      ) : (
+                        <div className="p-3 rounded-xl bg-white dark:bg-[#12141c] border border-stone-200/60 dark:border-white/[0.04] text-xs text-stone-700 dark:text-stone-300 whitespace-pre-line leading-relaxed">
+                          {rule.template}
                         </div>
-
-                        {isEditing ? (
-                          <div className="space-y-2">
-                            <textarea
-                              rows={4}
-                              value={rule.template}
-                              onChange={(e) => {
-                                const updated = rules.map((r) =>
-                                  r.id === rule.id ? { ...r, template: e.target.value } : r
-                                );
-                                setRules(updated);
-                              }}
-                              onBlur={() => saveSettings({ rules })}
-                              className="w-full p-3 rounded-xl bg-zinc-50 dark:bg-[#12141c] border border-zinc-200 dark:border-white/15 text-xs text-zinc-900 dark:text-white outline-none focus:border-rose-500 font-mono leading-relaxed"
-                            />
-                            <div className="flex flex-wrap gap-1 text-[11px] text-zinc-500">
-                              <span>Tags automáticas:</span>
-                              <strong className="text-rose-600">[Nome da Cliente]</strong>,{" "}
-                              <strong className="text-rose-600">[Procedimento]</strong>,{" "}
-                              <strong className="text-rose-600">[Horário]</strong>,{" "}
-                              <strong className="text-rose-600">[Data]</strong>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="p-3.5 rounded-xl bg-zinc-50 dark:bg-[#12141c] border border-zinc-100 dark:border-white/5 text-xs text-zinc-700 dark:text-zinc-300 whitespace-pre-line leading-relaxed font-sans">
-                            {rule.template}
-                          </div>
-                        )}
-                      </div>
+                      )}
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Configurações Chave PIX e Google */}
+            <div className="pt-4 border-t border-stone-200 dark:border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                  Chave PIX do Salão (para sinal de garantia):
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: Celular, CNPJ ou e-mail"
+                  value={pixKey}
+                  onChange={(e) => setPixKey(e.target.value)}
+                  onBlur={() => saveSettings({ pixKey })}
+                  className="w-full p-2.5 rounded-xl bg-white dark:bg-[#12141c] border border-stone-200 dark:border-white/10 text-xs text-stone-900 dark:text-stone-100 outline-none focus:ring-1 focus:ring-[#BE185D]"
+                />
               </div>
 
-              {/* Configurações de Apoio (Chave PIX e Link do Google) */}
-              <div className="pt-4 border-t border-zinc-200 dark:border-white/10 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                    Chave PIX do Salão (para sinal de garantia):
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: Celular, CNPJ ou e-mail"
-                    value={pixKey}
-                    onChange={(e) => setPixKey(e.target.value)}
-                    onBlur={() => saveSettings({ pixKey })}
-                    className="w-full p-3 rounded-xl bg-zinc-50 dark:bg-[#12141c] border border-zinc-200 dark:border-white/10 text-xs text-zinc-900 dark:text-white outline-none focus:border-rose-500"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
-                    Link do Google Meu Negócio (para avaliações 5 estrelas):
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Ex: g.page/r/seusalao"
-                    value={googleReviewLink}
-                    onChange={(e) => setGoogleReviewLink(e.target.value)}
-                    onBlur={() => saveSettings({ googleReviewLink })}
-                    className="w-full p-3 rounded-xl bg-zinc-50 dark:bg-[#12141c] border border-zinc-200 dark:border-white/10 text-xs text-zinc-900 dark:text-white outline-none focus:border-rose-500"
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-stone-800 dark:text-stone-200">
+                  Link de Avaliações do Google:
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ex: g.page/r/seusalao"
+                  value={googleReviewLink}
+                  onChange={(e) => setGoogleReviewLink(e.target.value)}
+                  onBlur={() => saveSettings({ googleReviewLink })}
+                  className="w-full p-2.5 rounded-xl bg-white dark:bg-[#12141c] border border-stone-200 dark:border-white/10 text-xs text-stone-900 dark:text-stone-100 outline-none focus:ring-1 focus:ring-[#BE185D]"
+                />
               </div>
             </div>
           </div>
         )}
 
         {/* =========================================================================
-            ABA 3: CONEXÃO DO WHATSAPP (DIRETO E SEM ENROLAÇÃO)
+            ABA 3: CONEXÃO DO WHATSAPP (QR CODE LIMPO)
             ========================================================================= */}
         {activeTab === "connection" && (
-          <div className="space-y-6">
-            <div className="p-6 sm:p-8 rounded-3xl bg-white dark:bg-[#12141c] border border-rose-200/80 dark:border-white/[0.08] shadow-xs space-y-6">
-              {isConnected ? (
-                <div className="p-6 rounded-2xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-md">
-                      <MessageCircle size={26} />
-                    </div>
-                    <div>
-                      <h4 className="font-extrabold text-base text-zinc-900 dark:text-white">
-                        WhatsApp da Recepção Conectado
-                      </h4>
-                      <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-0.5">
-                        Número ativo: <strong className="text-emerald-700 dark:text-emerald-400">{connectedPhone}</strong>
-                      </p>
-                      <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold block mt-1">
-                        ● Robô do Piloto Automático operando normalmente
-                      </span>
-                    </div>
+          <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 sm:p-6 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-6">
+            {isConnected ? (
+              <div className="p-5 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-[#15803D] text-white flex items-center justify-center shrink-0">
+                    <MessageCircle size={22} />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm text-stone-900 dark:text-stone-100">
+                      WhatsApp Conectado com Sucesso
+                    </h4>
+                    <p className="text-xs text-stone-500 mt-0.5">
+                      Número ativo: <strong className="text-emerald-700 dark:text-emerald-400">{connectedPhone}</strong>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleDisconnect}
+                  className="px-3.5 py-1.5 rounded-full bg-white dark:bg-white/10 border border-stone-200 text-rose-600 text-xs font-bold hover:bg-rose-50 transition cursor-pointer self-start sm:self-auto"
+                >
+                  Desconectar Aparelho
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                {/* QR Code */}
+                <div className="lg:col-span-5 flex flex-col items-center text-center p-6 bg-[#FAF5F2] dark:bg-[#181b26] rounded-2xl border border-stone-200 dark:border-white/10">
+                  <div className="p-4 bg-white rounded-2xl shadow-xs border border-stone-200">
+                    {isLoadingQr ? (
+                      <div className="w-[180px] h-[180px] flex flex-col items-center justify-center text-stone-400 gap-2">
+                        <RefreshCw size={24} className="animate-spin text-[#BE185D]" />
+                        <span className="text-xs font-bold text-stone-600">Gerando QR Code...</span>
+                      </div>
+                    ) : qrCodeDataUrl ? (
+                      <div className="flex flex-col items-center">
+                        <img
+                          src={qrCodeDataUrl}
+                          alt="QR Code WhatsApp"
+                          className="w-[180px] h-[180px] object-contain rounded-lg"
+                        />
+                        <span className="text-[11px] font-semibold text-[#BE185D] mt-2">
+                          Atualiza em {countdown}s
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="w-[180px] h-[180px] flex flex-col items-center justify-center text-stone-400 gap-2">
+                        <button
+                          type="button"
+                          onClick={fetchQrCode}
+                          className="px-4 py-2 rounded-full bg-[#7B1832] text-white text-xs font-bold cursor-pointer"
+                        >
+                          Carregar QR Code
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   <button
                     type="button"
-                    onClick={handleDisconnect}
-                    className="px-4 py-2.5 rounded-xl bg-white dark:bg-white/10 border border-zinc-200 dark:border-white/10 hover:bg-rose-50 text-rose-600 dark:text-rose-400 text-xs font-bold transition cursor-pointer self-start sm:self-auto"
+                    onClick={handleVerify}
+                    disabled={isVerifyingConnection || isLoadingQr}
+                    className="mt-4 w-full py-2.5 rounded-full bg-[#15803D] hover:bg-[#166534] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-2xs transition cursor-pointer active:scale-95 disabled:opacity-60"
                   >
-                    Desconectar Aparelho
+                    {isVerifyingConnection ? (
+                      <>
+                        <RefreshCw size={14} className="animate-spin" />
+                        <span>Verificando...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 size={15} />
+                        <span>Já Apontei a Câmera (Confirmar)</span>
+                      </>
+                    )}
                   </button>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                  {/* QR Code */}
-                  <div className="lg:col-span-5 flex flex-col items-center text-center p-6 bg-zinc-50 dark:bg-[#181b26] rounded-3xl border border-zinc-200 dark:border-white/10">
-                    <div className="p-4 bg-white rounded-2xl shadow-md border-2 border-rose-200">
-                      {isLoadingQr ? (
-                        <div className="w-[200px] h-[200px] flex flex-col items-center justify-center text-rose-500 gap-2">
-                          <RefreshCw size={28} className="animate-spin text-rose-600" />
-                          <span className="text-xs font-bold text-zinc-700">Gerando QR Code...</span>
-                        </div>
-                      ) : qrCodeDataUrl ? (
-                        <div className="flex flex-col items-center">
-                          <img
-                            src={qrCodeDataUrl}
-                            alt="QR Code WhatsApp"
-                            className="w-[200px] h-[200px] object-contain rounded-lg"
-                          />
-                          <span className="text-[11px] font-semibold text-rose-600 mt-2">
-                            Atualiza em {countdown}s
-                          </span>
-                        </div>
-                      ) : (
-                        <div className="w-[200px] h-[200px] flex flex-col items-center justify-center text-zinc-400 gap-2">
-                          <button
-                            type="button"
-                            onClick={fetchQrCode}
-                            className="px-4 py-2 rounded-xl bg-rose-600 text-white text-xs font-bold cursor-pointer"
-                          >
-                            Carregar QR Code
-                          </button>
-                        </div>
-                      )}
+
+                {/* 3 Passos */}
+                <div className="lg:col-span-7 space-y-4">
+                  <h3 className="font-bold text-lg text-stone-900 dark:text-stone-100">
+                    Como conectar o WhatsApp da recepção
+                  </h3>
+                  <p className="text-xs text-stone-500 leading-relaxed">
+                    Conecte o WhatsApp do salão para que o robô envie lembretes e confirme horários de forma automática.
+                  </p>
+
+                  <div className="space-y-2.5 pt-1">
+                    <div className="p-3 rounded-xl bg-[#FAF5F2] dark:bg-white/[0.02] border border-stone-200/80 dark:border-white/10 flex items-center gap-3 text-xs">
+                      <span className="w-6 h-6 rounded-lg bg-[#7B1832] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                        1
+                      </span>
+                      <span>Abra o <strong>WhatsApp</strong> no celular do salão.</span>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={handleVerify}
-                      disabled={isVerifyingConnection || isLoadingQr}
-                      className="mt-4 w-full py-3 rounded-2xl bg-[#25D366] hover:bg-[#20bd5a] text-white font-extrabold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer active:scale-95 disabled:opacity-60"
-                    >
-                      {isVerifyingConnection ? (
-                        <>
-                          <RefreshCw size={14} className="animate-spin" />
-                          <span>Verificando Leitura...</span>
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 size={16} />
-                          <span>Já Apontei a Câmera (Confirmar)</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* 3 Passos */}
-                  <div className="lg:col-span-7 space-y-4">
-                    <h3 className="font-extrabold text-xl text-zinc-900 dark:text-white">
-                      Conectar o WhatsApp da Recepção
-                    </h3>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-relaxed">
-                      Conecte o número de WhatsApp que atende suas clientes para que o robô envie lembretes e confirme horários de forma 100% autônoma.
-                    </p>
-
-                    <div className="space-y-3 pt-2">
-                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 flex items-center gap-3 text-xs">
-                        <span className="w-7 h-7 rounded-lg bg-rose-600 text-white font-bold flex items-center justify-center shrink-0">
-                          1
-                        </span>
-                        <span>Abra o <strong>WhatsApp</strong> no celular da recepção.</span>
-                      </div>
-                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 flex items-center gap-3 text-xs">
-                        <span className="w-7 h-7 rounded-lg bg-rose-600 text-white font-bold flex items-center justify-center shrink-0">
-                          2
-                        </span>
-                        <span>Toque em <strong>Aparelhos Conectados</strong> e selecione <strong>Conectar um Aparelho</strong>.</span>
-                      </div>
-                      <div className="p-3.5 rounded-2xl bg-zinc-50 dark:bg-white/[0.02] border border-zinc-200 dark:border-white/10 flex items-center gap-3 text-xs">
-                        <span className="w-7 h-7 rounded-lg bg-rose-600 text-white font-bold flex items-center justify-center shrink-0">
-                          3
-                        </span>
-                        <span>Aponte a câmera para o QR Code ao lado. Pronto! O robô assume os disparos.</span>
-                      </div>
+                    <div className="p-3 rounded-xl bg-[#FAF5F2] dark:bg-white/[0.02] border border-stone-200/80 dark:border-white/10 flex items-center gap-3 text-xs">
+                      <span className="w-6 h-6 rounded-lg bg-[#7B1832] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                        2
+                      </span>
+                      <span>Toque em <strong>Aparelhos Conectados</strong> e selecione <strong>Conectar um Aparelho</strong>.</span>
+                    </div>
+                    <div className="p-3 rounded-xl bg-[#FAF5F2] dark:bg-white/[0.02] border border-stone-200/80 dark:border-white/10 flex items-center gap-3 text-xs">
+                      <span className="w-6 h-6 rounded-lg bg-[#7B1832] text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                        3
+                      </span>
+                      <span>Aponte a câmera para o QR Code ao lado. Pronto! O robô assume os disparos.</span>
                     </div>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
       </div>

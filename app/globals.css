@@ -23,15 +23,15 @@
   --accent-violet: #7c3aed;
   --accent-violet-light: #f5f3ff;
 
-  --beige-bg: #fdfaf8;
-  --beige-card: #ffffff;
-  --surface: #ffffff;
+  --beige-bg: #faf5f2;
+  --beige-card: #fffdfb;
+  --surface: #fffdfb;
   --surface-hover: #fdf4f8;
   --border-subtle: #eae2dc;
   --grey-text: #73646d;
-  --dark-text: #1a1218;
+  --dark-text: #20181b;
 
-  --card-bg: #ffffff;
+  --card-bg: #fffdfb;
   --card-border: #eae2dc;
   --muted: #706268;
 }
