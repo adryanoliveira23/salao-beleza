@@ -21,6 +21,7 @@ import {
   setDoc,
   getDoc,
   writeBatch,
+  onSnapshot,
 } from "firebase/firestore";
 
 export interface Client {
@@ -621,6 +622,61 @@ export function SalonDataProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Listener em tempo real para novos agendamentos (Aparece imediatamente no Gestor do Salão e na Agenda)
+  useEffect(() => {
+    if (!user) return;
+    const qApts = query(
+      collection(db, "appointments"),
+      where("userId", "==", user.uid)
+    );
+    const unsubscribe = onSnapshot(
+      qApts,
+      (snapshot) => {
+        const list = snapshot.docs.map((docItem) => {
+          const d = docItem.data();
+          return {
+            id: docItem.id,
+            clientId: d.clientId,
+            clientName: d.clientName || "",
+            clientPhone: d.clientPhone || "",
+            clientEmail: d.clientEmail || "",
+            serviceId: d.serviceId || "",
+            serviceName: d.serviceName || "",
+            professionalId: d.professionalId || "",
+            professionalName: d.professionalName || "",
+            date: d.date,
+            time: d.time,
+            duration: Number(d.duration) || 45,
+            price: Number(d.price) || 0,
+            discount: Number(d.discount) || 0,
+            depositAmount: Number(d.depositAmount) || 0,
+            depositPaid: Boolean(d.depositPaid),
+            paymentMethod: d.paymentMethod || "pix",
+            paymentStatus: d.paymentStatus || "pending",
+            commissionPaid: Boolean(d.commissionPaid),
+            status: (d.status as AppointmentStatus) || "pending",
+            origin: d.origin || "online",
+            hairType: d.hairType,
+            skinType: d.skinType,
+            allergies: d.allergies,
+            observations: d.observations,
+            rating: d.rating,
+          } as Appointment;
+        });
+
+        setData((prev) => ({
+          ...prev,
+          appointments: list,
+        }));
+      },
+      (error) => {
+        console.warn("Realtime appointments listener note:", error);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [user]);
 
   // Client Actions
   const addClient = async (

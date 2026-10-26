@@ -3,19 +3,19 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* Paleta Pastel Suave & Sofisticada (Estilo Moderno BellaMais)
-     Fundo neutro ultra-suave, cards em branco puro com sombras leves e toques em rosa seco/vinho */
-  --background: #f8f9fa;
-  --foreground: #231920;
+  /* Paleta BellaMais Glow 2026: Feminina, Vibrante & Cheia de Energia
+     Fundo aquecido de porcelana suave, cartões com bordas sutis em quartzo rosa, acentos vivos em framboesa vibrante e esmeralda */
+  --background: #fdfaf8;
+  --foreground: #1a1218;
 
-  --primary: #9e3160;
-  --primary-dark: #7d1f47;
-  --primary-light: #fbf2f6;
-  --primary-light-hover: #f7e6ef;
+  --primary: #be185d;
+  --primary-dark: #9d174d;
+  --primary-light: #fdf2f8;
+  --primary-light-hover: #fce7f3;
 
-  --accent-gold: #b48328;
-  --accent-gold-light: #fef9ed;
-  --accent-wine: #5c1635;
+  --accent-gold: #d97706;
+  --accent-gold-light: #fef3c7;
+  --accent-wine: #831843;
 
   --accent-emerald: #059669;
   --accent-emerald-light: #ecfdf5;
@@ -23,50 +23,51 @@
   --accent-violet: #7c3aed;
   --accent-violet-light: #f5f3ff;
 
-  --beige-bg: #f8f9fa;
+  --beige-bg: #fdfaf8;
   --beige-card: #ffffff;
   --surface: #ffffff;
-  --surface-hover: #faf7f9;
-  --border-subtle: #ede6eb;
-  --grey-text: #6e6068;
-  --dark-text: #231920;
+  --surface-hover: #fdf4f8;
+  --border-subtle: #f0e3eb;
+  --grey-text: #73646d;
+  --dark-text: #1a1218;
 
   --card-bg: #ffffff;
-  --card-border: #eeeaee;
-  --muted: #736770;
+  --card-border: #eedee7;
+  --muted: #73646d;
 }
 
 html.dark,
 [data-theme="dark"] {
-  --background: #130f13;
-  --foreground: #faf5f8;
+  /* Modo Escuro Premium: Slate/Obsidian Neutro e Limpo com Destaques Vivos em Rosa Radiante e Esmeralda */
+  --background: #090a0f;
+  --foreground: #f8fafc;
 
-  --primary: #e06294;
-  --primary-dark: #bf4577;
-  --primary-light: #281722;
-  --primary-light-hover: #361e2e;
+  --primary: #f43f5e;
+  --primary-dark: #fb7185;
+  --primary-light: #26111b;
+  --primary-light-hover: #361726;
 
-  --accent-gold: #dca842;
-  --accent-gold-light: #2a2012;
-  --accent-wine: #963861;
+  --accent-gold: #fbbf24;
+  --accent-gold-light: #2c200a;
+  --accent-wine: #f43f5e;
 
-  --accent-emerald: #34d399;
-  --accent-emerald-light: #10261c;
+  --accent-emerald: #10b981;
+  --accent-emerald-light: #064e3b;
 
-  --accent-violet: #a78bfa;
-  --accent-violet-light: #221833;
+  --accent-violet: #c084fc;
+  --accent-violet-light: #2e1065;
 
-  --beige-bg: #130f13;
-  --beige-card: #1c151b;
-  --surface: #1c151b;
-  --surface-hover: #261d25;
-  --border-subtle: #2d202a;
-  --grey-text: #b5a4ad;
-  --dark-text: #faf5f8;
+  --beige-bg: #090a0f;
+  --beige-card: #12141c;
+  --surface: #171924;
+  --surface-hover: #1f2230;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --grey-text: #94a3b8;
+  --dark-text: #f8fafc;
 
-  --card-bg: #1c151b;
-  --card-border: #2d202a;
-  --muted: #b5a4ad;
+  --card-bg: #12141c;
+  --card-border: rgba(255, 255, 255, 0.08);
+  --muted: #94a3b8;
 }
 
 @theme inline {
@@ -75,7 +76,7 @@ html.dark,
   --font-sans: var(--font-outfit), var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-inter: var(--font-inter);
   --font-serif: var(--font-cormorant), var(--font-playfair), serif;
-  --font-display: var(--font-cormorant), serif;
+  --font-display: var(--font-outfit), var(--font-cormorant), serif;
   --font-montserrat: var(--font-montserrat);
   --font-mono: var(--font-geist-mono);
   --font-script: var(--font-great-vibes);
@@ -97,97 +98,230 @@ body {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-outfit), var(--font-inter), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-family: var(--font-outfit), var(--font-inter), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: -0.011em;
 }
 
-/* Overrides automáticos para páginas legadas quando o usuário ativa o Modo Escuro */
-html.dark .bg-white,
-html.dark [class*="bg-white/"] {
-  background-color: #1e181c !important;
-  color: #f7f2f5;
+/* Custom Animations & Micro-Interactions para Salão Premium */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
-html.dark .bg-\[\#faf6f2\],
-html.dark [class*="bg-[#faf6f2]"],
-html.dark .bg-\[\#fcfaf8\],
-html.dark [class*="bg-[#fcfaf8]"],
-html.dark .bg-\[\#fffcf9\],
-html.dark [class*="bg-[#fffcf9]"],
-html.dark .bg-\[\#fdfbfc\],
-html.dark .bg-\[\#fdf7f9\],
-html.dark .bg-\[\#f5f5f5\],
-html.dark .bg-\[\#fafafa\],
-html.dark .bg-gray-50,
-html.dark .bg-gray-100 {
-  background-color: #141013 !important;
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
 }
-html.dark .bg-\[\#fff0f5\],
-html.dark [class*="bg-[#fff0f5]"],
-html.dark .bg-\[\#fce4ed\],
-html.dark .bg-rose-50,
-html.dark .bg-pink-50 {
-  background-color: #281b22 !important;
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
-html.dark .bg-\[\#fdf8e7\],
-html.dark .bg-amber-50,
-html.dark .bg-yellow-50 {
-  background-color: #292215 !important;
+
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
 }
-html.dark .bg-emerald-50,
-html.dark .bg-green-50 {
-  background-color: rgba(16, 185, 129, 0.14) !important;
+
+.animate-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.25) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 3s infinite;
 }
-html.dark .bg-blue-50 {
-  background-color: rgba(59, 130, 246, 0.14) !important;
+
+.animate-pulse-slow {
+  animation: pulseGlow 4s ease-in-out infinite;
 }
-html.dark .bg-red-50 {
-  background-color: rgba(239, 68, 68, 0.14) !important;
+
+.animate-float-slow {
+  animation: floatGentle 5s ease-in-out infinite;
 }
-html.dark .bg-purple-50 {
-  background-color: rgba(168, 85, 247, 0.14) !important;
+
+/* Utilitários de Superfície Glassmorphic & Aura de Luz */
+.lux-glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
 }
-html.dark .text-\[\#2d1b2e\],
-html.dark .text-\[\#2a1d24\],
-html.dark .text-\[\#2b1822\],
-html.dark .text-\[\#1f1219\],
-html.dark .text-gray-800,
-html.dark .text-gray-900,
-html.dark .text-gray-700 {
-  color: #f7f2f5 !important;
+
+.lux-glass-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px -10px rgba(190, 24, 93, 0.12);
+  border-color: rgba(244, 63, 94, 0.35);
 }
-html.dark .text-\[\#6e5a65\],
-html.dark .text-\[\#73626a\],
-html.dark .text-\[\#7d6570\],
-html.dark .text-\[\#666\],
-html.dark .text-gray-600,
-html.dark .text-gray-500 {
-  color: #b3a2aa !important;
+
+html.dark .lux-glass-card:hover {
+  box-shadow: 0 14px 34px -10px rgba(244, 63, 94, 0.2);
+  border-color: rgba(244, 63, 94, 0.4);
 }
-html.dark .text-\[\#88234b\],
-html.dark .text-\[\#b83b6b\] {
-  color: #e47aa6 !important;
+
+/* =========================================================================
+   MAPEAMENTO HARMONIOSO DO MODO ESCURO PARA TODAS AS TELAS
+   (Agenda, Clientes, Caixa, Serviços, Colaboradores, Configurações, etc.)
+   ========================================================================= */
+html.dark .bg-white:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .lux-card:not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-\[var\(--card-bg\)\]:not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *) {
+  background: #12141c !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+  color: var(--foreground);
 }
-html.dark .border-\[\#f2e6ea\],
-html.dark .border-\[\#efe6ea\],
-html.dark .border-rose-100,
-html.dark .border-rose-200,
-html.dark .border-pink-100,
-html.dark .border-pink-200,
-html.dark .border-gray-100,
-html.dark .border-gray-200,
-html.dark .border-gray-300,
-html.dark .border-\[\#f0f0f0\],
-html.dark .border-\[\#f5f5f5\] {
-  border-color: #332730 !important;
+
+html.dark .bg-white:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *):hover,
+html.dark .lux-card:not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *):hover,
+html.dark .bg-\[var\(--card-bg\)\]:not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *):hover {
+  border-color: rgba(244, 63, 94, 0.4) !important;
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.65), 0 0 20px -2px rgba(244, 63, 94, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
 }
+
+/* Recintos e caixas aninhadas (sub-cards, inputs, tabelas e filtros) */
+html.dark .bg-\[\#faf6f2\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-\[\#fcfaf8\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-\[\#fffcf9\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-\[\#fdfbfc\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-\[\#fdf7f9\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-gray-50:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-gray-100:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-stone-50:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-stone-100:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *) {
+  background-color: #0b0c12 !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
+  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.4) !important;
+}
+
+html.dark .border-\[\#f2e6ea\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .border-\[\#efe6ea\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .border-gray-200:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .border-gray-100:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .border-stone-200:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .border-stone-100:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *) {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Selos e chips de ícones com iluminação sutil (Jewel Chips) */
+html.dark .bg-emerald-500\/10 {
+  background-color: rgba(16, 185, 129, 0.16) !important;
+  border-color: rgba(16, 185, 129, 0.35) !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.12);
+}
+html.dark .bg-rose-500\/10,
+html.dark .bg-pink-500\/10 {
+  background-color: rgba(244, 63, 94, 0.16) !important;
+  border-color: rgba(244, 63, 94, 0.35) !important;
+  box-shadow: 0 0 12px rgba(244, 63, 94, 0.15);
+}
+html.dark .bg-amber-500\/10 {
+  background-color: rgba(251, 191, 36, 0.16) !important;
+  border-color: rgba(251, 191, 36, 0.35) !important;
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.12);
+}
+html.dark .bg-purple-500\/10 {
+  background-color: rgba(192, 132, 252, 0.16) !important;
+  border-color: rgba(192, 132, 252, 0.35) !important;
+  box-shadow: 0 0 12px rgba(192, 132, 252, 0.12);
+}
+
+html.dark .text-\[\#2d1b2e\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-\[\#2a1d24\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-\[\#1a1218\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-gray-900:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-gray-800:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-stone-900:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-stone-800:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-stone-700:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *) {
+  color: var(--foreground) !important;
+}
+
+html.dark .text-\[\#6e5a65\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-\[\#73626a\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-\[\#7d6570\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-gray-600:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-gray-500:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-stone-600:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .text-stone-500:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *) {
+  color: var(--muted) !important;
+}
+
+html.dark .text-\[\#88234b\]:not([class*="dark:"]),
+html.dark .text-\[\#b83b6b\]:not([class*="dark:"]) {
+  color: var(--primary) !important;
+}
+
+html.dark .bg-\[\#fff0f5\]:not([class*="dark:"]),
+html.dark .bg-\[\#fce4ed\]:not([class*="dark:"]) {
+  background-color: rgba(244, 63, 94, 0.18) !important;
+  color: #fca5a5 !important;
+}
+
+html.dark .bg-\[\#fdf8e7\]:not([class*="dark:"]) {
+  background-color: rgba(251, 191, 36, 0.18) !important;
+  color: #fde68a !important;
+}
+
+/* Suavização de Hover States no Modo Escuro */
+html.dark .hover\:bg-stone-50:hover,
+html.dark .hover\:bg-stone-100:hover,
+html.dark .hover\:bg-gray-100:hover,
+html.dark .hover\:bg-gray-50:hover,
+html.dark .hover\:bg-\[\#faf6f2\]:hover,
+html.dark .hover\:bg-\[\#fff0f5\]:hover,
+html.dark .hover\:bg-white:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
 html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
 html.dark select,
 html.dark textarea {
-  background-color: #141013 !important;
-  color: #f7f2f5 !important;
-  border-color: #332730 !important;
+  background-color: #0b0c12 !important;
+  color: var(--foreground) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+html.dark input::placeholder,
+html.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+html.dark table thead th {
+  background-color: #0e1017 !important;
+  color: #94a3b8 !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html.dark table tbody td {
+  border-color: rgba(255, 255, 255, 0.07) !important;
 }
 
 /* Custom Scrollbar */
@@ -274,4 +408,36 @@ input,
 select,
 textarea {
   touch-action: manipulation;
+}
+
+/* =========================================================================
+   ESTILOS DE SUPERFÍCIE & TIPOGRAFIA LIMPA
+   ========================================================================= */
+.font-editorial {
+  font-family: var(--font-cormorant), var(--font-playfair), Georgia, serif;
+}
+
+.lux-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.03), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
+}
+
+.lux-card:hover {
+  border-color: rgba(159, 18, 57, 0.25);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+}
+
+.lux-glass {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--card-border);
+}
+
+html.dark .lux-glass {
+  background: rgba(28, 26, 29, 0.95);
+  border-bottom: 1px solid var(--card-border);
 }

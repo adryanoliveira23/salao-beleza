@@ -123,14 +123,15 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // 4. FALLBACK ELEGANTE: DISPARO DIRETO WHATSAPP WEB
-    // Se o Baileys ainda não estiver conectado por QR code, gera o link direto wa.me
+    // 4. FALLBACK ELEGANTE: SE BAILEYS DESCONECTADO
     const waUrl = `https://api.whatsapp.com/send?phone=${encodeURIComponent(formattedPhone)}&text=${encodeURIComponent(messageText || "")}`;
     return NextResponse.json({
-      sent: true,
+      sent: false,
+      isAutomated: false,
+      requiresManualDispatch: true,
       provider: "free_direct",
       directUrl: waUrl,
-      message: "Link de envio gerado com sucesso para envio via WhatsApp Web!",
+      message: "WhatsApp não está emparelhado no servidor. Conecte o QR Code para disparos automáticos ou utilize o envio manual.",
     });
   } catch (error) {
     console.error("[WhatsApp Send API] Erro crítico no envio:", error);

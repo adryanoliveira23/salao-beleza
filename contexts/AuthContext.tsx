@@ -143,13 +143,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           (docSnap) => {
             if (docSnap.exists()) {
               const data = docSnap.data();
+              let currentUsername = (data.username || "").trim().toLowerCase();
+              if (!currentUsername) {
+                // Auto-gera um username único inicial baseado no nome do salão
+                const baseName = data.salon_name || firebaseUser.displayName || "salao";
+                const cleanSlug =
+                  baseName
+                    .toLowerCase()
+                    .normalize("NFD")
+                    .replace(/[\u0300-\u036f]/g, "")
+                    .replace(/[^a-z0-9]/g, "") || "salao";
+                currentUsername = cleanSlug;
+                setDoc(profileRef, { username: cleanSlug }, { merge: true }).catch(() => {});
+              }
+
               const loadedProfile: Profile = {
                 id: docSnap.id,
                 name: data.name || firebaseUser.displayName || "Profissional",
                 email: data.email || firebaseUser.email || "",
                 phone: data.phone || "",
                 salon_name: data.salon_name || "Meu Espaço de Beleza",
-                username: data.username || "",
+                username: currentUsername,
                 avatar_url: data.avatar_url || "",
                 address: data.address || "",
                 city: data.city || "",
@@ -181,11 +195,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               );
             } else {
               // Initialize default profile if missing
+              const initialUsername = (firebaseUser.displayName || "salao")
+                .toLowerCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, "") || "salao";
+
               const initialProfile: Profile = {
                 id: firebaseUser.uid,
                 name: firebaseUser.displayName || "Profissional",
                 email: firebaseUser.email || "",
                 salon_name: "Meu Espaço de Beleza",
+                username: initialUsername,
                 plan: "profissional",
                 status: "active",
                 role: "owner",

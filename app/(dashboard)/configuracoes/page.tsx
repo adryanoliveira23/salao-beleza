@@ -2,7 +2,7 @@
 
 export const dynamic = "force-dynamic";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   User,
   Link2,
@@ -20,8 +20,22 @@ import {
   Clock,
   CalendarCheck,
   Lock,
+  Building2,
+  Zap,
+  Wifi,
+  Target,
+  Plus,
+  Minus,
+  Sparkles,
+  CheckCircle2,
+  MapPin,
+  Store,
+  Phone,
+  ExternalLink,
+  Instagram,
 } from "lucide-react";
 import { Header } from "@/components/Header";
+import { soundEffects } from "@/lib/soundEffects";
 import { useSalonData } from "@/contexts/SalonDataContext";
 import {
   useAuth,
@@ -33,7 +47,7 @@ import {
 import { useNotifications } from "@/contexts/NotificationContext";
 import { storage, db, auth } from "@/app/lib/firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, updateDoc, collection, query, where, getDocs } from "firebase/firestore";
 import { sendPasswordResetEmail, updatePassword } from "firebase/auth";
 import { useFinance, NeighborhoodType } from "@/contexts/FinanceContext";
 
@@ -47,6 +61,45 @@ const DAY_LABELS: { key: string; label: string }[] = [
   { key: "sunday", label: "Domingo" },
 ];
 
+// Formatador de Telefone / WhatsApp: (11) 98765-4321
+function formatPhone(val: string): string {
+  const digits = (val || "").replace(/\D/g, "").slice(0, 11);
+  if (!digits) return "";
+  if (digits.length <= 2) return `(${digits}`;
+  if (digits.length <= 6) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  if (digits.length <= 10) return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+// Formatador de CPF: 000.000.000-00
+function formatCPF(val: string): string {
+  const digits = (val || "").replace(/\D/g, "").slice(0, 11);
+  if (!digits) return "";
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+// Formatador de CNPJ: 00.000.000/0001-00
+function formatCNPJ(val: string): string {
+  const digits = (val || "").replace(/\D/g, "").slice(0, 14);
+  if (!digits) return "";
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+  if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+  if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+// Higienizador de Instagram (@usuario)
+function cleanInstagramHandle(val: string): string {
+  let s = (val || "").trim();
+  s = s.replace(/^(https?:\/\/)?(www\.)?instagram\.com\//i, "");
+  s = s.replace(/^[@/]+/, "").split(/[?#]/)[0];
+  return s.toLowerCase();
+}
+
 export default function Settings() {
   const [activeTab, setActiveTab] = useState("profile");
   const [copied, setCopied] = useState(false);
@@ -56,6 +109,7 @@ export default function Settings() {
   const { notifications, markAsRead, clearNotifications } = useNotifications();
   const { settings, updateSettings } = useFinance();
 
+  const [docType, setDocType] = useState<"cnpj" | "cpf">("cnpj");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -97,16 +151,22 @@ export default function Settings() {
 
   useEffect(() => {
     if (profile) {
+      const rawDoc = profile.cnpj || "";
+      const digits = rawDoc.replace(/\D/g, "");
+      const detectedDocType: "cnpj" | "cpf" =
+        digits.length <= 11 && digits.length > 0 ? "cpf" : "cnpj";
+      setDocType(detectedDocType);
+
       setFormData({
         name: profile.name || "",
         email: profile.email || "",
-        phone: profile.phone || "",
+        phone: formatPhone(profile.phone || ""),
         salon_name: profile.salon_name || "",
         username: profile.username || "",
         avatar_url: profile.avatar_url || "",
         address: profile.address || "",
-        instagram: profile.instagram || "",
-        cnpj: profile.cnpj || "",
+        instagram: cleanInstagramHandle(profile.instagram || ""),
+        cnpj: detectedDocType === "cpf" ? formatCPF(rawDoc) : formatCNPJ(rawDoc),
       });
       if (profile.businessHours) {
         setBusinessHours({
@@ -141,6 +201,22 @@ export default function Settings() {
     }
   }, [settings]);
 
+  const totalFixedCosts = useMemo(() => {
+    return (
+      (financeForm.rentCost || 0) +
+      (financeForm.energyCost || 0) +
+      (financeForm.internetCost || 0) +
+      (financeForm.systemCost || 0)
+    );
+  }, [financeForm]);
+
+  const formatBRL = (val: number) => {
+    return (val || 0).toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    });
+  };
+
   const uploadAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploading(true);
@@ -174,8 +250,8 @@ export default function Settings() {
 
   const bookingUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/agendar${formData.username ? `/${formData.username}` : ""}`
-      : "/agendar";
+      ? `${window.location.origin}/agendamento${formData.username ? `/${formData.username}` : ""}`
+      : "/agendamento";
 
   const copyLink = async () => {
     try {
@@ -192,18 +268,70 @@ export default function Settings() {
     if (!user) return;
     setLoading(true);
     setMessage(null);
+
+    const cleanUsername = (formData.username || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9_-]/g, "");
+
+    if (cleanUsername) {
+      if (cleanUsername.length < 3) {
+        setMessage({
+          type: "error",
+          text: "O nome de usuário do link deve ter no mínimo 3 caracteres.",
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Validação de unicidade: nenhum outro salão pode ter o mesmo nome de usuário
+      try {
+        const qUser = query(
+          collection(db, "profiles"),
+          where("username", "==", cleanUsername),
+        );
+        const snapUser = await getDocs(qUser);
+        const isTakenByAnother = snapUser.docs.some((d) => d.id !== user.uid);
+
+        if (isTakenByAnother) {
+          setMessage({
+            type: "error",
+            text: `O nome de usuário "@${cleanUsername}" já está em uso por outro salão. Escolha um nome exclusivo para seu salão.`,
+          });
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Erro ao verificar disponibilidade do nome de usuário:", err);
+      }
+    }
+
+    const cleanInsta = cleanInstagramHandle(formData.instagram);
+    const formattedPhone = formatPhone(formData.phone);
+    const formattedDoc =
+      docType === "cpf" ? formatCPF(formData.cnpj) : formatCNPJ(formData.cnpj);
+
     try {
       await updateProfileData({
         name: formData.name,
         email: formData.email,
-        phone: formData.phone,
+        phone: formattedPhone,
         salon_name: formData.salon_name,
-        username: formData.username,
+        username: cleanUsername,
         avatar_url: formData.avatar_url,
         address: formData.address,
-        instagram: formData.instagram,
-        cnpj: formData.cnpj,
+        instagram: cleanInsta,
+        cnpj: formattedDoc,
       });
+      setFormData((prev) => ({
+        ...prev,
+        username: cleanUsername,
+        phone: formattedPhone,
+        instagram: cleanInsta,
+        cnpj: formattedDoc,
+      }));
       setMessage({
         type: "success",
         text: "Dados do salão salvos com sucesso!",
@@ -446,8 +574,11 @@ export default function Settings() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                        Usuário para Link (@slug)
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1 flex items-center justify-between">
+                        <span>Usuário para Link (@slug único)</span>
+                        <span className="text-[10px] text-rose-600 dark:text-rose-400 font-semibold normal-case">
+                          Exclusivo por salão
+                        </span>
                       </label>
                       <input
                         type="text"
@@ -457,26 +588,48 @@ export default function Settings() {
                             ...formData,
                             username: e.target.value
                               .toLowerCase()
-                              .replace(/[^a-z0-9_]/g, ""),
+                              .replace(/[^a-z0-9_-]/g, ""),
                           })
                         }
-                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)] font-mono"
                         placeholder="studioglow"
                       />
+                      <p className="text-[11px] text-[var(--muted)] mt-1.5 truncate">
+                        Link público:{" "}
+                        <strong className="text-[var(--primary)] font-mono font-bold">
+                          {(typeof window !== "undefined"
+                            ? window.location.origin
+                            : "https://bellamais.com") +
+                            `/agendamento/${formData.username || "seu-usuario"}`}
+                        </strong>
+                      </p>
                     </div>
                     <div>
-                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                        WhatsApp / Telefone Comercial
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Phone size={13} className="text-emerald-500" />
+                          WhatsApp / Telefone Comercial
+                        </span>
+                        <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold normal-case">
+                          Com DDD
+                        </span>
                       </label>
                       <input
-                        type="text"
+                        type="tel"
                         value={formData.phone}
+                        maxLength={15}
                         onChange={(e) =>
-                          setFormData({ ...formData, phone: e.target.value })
+                          setFormData({
+                            ...formData,
+                            phone: formatPhone(e.target.value),
+                          })
                         }
-                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)] font-mono text-[var(--foreground)] placeholder:text-[var(--muted)]/50 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition-all"
                         placeholder="(11) 99999-9999"
                       />
+                      <p className="text-[11px] text-[var(--muted)] mt-1.5">
+                        Formata automaticamente com DDD: (00) 00000-0000.
+                      </p>
                     </div>
                   </div>
 
@@ -497,35 +650,115 @@ export default function Settings() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                        Instagram (@perfil)
+                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1 flex items-center justify-between">
+                        <span className="flex items-center gap-1.5">
+                          <Instagram size={13} className="text-pink-500" />
+                          Instagram do Salão
+                        </span>
+                        <span className="text-[10px] text-pink-600 dark:text-pink-400 font-semibold normal-case">
+                          @ ou Link
+                        </span>
                       </label>
-                      <input
-                        type="text"
-                        value={formData.instagram}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            instagram: e.target.value,
-                          })
-                        }
-                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
-                        placeholder="@studioglow"
-                      />
+                      <div className="relative flex items-center">
+                        <span className="absolute left-3.5 text-xs font-bold text-[var(--muted)] select-none pointer-events-none">
+                          @
+                        </span>
+                        <input
+                          type="text"
+                          value={formData.instagram}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              instagram: cleanInstagramHandle(e.target.value),
+                            })
+                          }
+                          className="w-full pl-8 pr-3 py-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)] font-mono text-[var(--foreground)] placeholder:text-[var(--muted)]/50 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition-all"
+                          placeholder="seustudio"
+                        />
+                      </div>
+                      <div className="mt-1.5 text-[11px] text-[var(--muted)] truncate">
+                        {formData.instagram ? (
+                          <a
+                            href={`https://instagram.com/${formData.instagram}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-pink-600 dark:text-pink-400 hover:underline font-semibold"
+                          >
+                            <span>instagram.com/{formData.instagram}</span>
+                            <ExternalLink size={11} />
+                          </a>
+                        ) : (
+                          "Digite apenas seu @ ou cole o link do perfil."
+                        )}
+                      </div>
                     </div>
+
                     <div>
-                      <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                        CNPJ / CPF Comercial
-                      </label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-bold uppercase text-[var(--muted)]">
+                          {docType === "cpf"
+                            ? "CPF do Responsável"
+                            : "CNPJ da Empresa / MEI"}
+                        </label>
+                        <div className="inline-flex items-center p-0.5 rounded-lg bg-[var(--background)] border border-[var(--card-border)] text-xs font-semibold">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDocType("cpf");
+                              setFormData((prev) => ({
+                                ...prev,
+                                cnpj: formatCPF(prev.cnpj),
+                              }));
+                            }}
+                            className={`px-2.5 py-0.5 rounded-md text-xs font-bold transition-all ${
+                              docType === "cpf"
+                                ? "bg-rose-500 text-white shadow-sm"
+                                : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                            }`}
+                          >
+                            CPF
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDocType("cnpj");
+                              setFormData((prev) => ({
+                                ...prev,
+                                cnpj: formatCNPJ(prev.cnpj),
+                              }));
+                            }}
+                            className={`px-2.5 py-0.5 rounded-md text-xs font-bold transition-all ${
+                              docType === "cnpj"
+                                ? "bg-rose-500 text-white shadow-sm"
+                                : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                            }`}
+                          >
+                            CNPJ
+                          </button>
+                        </div>
+                      </div>
                       <input
                         type="text"
                         value={formData.cnpj}
-                        onChange={(e) =>
-                          setFormData({ ...formData, cnpj: e.target.value })
+                        maxLength={docType === "cpf" ? 14 : 18}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          const formatted =
+                            docType === "cpf" ? formatCPF(val) : formatCNPJ(val);
+                          setFormData({ ...formData, cnpj: formatted });
+                        }}
+                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)] font-mono text-[var(--foreground)] placeholder:text-[var(--muted)]/50 focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none transition-all"
+                        placeholder={
+                          docType === "cpf"
+                            ? "000.000.000-00"
+                            : "00.000.000/0001-00"
                         }
-                        className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
-                        placeholder="00.000.000/0001-00"
                       />
+                      <p className="text-[11px] text-[var(--muted)] mt-1.5">
+                        {docType === "cpf"
+                          ? "11 dígitos com pontuação automática (000.000.000-00)."
+                          : "14 dígitos com pontuação automática (00.000.000/0001-00)."}
+                      </p>
                     </div>
                   </div>
 
@@ -762,126 +995,172 @@ export default function Settings() {
               </form>
             )}
 
-            {/* TAB: FINANCIAL */}
+            {/* TAB: FINANCIAL - SIMPLES MVP */}
             {activeTab === "financial" && (
-              <form onSubmit={handleSaveFinance} className="max-w-xl space-y-5">
-                <h3 className="text-xl font-bold text-[var(--foreground)]">
-                  Estrutura Financeira & Custos Fixos Base
-                </h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                      Perfil do Bairro
-                    </label>
-                    <select
-                      value={financeForm.neighborhood}
-                      onChange={(e) =>
-                        setFinanceForm({
-                          ...financeForm,
-                          neighborhood: e.target.value as NeighborhoodType,
-                        })
-                      }
-                      className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
-                    >
-                      <option value="simples">Popular</option>
-                      <option value="media">Bairro Médio</option>
-                      <option value="rica">Bairro Nobre</option>
-                    </select>
+              <form onSubmit={handleSaveFinance} className="max-w-2xl space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold text-zinc-900 dark:text-white">
+                    Estrutura Financeira
+                  </h3>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    Preencha suas despesas básicas e a meta do salão para calibrar o sistema.
+                  </p>
+                </div>
+
+                {/* Perfil do Salão - 3 Opções Simples */}
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                    Perfil do Bairro
+                  </label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "simples" as NeighborhoodType, label: "Popular" },
+                      { id: "media" as NeighborhoodType, label: "Bairro Médio" },
+                      { id: "rica" as NeighborhoodType, label: "Bairro Nobre" },
+                    ].map((item) => {
+                      const isSelected = financeForm.neighborhood === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => {
+                            soundEffects.playPop();
+                            setFinanceForm({ ...financeForm, neighborhood: item.id });
+                          }}
+                          className={`py-2.5 px-3 rounded-xl text-xs font-bold transition cursor-pointer border text-center ${
+                            isSelected
+                              ? "bg-rose-600 text-white border-rose-600 shadow-xs"
+                              : "bg-zinc-50 dark:bg-white/5 text-zinc-700 dark:text-zinc-300 border-zinc-200 dark:border-white/10 hover:bg-zinc-100 dark:hover:bg-white/10"
+                          }`}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                      Cadeiras / Estações
+                </div>
+
+                {/* Grid Limpo de Despesas e Capacidade */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Aluguel */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Aluguel do Salão
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-xs font-bold text-zinc-400">R$</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={financeForm.rentCost ? financeForm.rentCost.toLocaleString("pt-BR") : ""}
+                        onChange={(e) => {
+                          const num = Number(e.target.value.replace(/\D/g, ""));
+                          setFinanceForm({ ...financeForm, rentCost: num });
+                        }}
+                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-rose-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Energia & Água */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Energia & Água
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-xs font-bold text-zinc-400">R$</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={financeForm.energyCost ? financeForm.energyCost.toLocaleString("pt-BR") : ""}
+                        onChange={(e) => {
+                          const num = Number(e.target.value.replace(/\D/g, ""));
+                          setFinanceForm({ ...financeForm, energyCost: num });
+                        }}
+                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-rose-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Internet */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Internet & Telefone
+                    </label>
+                    <div className="relative flex items-center">
+                      <span className="absolute left-3.5 text-xs font-bold text-zinc-400">R$</span>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        placeholder="0"
+                        value={financeForm.internetCost ? financeForm.internetCost.toLocaleString("pt-BR") : ""}
+                        onChange={(e) => {
+                          const num = Number(e.target.value.replace(/\D/g, ""));
+                          setFinanceForm({ ...financeForm, internetCost: num });
+                        }}
+                        className="w-full pl-10 pr-3 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-rose-500"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Cadeiras */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-zinc-700 dark:text-zinc-300">
+                      Cadeiras / Bancadas Ativas
                     </label>
                     <input
                       type="number"
                       min="1"
-                      value={financeForm.chairs}
-                      onChange={(e) =>
-                        setFinanceForm({
-                          ...financeForm,
-                          chairs: Number(e.target.value),
-                        })
-                      }
-                      className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                      placeholder="1"
+                      value={financeForm.chairs || 1}
+                      onChange={(e) => {
+                        const val = Math.max(1, Number(e.target.value));
+                        setFinanceForm({ ...financeForm, chairs: val });
+                      }}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-zinc-50 dark:bg-white/5 text-sm font-semibold text-zinc-900 dark:text-white outline-none focus:border-rose-500"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                      Aluguel (R$)
+                {/* Meta Mensal de Faturamento */}
+                <div className="p-4 rounded-2xl bg-zinc-50/80 dark:bg-white/[0.03] border border-zinc-200/80 dark:border-white/10 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-bold text-zinc-800 dark:text-zinc-200">
+                      Meta Mensal de Faturamento (R$)
                     </label>
-                    <input
-                      type="number"
-                      value={financeForm.rentCost}
-                      onChange={(e) =>
-                        setFinanceForm({
-                          ...financeForm,
-                          rentCost: Number(e.target.value),
-                        })
-                      }
-                      className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
-                    />
+                    <span className="text-[11px] font-bold text-zinc-500 dark:text-zinc-400">
+                      Total Custos Fixos: <strong className="text-zinc-900 dark:text-white">R$ {totalFixedCosts.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong>
+                    </span>
                   </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                      Energia & Água (R$)
-                    </label>
+
+                  <div className="relative flex items-center">
+                    <span className="absolute left-3.5 text-sm font-bold text-zinc-400">R$</span>
                     <input
-                      type="number"
-                      value={financeForm.energyCost}
-                      onChange={(e) =>
-                        setFinanceForm({
-                          ...financeForm,
-                          energyCost: Number(e.target.value),
-                        })
-                      }
-                      className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                      Internet (R$)
-                    </label>
-                    <input
-                      type="number"
-                      value={financeForm.internetCost}
-                      onChange={(e) =>
-                        setFinanceForm({
-                          ...financeForm,
-                          internetCost: Number(e.target.value),
-                        })
-                      }
-                      className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
-                      Meta Mensal do Salão (R$)
-                    </label>
-                    <input
-                      type="number"
-                      value={financeForm.monthlyGoal}
-                      onChange={(e) =>
-                        setFinanceForm({
-                          ...financeForm,
-                          monthlyGoal: Number(e.target.value),
-                        })
-                      }
-                      className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Ex: 25.000"
+                      value={financeForm.monthlyGoal ? financeForm.monthlyGoal.toLocaleString("pt-BR") : ""}
+                      onChange={(e) => {
+                        const num = Number(e.target.value.replace(/\D/g, ""));
+                        setFinanceForm({ ...financeForm, monthlyGoal: num });
+                      }}
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-200 dark:border-white/10 bg-white dark:bg-[#12141c] text-base font-extrabold text-zinc-900 dark:text-white outline-none focus:border-rose-500 shadow-2xs"
                     />
                   </div>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex items-center justify-center gap-2 bg-[var(--primary)] text-white px-6 py-3 rounded-xl font-bold text-sm shadow-sm cursor-pointer w-full sm:w-auto"
-                >
-                  <Save size={18} />
-                  Salvar Configurações Financeiras
-                </button>
+                {/* Botão de Salvar */}
+                <div>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="px-6 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-sm transition cursor-pointer active:scale-95 disabled:opacity-50"
+                  >
+                    Salvar Configurações Financeiras
+                  </button>
+                </div>
               </form>
             )}
 

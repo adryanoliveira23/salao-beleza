@@ -1,5 +1,6 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -14,16 +15,16 @@ import {
   X,
   DollarSign,
   Wallet,
-  TrendingUp,
-  Activity,
   Menu,
   Crown,
-  CheckSquare,
   MessageCircle,
   HeartHandshake,
   PieChart,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { useSidebar } from "@/contexts/SidebarContext";
+import { soundEffects } from "@/lib/soundEffects";
 
 interface MenuItem {
   name: string;
@@ -40,6 +41,20 @@ interface MenuSection {
 export function Sidebar() {
   const pathname = usePathname();
   const { isOpen, toggle, close } = useSidebar();
+  const [soundActive, setSoundActive] = useState(true);
+
+  useEffect(() => {
+    setSoundActive(!soundEffects.isMuted());
+    const unsubscribe = soundEffects.subscribe((muted) => {
+      setSoundActive(!muted);
+    });
+    return unsubscribe;
+  }, []);
+
+  const handleToggleSound = () => {
+    const nextActive = soundEffects.toggleMute();
+    setSoundActive(nextActive);
+  };
 
   const menuSections: MenuSection[] = [
     {
@@ -51,7 +66,6 @@ export function Sidebar() {
           name: "WhatsApp Salão",
           icon: MessageCircle,
           path: "/whatsapp",
-          badge: "Ativo",
         },
         { name: "Agendamento Online", icon: Link2, path: "/meu-link" },
       ],
@@ -77,9 +91,6 @@ export function Sidebar() {
         { name: "Equipe & Comissões", icon: Users, path: "/colaboradores" },
         { name: "Estoque & Produtos", icon: Package, path: "/estoque" },
         { name: "Relatórios & BI", icon: PieChart, path: "/relatorios" },
-        { name: "Metas de Lucro", icon: TrendingUp, path: "/metas" },
-        { name: "Diagnóstico & Metas", icon: Activity, path: "/ia-consultora" },
-        { name: "Checklist Diário", icon: CheckSquare, path: "/checklist" },
       ],
     },
   ];
@@ -105,38 +116,38 @@ export function Sidebar() {
         aria-hidden="true"
       />
       <aside
-        className={`w-[248px] max-w-[85vw] bg-[var(--card-bg)] text-[var(--foreground)] border-r border-[var(--card-border)] flex flex-col shadow-[2px_0_16px_rgba(35,25,32,0.02)] z-50 h-dvh fixed left-0 top-0 transition-transform duration-300 ease-out
+        className={`w-[240px] max-w-[85vw] bg-[var(--card-bg)] text-[var(--foreground)] border-r border-[var(--card-border)] flex flex-col z-50 h-dvh fixed left-0 top-0 transition-transform duration-200 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"} md:translate-x-0`}
       >
-        {/* Brand Header - Minimalista & Editorial */}
-        <div className="flex items-center justify-between gap-3 px-5 h-18 border-b border-[var(--card-border)]">
+        {/* Brand Header - Limpo, Profissional & Direto */}
+        <div className="flex items-center justify-between gap-3 px-5 h-16 border-b border-[var(--card-border)]">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[var(--primary)] to-pink-500 text-white flex items-center justify-center shadow-xs shadow-rose-500/20 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-600 to-pink-600 text-white flex items-center justify-center shrink-0 shadow-xs shadow-rose-950/30">
               <Scissors size={16} />
             </div>
             <div>
-              <span className="text-base font-bold font-sans text-[var(--foreground)] block leading-tight tracking-tight">
+              <span className="text-[15px] font-extrabold tracking-tight text-[var(--foreground)] block leading-tight">
                 BellaMais
               </span>
-              <span className="text-[9px] uppercase tracking-[0.14em] text-rose-800/80 dark:text-rose-300 font-bold">
-                Beleza & Gestão
+              <span className="text-[10px] text-[var(--muted)] font-medium block">
+                Gestão de Salões
               </span>
             </div>
           </div>
           <button
             onClick={close}
-            className="md:hidden p-1.5 hover:bg-[var(--primary-light)] rounded-lg transition-colors text-[var(--muted)] cursor-pointer"
+            className="md:hidden p-1.5 hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-[var(--muted)] cursor-pointer"
             aria-label="Fechar menu"
           >
             <X size={18} />
           </button>
         </div>
 
-        {/* Navigation Links - Line Icons & Fundo Suave */}
+        {/* Navigation Links */}
         <nav className="flex-1 px-3 py-4 flex flex-col gap-5 overflow-y-auto sidebar-scrollbar">
           {menuSections.map((section) => (
             <div key={section.title} className="flex flex-col gap-0.5">
-              <span className="px-3 text-[9px] uppercase tracking-[0.15em] font-bold text-[var(--muted)]/70 mb-1">
+              <span className="px-2.5 text-[10px] uppercase tracking-wider font-semibold text-[var(--muted)]/80 dark:text-rose-200/50 mb-1">
                 {section.title}
               </span>
               {section.items.map((item) => {
@@ -147,31 +158,33 @@ export function Sidebar() {
                   <Link
                     key={item.path}
                     href={item.path}
-                    onClick={close}
-                    className={`flex items-center justify-between gap-2.5 px-3 py-2 rounded-xl transition-all duration-150 text-xs sm:text-[13px]
-                    ${
+                    onClick={() => {
+                      soundEffects.playPop();
+                      close();
+                    }}
+                    className={`flex items-center justify-between gap-2.5 px-2.5 py-2 rounded-xl transition-all text-[13px] ${
                       isActive
-                        ? "bg-gradient-to-r from-rose-50 to-pink-50/70 dark:from-rose-950/40 dark:to-transparent text-[var(--primary)] font-bold shadow-2xs border-l-3 border-[var(--primary)]"
-                        : "text-[var(--muted)] hover:bg-rose-50/40 hover:text-[var(--foreground)] font-medium"
+                        ? "bg-rose-50 dark:bg-rose-500/15 text-[var(--primary)] dark:text-rose-300 font-bold shadow-2xs dark:border dark:border-rose-500/25"
+                        : "text-[var(--muted)] hover:bg-stone-100/70 dark:hover:bg-white/[0.05] hover:text-[var(--foreground)] font-medium"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
                       <item.icon
                         size={16}
-                        className={
+                        className={`shrink-0 ${
                           isActive
-                            ? "text-[var(--primary)] shrink-0"
-                            : "text-[var(--muted)]/80 shrink-0"
-                        }
+                            ? "text-[var(--primary)] dark:text-rose-400"
+                            : "text-[var(--muted)]"
+                        }`}
                       />
                       <span className="truncate">{item.name}</span>
                     </div>
                     {item.badge && (
                       <span
-                        className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                        className={`text-[9px] px-1.5 py-0.5 rounded font-semibold uppercase tracking-wider ${
                           isActive
-                            ? "bg-[var(--primary)] text-white shadow-2xs"
-                            : "bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border border-emerald-300/80 shadow-2xs"
+                            ? "bg-[var(--primary)] text-white"
+                            : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200/60 dark:border-emerald-800/60"
                         }`}
                       >
                         {item.badge}
@@ -184,20 +197,37 @@ export function Sidebar() {
           ))}
         </nav>
 
-        {/* Bottom Settings Link */}
-        <div className="p-3 border-t border-[var(--card-border)]">
+        {/* Bottom Profile / Settings & Sound Mute Toggle */}
+        <div className="p-3 border-t border-[var(--card-border)] flex items-center justify-between gap-1.5">
           <Link
             href="/configuracoes"
-            onClick={close}
-            className={`flex items-center gap-2.5 px-3 py-2 w-full rounded-xl transition-all duration-150 text-xs sm:text-[13px] ${
+            onClick={() => {
+              soundEffects.playPop();
+              close();
+            }}
+            className={`flex items-center gap-2.5 px-2.5 py-2 flex-1 rounded-lg transition-colors text-[13px] ${
               pathname.startsWith("/configuracoes")
-                ? "bg-[var(--primary-light)] text-[var(--primary)] font-bold border-l-2.5 border-[var(--primary)]"
-                : "text-[var(--muted)] hover:bg-[var(--primary-light)]/50 hover:text-[var(--foreground)] font-medium"
+                ? "bg-stone-100 dark:bg-zinc-800 text-[var(--foreground)] font-semibold"
+                : "text-[var(--muted)] hover:bg-stone-100/70 dark:hover:bg-zinc-800/60 hover:text-[var(--foreground)] font-medium"
             }`}
           >
-            <Settings size={16} className="shrink-0 text-[var(--muted)]/80" />
-            Configurações do Salão
+            <Settings size={16} className="shrink-0 text-[var(--muted)]" />
+            Configurações
           </Link>
+
+          <button
+            type="button"
+            onClick={handleToggleSound}
+            className="p-2 rounded-lg text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-stone-100/70 dark:hover:bg-zinc-800/60 transition-colors cursor-pointer shrink-0"
+            title={soundActive ? "Sons táteis ativados (clique para silenciar)" : "Sons táteis desativados (clique para ativar)"}
+            aria-label="Alternar sons do sistema"
+          >
+            {soundActive ? (
+              <Volume2 size={16} className="text-emerald-600 dark:text-emerald-400" />
+            ) : (
+              <VolumeX size={16} className="text-[var(--muted)]" />
+            )}
+          </button>
         </div>
       </aside>
 
@@ -211,6 +241,7 @@ export function Sidebar() {
             <Link
               key={item.path}
               href={item.path}
+              onClick={() => soundEffects.playPop()}
               className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-xl transition-all ${
                 isActive
                   ? "text-[var(--primary)] font-bold bg-[var(--primary-light)]"
@@ -224,7 +255,10 @@ export function Sidebar() {
         })}
         <button
           type="button"
-          onClick={toggle}
+          onClick={() => {
+            soundEffects.playPop();
+            toggle();
+          }}
           className={`flex flex-col items-center justify-center gap-1 py-1.5 px-2.5 rounded-xl transition-all cursor-pointer ${
             isOpen
               ? "text-[var(--primary)] font-bold bg-[var(--primary-light)]"

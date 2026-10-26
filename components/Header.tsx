@@ -50,62 +50,65 @@ export function Header({ title }: HeaderProps) {
   };
 
   return (
-    <header className="h-16 md:h-20 bg-[var(--card-bg)]/90 backdrop-blur-md border-b border-[var(--card-border)] flex items-center justify-between px-4 md:px-6 lg:px-10 sticky top-0 z-30">
-      <div className="flex items-center gap-3 md:gap-4 min-w-0">
+    <header className="h-16 bg-[var(--card-bg)] border-b border-[var(--card-border)] flex items-center justify-between px-4 md:px-6 lg:px-8 sticky top-0 z-30">
+      <div className="flex items-center gap-3 min-w-0">
         <button
           onClick={toggle}
-          className="md:hidden p-2 -ml-2 hover:bg-[var(--primary-light)] rounded-xl transition-colors text-[var(--foreground)] cursor-pointer"
+          className="md:hidden p-2 -ml-2 hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-[var(--foreground)] cursor-pointer"
           aria-label="Abrir menu"
         >
-          <Menu size={22} />
+          <Menu size={20} />
         </button>
         <div className="min-w-0">
-          <h1 className="text-lg md:text-2xl font-bold font-sans tracking-tight text-[var(--foreground)] truncate">
-            {title}
-          </h1>
-          {profile?.salon_name && (
-            <p className="text-xs text-[var(--primary)] font-semibold truncate hidden sm:block">
-              {profile.salon_name}
-            </p>
-          )}
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-base md:text-lg font-bold tracking-tight text-[var(--foreground)] truncate">
+              {title}
+            </h1>
+            {profile?.salon_name && (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-white/[0.06] text-[var(--muted)] dark:text-rose-100/80 text-[11px] font-medium border border-stone-200 dark:border-white/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {profile.salon_name}
+              </span>
+            )}
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 md:gap-2.5 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <button
           onClick={() => router.push("/agenda")}
-          className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--primary-light)] text-[var(--primary)] text-xs font-semibold hover:bg-[var(--primary-light-hover)] transition-colors cursor-pointer"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-white/10 bg-transparent dark:bg-white/[0.04] hover:bg-stone-50 dark:hover:bg-white/[0.08] text-stone-700 dark:text-zinc-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
           title="Ir para Agenda"
         >
-          <CalendarPlus size={15} />
-          <span>Agendar</span>
+          <CalendarPlus size={14} className="text-[var(--primary)] dark:text-rose-400" />
+          <span>Agenda</span>
         </button>
 
         <button
           onClick={() => router.push("/whatsapp")}
-          className="hidden sm:flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[var(--background)] border border-[var(--card-border)] text-[var(--foreground)] text-xs font-semibold hover:border-[var(--primary)]/40 transition-colors cursor-pointer"
+          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-white/10 bg-transparent dark:bg-white/[0.04] hover:bg-stone-50 dark:hover:bg-white/[0.08] text-stone-700 dark:text-zinc-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
           title="Central WhatsApp"
         >
-          <MessageCircle size={15} className="text-emerald-600" />
+          <MessageCircle size={14} className="text-emerald-600 dark:text-emerald-400" />
           <span>WhatsApp</span>
         </button>
 
         <button
           onClick={toggleTheme}
-          className="w-9 h-9 md:w-10 md:h-10 flex items-center justify-center text-[var(--muted)] hover:text-[var(--primary)] hover:bg-[var(--primary-light)] rounded-full transition-colors cursor-pointer"
+          className="w-8 h-8 flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-stone-100 dark:hover:bg-white/[0.06] rounded-xl transition-all cursor-pointer"
           title={isDark ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
         >
-          {isDark ? <Sun size={18} /> : <Moon size={18} />}
+          {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
 
         <button
-          className="relative w-9 h-9 md:w-10 md:h-10 flex items-center justify-center text-[var(--muted)] hover:text-[var(--primary)] hover:bg-[var(--primary-light)] rounded-full transition-colors cursor-pointer"
+          className="relative w-8 h-8 flex items-center justify-center text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
           onClick={() => router.push("/configuracoes")}
           title="Notificações"
         >
-          <Bell size={18} />
+          <Bell size={16} />
           {unreadCount > 0 && (
-            <span className="absolute top-2 right-2 w-2 h-2 bg-[var(--primary)] rounded-full"></span>
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[var(--primary)] rounded-full"></span>
           )}
         </button>
 

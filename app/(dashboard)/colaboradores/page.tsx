@@ -6,6 +6,7 @@ import React, { useState, useMemo } from "react";
 import { Header } from "@/components/Header";
 import { useSalonData, Professional } from "@/contexts/SalonDataContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { CurrencyInput } from "@/components/CurrencyInput";
 import { jsPDF } from "jspdf";
 import {
   Plus,
@@ -900,15 +901,12 @@ Local e Data: _______________________, ${new Date().toLocaleDateString("pt-BR")}
                   <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
                     Salário Fixo (R$)
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <CurrencyInput
                     value={formData.fixedSalary}
-                    onChange={(e) =>
+                    onChangeValue={(val) =>
                       setFormData({
                         ...formData,
-                        fixedSalary: Number(e.target.value),
+                        fixedSalary: val,
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
@@ -918,18 +916,15 @@ Local e Data: _______________________, ${new Date().toLocaleDateString("pt-BR")}
                   <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
                     Meta Mensal (R$)
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="100"
+                  <CurrencyInput
                     value={formData.monthlyGoal}
-                    onChange={(e) =>
+                    onChangeValue={(val) =>
                       setFormData({
                         ...formData,
-                        monthlyGoal: Number(e.target.value),
+                        monthlyGoal: val,
                       })
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm font-bold text-rose-600 dark:text-rose-400"
                   />
                 </div>
               </div>

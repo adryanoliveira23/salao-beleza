@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useSalonData, Service } from "@/contexts/SalonDataContext";
+import { CurrencyInput } from "@/components/CurrencyInput";
 
 export const BEAUTY_CATEGORIES = [
   "Corte e escova",
@@ -516,13 +517,9 @@ function ServiceModal({
               <label className="text-xs font-bold text-[#2d1b2e] block mb-1">
                 Preço (R$) *
               </label>
-              <input
-                type="number"
-                required
-                min={0}
-                step={0.01}
+              <CurrencyInput
                 value={price}
-                onChange={(e) => setPrice(Number(e.target.value))}
+                onChangeValue={(val) => setPrice(val)}
                 className="w-full p-2.5 border border-[#f2e6ea] rounded-xl text-sm font-bold text-[#0ca678]"
               />
             </div>
@@ -530,12 +527,9 @@ function ServiceModal({
               <label className="text-xs font-bold text-[#2d1b2e] block mb-1">
                 Custo Est. (R$)
               </label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
+              <CurrencyInput
                 value={costPrice}
-                onChange={(e) => setCostPrice(Number(e.target.value))}
+                onChangeValue={(val) => setCostPrice(val)}
                 className="w-full p-2.5 border border-[#f2e6ea] rounded-xl text-sm"
               />
             </div>

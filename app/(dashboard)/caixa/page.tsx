@@ -10,6 +10,7 @@ import {
   FinancialTransaction,
 } from "@/contexts/FinanceContext";
 import { useSalonData } from "@/contexts/SalonDataContext";
+import { CurrencyInput } from "@/components/CurrencyInput";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -955,40 +956,31 @@ function TransactionModal({
               <label className="font-bold text-[#2d1b2e] block mb-1">
                 Valor Bruto (R$) *
               </label>
-              <input
-                type="number"
-                required
-                min={0}
-                step={0.01}
+              <CurrencyInput
                 value={amount}
-                onChange={(e) => setAmount(Number(e.target.value))}
+                onChangeValue={setAmount}
                 className="w-full p-2.5 border border-[#f2e6ea] rounded-xl font-bold"
+                required
               />
             </div>
             <div>
               <label className="font-bold text-[#2d1b2e] block mb-1">
                 Desconto (R$)
               </label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
+              <CurrencyInput
                 value={discount}
-                onChange={(e) => setDiscount(Number(e.target.value))}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl"
+                onChangeValue={setDiscount}
+                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl text-amber-600 font-bold"
               />
             </div>
             <div>
               <label className="font-bold text-[#2d1b2e] block mb-1">
                 Sinal Pago (R$)
               </label>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
+              <CurrencyInput
                 value={depositAmount}
-                onChange={(e) => setDepositAmount(Number(e.target.value))}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl"
+                onChangeValue={setDepositAmount}
+                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl text-blue-600 font-bold"
               />
             </div>
           </div>

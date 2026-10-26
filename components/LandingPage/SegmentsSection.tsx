@@ -51,16 +51,16 @@ const segments = [
 
 export function SegmentsSection() {
   return (
-    <section className="py-12 md:py-20 bg-[#fcfcfc]">
+    <section className="py-12 md:py-20 bg-[#fcfcfc] dark:bg-[#110712] transition-colors">
       <div className="max-w-7xl mx-auto px-4 md:px-6">
         <div className="text-center mb-8 md:mb-14">
-          <span className="inline-block py-1 px-3 rounded-full bg-[#FF6B9D]/10 text-[#FF6B9D] font-semibold text-xs sm:text-sm mb-3">
+          <span className="inline-block py-1.5 px-3.5 rounded-full bg-rose-500/10 dark:bg-rose-500/15 border border-rose-500/20 text-[var(--primary)] dark:text-rose-400 font-bold text-xs uppercase tracking-wider mb-3">
             Para Todos os Tamanhos
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#2d1b2e] mb-3 md:mb-5 font-sans tracking-tight text-balance">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-[#2d1b2e] dark:text-[#fdf5f9] mb-3 md:mb-5 tracking-tight text-balance">
             Feito sob medida para o seu negócio
           </h2>
-          <p className="text-sm sm:text-base text-[#666] max-w-2xl mx-auto text-balance">
+          <p className="text-sm sm:text-base text-[#666] dark:text-[#b8a3af] max-w-2xl mx-auto text-balance font-sans">
             Não importa se você tem uma equipe completa ou trabalha sozinho(a), o
             BellaMais se adapta à sua rotina diária.
           </p>
@@ -70,17 +70,17 @@ export function SegmentsSection() {
           {segments.map((segment, index) => (
             <div
               key={index}
-              className="bg-white p-5 sm:p-6 md:p-8 rounded-2xl border border-[#f0f0f0] shadow-2xs hover:shadow-md transition-all hover:-translate-y-1 group"
+              className="bg-white dark:bg-[#1e121d] p-5 sm:p-6 md:p-8 rounded-3xl border border-[#f0f0f0] dark:border-white/10 shadow-2xs hover:shadow-md dark:shadow-[0_10px_28px_-4px_rgba(0,0,0,0.65)] transition-all hover:-translate-y-1 group"
             >
               <div
-                className={`w-12 h-12 md:w-14 md:h-14 rounded-xl bg-gradient-to-br ${segment.color} flex items-center justify-center text-white mb-4 md:mb-5 group-hover:scale-105 transition-transform shadow-xs`}
+                className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-br ${segment.color} flex items-center justify-center text-white mb-4 md:mb-5 group-hover:scale-105 transition-transform shadow-xs`}
               >
                 {segment.icon}
               </div>
-              <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#2d1b2e] mb-1.5 md:mb-2">
+              <h3 className="text-base sm:text-lg md:text-xl font-bold text-[#2d1b2e] dark:text-[#fdf5f9] mb-1.5 md:mb-2">
                 {segment.title}
               </h3>
-              <p className="text-xs sm:text-sm text-[#666] leading-relaxed">{segment.desc}</p>
+              <p className="text-xs sm:text-sm text-[#666] dark:text-[#b8a3af] leading-relaxed">{segment.desc}</p>
             </div>
           ))}
         </div>
