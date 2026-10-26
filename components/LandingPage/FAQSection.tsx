@@ -40,16 +40,16 @@ export function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-12 md:py-20 bg-white" id="faq">
+    <section className="py-12 md:py-20 bg-white dark:bg-[#0d070e] transition-colors" id="faq">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
         <div className="text-center mb-8 md:mb-14">
-          <span className="inline-block py-1 px-3 rounded-full bg-[#FF6B9D]/10 text-[#FF6B9D] font-semibold text-xs sm:text-sm mb-3">
+          <span className="inline-block py-1.5 px-3.5 rounded-full bg-rose-500/10 dark:bg-rose-500/15 border border-rose-500/20 text-[var(--primary)] dark:text-rose-400 font-bold text-xs uppercase tracking-wider mb-3">
             Tira-Dúvidas
           </span>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#2d1b2e] mb-3 md:mb-5 font-sans tracking-tight text-balance">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold text-[#2d1b2e] dark:text-[#fdf5f9] mb-3 md:mb-5 tracking-tight text-balance">
             Perguntas Frequentes
           </h2>
-          <p className="text-sm sm:text-base text-[#666] max-w-2xl mx-auto text-balance">
+          <p className="text-sm sm:text-base text-[#666] dark:text-[#b8a3af] max-w-2xl mx-auto text-balance font-sans">
             Separamos as dúvidas mais comuns de donas de salão e profissionais da beleza para você começar com segurança.
           </p>
         </div>
@@ -60,8 +60,8 @@ export function FAQSection() {
               key={index}
               className={`border rounded-2xl transition-all duration-300 ${
                 openIndex === index
-                  ? "border-[var(--primary)]/30 bg-[var(--primary)]/5 shadow-2xs"
-                  : "border-[#f0f0f0] bg-white hover:border-[var(--primary)]/20"
+                  ? "border-[var(--primary)]/35 bg-rose-500/5 dark:bg-rose-950/20 shadow-2xs"
+                  : "border-[#f0f0f0] dark:border-white/10 bg-white dark:bg-[#1a0f1a] hover:border-[var(--primary)]/25"
               }`}
             >
               <button
@@ -72,21 +72,21 @@ export function FAQSection() {
                   <HelpCircle
                     size={18}
                     className={`shrink-0 ${
-                      openIndex === index ? "text-[var(--primary)]" : "text-[#aaa]"
+                      openIndex === index ? "text-[var(--primary)] dark:text-rose-400" : "text-[#aaa] dark:text-zinc-500"
                     }`}
                   />
                   <span
                     className={`font-semibold text-sm sm:text-base md:text-lg leading-snug ${
-                      openIndex === index ? "text-[#2d1b2e]" : "text-[#555]"
+                      openIndex === index ? "text-[#2d1b2e] dark:text-[#fdf5f9]" : "text-[#555] dark:text-[#ded1d8]"
                     }`}
                   >
                     {faq.question}
                   </span>
                 </div>
                 {openIndex === index ? (
-                  <ChevronUp className="text-[var(--primary)] shrink-0 mt-0.5" size={18} />
+                  <ChevronUp className="text-[var(--primary)] dark:text-rose-400 shrink-0 mt-0.5" size={18} />
                 ) : (
-                  <ChevronDown className="text-[#aaa] shrink-0 mt-0.5" size={18} />
+                  <ChevronDown className="text-[#aaa] dark:text-zinc-500 shrink-0 mt-0.5" size={18} />
                 )}
               </button>
               <div
@@ -96,7 +96,7 @@ export function FAQSection() {
                     : "max-h-0 opacity-0"
                 }`}
               >
-                <div className="p-4 sm:p-5 md:p-6 pt-0 text-xs sm:text-sm text-[#666] leading-relaxed pl-9 sm:pl-11 md:pl-14 pr-4">
+                <div className="p-4 sm:p-5 md:p-6 pt-0 text-xs sm:text-sm text-[#666] dark:text-[#b8a3af] leading-relaxed pl-9 sm:pl-11 md:pl-14 pr-4">
                   {faq.answer}
                 </div>
               </div>

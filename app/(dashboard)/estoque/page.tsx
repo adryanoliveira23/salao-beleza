@@ -20,6 +20,7 @@ import {
   Truck,
   Calendar,
 } from "lucide-react";
+import { CurrencyInput } from "@/components/CurrencyInput";
 
 const PRODUCT_CATEGORIES: Product["category"][] = [
   "Tintas e Químicos",
@@ -708,15 +709,12 @@ export default function EstoquePage() {
                   <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
                     Preço de Custo (R$)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <CurrencyInput
                     value={formData.costPrice}
-                    onChange={(e) =>
+                    onChangeValue={(val) =>
                       setFormData({
                         ...formData,
-                        costPrice: Number(e.target.value),
+                        costPrice: val,
                       })
                     }
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
@@ -726,18 +724,15 @@ export default function EstoquePage() {
                   <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
                     Preço de Venda (R$)
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
+                  <CurrencyInput
                     value={formData.salePrice}
-                    onChange={(e) =>
+                    onChangeValue={(val) =>
                       setFormData({
                         ...formData,
-                        salePrice: Number(e.target.value),
+                        salePrice: val,
                       })
                     }
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm font-bold text-emerald-600 dark:text-emerald-400"
                   />
                 </div>
               </div>

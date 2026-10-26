@@ -12,7 +12,9 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { SalonDataProvider } from "@/contexts/SalonDataContext";
 import { FinanceProvider } from "@/contexts/FinanceContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ToastProvider } from "@/contexts/ToastContext";
 import { SuppressHydrationWarning } from "./suppress-hydration-warning";
+import { GlobalSoundProvider } from "@/components/GlobalSoundProvider";
 
 const fontInter = Inter({
   variable: "--font-inter",
@@ -100,7 +102,11 @@ export default function RootLayout({
         <AuthProvider>
           <NotificationProvider>
             <SalonDataProvider>
-              <FinanceProvider>{children}</FinanceProvider>
+              <FinanceProvider>
+                <ToastProvider>
+                  <GlobalSoundProvider>{children}</GlobalSoundProvider>
+                </ToastProvider>
+              </FinanceProvider>
             </SalonDataProvider>
           </NotificationProvider>
         </AuthProvider>

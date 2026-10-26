@@ -17,14 +17,51 @@ import {
   DollarSign,
   ArrowRight,
   Sparkles,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { DemoSection } from "@/components/LandingPage/DemoSection";
 import { FAQSection } from "@/components/LandingPage/FAQSection";
 import { SegmentsSection } from "@/components/LandingPage/SegmentsSection";
+import { soundEffects } from "@/lib/soundEffects";
 
 export default function LandingPage() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [isDark, setIsDark] = useState(false);
   const lastScrollY = useRef(0);
+
+  // Sincronização do tema (Claro / Escuro)
+  useEffect(() => {
+    const isCurrentlyDark =
+      document.documentElement.classList.contains("dark") ||
+      localStorage.getItem("bellamais_theme_mode") === "dark" ||
+      localStorage.getItem("agendly_theme_mode") === "dark";
+    setIsDark(isCurrentlyDark);
+    if (isCurrentlyDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    soundEffects.playClick();
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    if (nextDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "dark");
+      localStorage.setItem("bellamais_theme_mode", "dark");
+      localStorage.setItem("agendly_theme_mode", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "light");
+      localStorage.setItem("bellamais_theme_mode", "light");
+      localStorage.setItem("agendly_theme_mode", "light");
+    }
+  };
 
   useEffect(() => {
     let ticking = false;
@@ -105,6 +142,22 @@ export default function LandingPage() {
           </ul>
 
           <div className={styles.navActions}>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className={styles.themeToggleBtn}
+              title={isDark ? "Mudar para Modo Claro" : "Mudar para Modo Escuro"}
+              aria-label="Alternar tema claro e escuro"
+            >
+              {isDark ? (
+                <Sun size={16} className="text-amber-400 shrink-0" />
+              ) : (
+                <Moon size={16} className="text-purple-600 shrink-0" />
+              )}
+              <span className="hidden sm:inline text-xs font-semibold">
+                {isDark ? "Claro" : "Escuro"}
+              </span>
+            </button>
             <a href="/login" className={styles.navLoginLink}>
               Entrar
             </a>
@@ -146,7 +199,6 @@ export default function LandingPage() {
                 <a
                   href="#demo"
                   className={`${styles.btn} ${styles.btnWhite}`}
-                  style={{ background: "#ffffff", border: "1px solid #e5d7df" }}
                 >
                   Ver Demonstração
                 </a>
@@ -178,7 +230,7 @@ export default function LandingPage() {
           <div className={styles.transformationGrid}>
             <div className={styles.transformCard}>
               <span className={styles.transformIcon}>
-                <Clock size={36} className="text-[#9e3160]" />
+                <Clock size={36} className="text-[var(--primary)] dark:text-rose-400" />
               </span>
               <h3>Otimização de Tempo</h3>
               <p>
@@ -188,7 +240,7 @@ export default function LandingPage() {
             </div>
             <div className={styles.transformCard}>
               <span className={styles.transformIcon}>
-                <DollarSign size={36} className="text-[#9e3160]" />
+                <DollarSign size={36} className="text-[var(--primary)] dark:text-rose-400" />
               </span>
               <h3>Maximização de Lucro</h3>
               <p>
@@ -198,7 +250,7 @@ export default function LandingPage() {
             </div>
             <div className={styles.transformCard}>
               <span className={styles.transformIcon}>
-                <CheckCircle2 size={36} className="text-[#9e3160]" />
+                <CheckCircle2 size={36} className="text-[var(--primary)] dark:text-rose-400" />
               </span>
               <h3>Redução de No-Show</h3>
               <p>
@@ -208,7 +260,7 @@ export default function LandingPage() {
             </div>
             <div className={styles.transformCard}>
               <span className={styles.transformIcon}>
-                <Heart size={36} className="text-[#9e3160]" />
+                <Heart size={36} className="text-[var(--primary)] dark:text-rose-400" />
               </span>
               <h3>Fidelização de Clientes</h3>
               <p>

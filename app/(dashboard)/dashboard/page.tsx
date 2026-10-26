@@ -13,7 +13,6 @@ import {
   MessageCircle,
   Plus,
   ArrowRight,
-  Award,
   Link2,
   Copy,
   Check,
@@ -21,14 +20,18 @@ import {
   DollarSign,
   Activity,
   Crown,
+  ChevronRight,
   Sparkles,
   Zap,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import Link from "next/link";
 import { Header } from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { useFinance } from "@/contexts/FinanceContext";
 import { useSalonData } from "@/contexts/SalonDataContext";
+import { soundEffects } from "@/lib/soundEffects";
 
 export default function Dashboard() {
   const { user, profile } = useAuth();
@@ -42,10 +45,20 @@ export default function Dashboard() {
 
   const [chartPeriod, setChartPeriod] = useState<"7d" | "6m">("7d");
   const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedBroadcast, setCopiedBroadcast] = useState(false);
+  const [soundActive, setSoundActive] = useState(!soundEffects.isMuted());
 
   const now = useMemo(() => new Date(), []);
   const todayStr = useMemo(() => now.toISOString().split("T")[0], [now]);
   const currentMonth = now.getMonth() + 1;
+
+  // Saudação acolhedora de acordo com o turno do dia
+  const greeting = useMemo(() => {
+    const hour = now.getHours();
+    if (hour < 12) return "Bom dia";
+    if (hour < 18) return "Boa tarde";
+    return "Boa noite";
+  }, [now]);
 
   // Formatação de data em português
   const todayFormatted = useMemo(() => {
@@ -230,22 +243,56 @@ export default function Dashboard() {
     now,
   ]);
 
-  const handleCopyLink = () => {
-    const slug = (salonName || "meusalao")
+  // URL real e dinâmica do agendamento online baseada no @username exclusivo do salão
+  const activeUsername = useMemo(() => {
+    if (profile?.username?.trim()) {
+      return profile.username.trim().toLowerCase();
+    }
+    // Fallback: se ainda não houver username configurado, gera slug limpo do salão
+    return (profile?.salon_name || salonName || "salao")
       .toLowerCase()
-      .replace(/\s+/g, "-")
-      .replace(/[^\w-]/g, "");
-    const link = `https://bellamais.com/agendar/${slug}`;
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9_-]/g, "");
+  }, [profile, salonName]);
+
+  const getFullBookingUrl = () => {
+    const origin =
+      typeof window !== "undefined" && window.location.origin
+        ? window.location.origin
+        : "https://bellamais.com";
+    return `${origin}/agendamento/${activeUsername}`;
+  };
+
+  const handleCopyLink = () => {
+    soundEffects.playClick();
+    const link = getFullBookingUrl();
     navigator.clipboard.writeText(link);
     setCopiedLink(true);
+    soundEffects.playSuccess();
     setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  const handleCopyBroadcast = () => {
+    soundEffects.playClick();
+    const link = getFullBookingUrl();
+    const slots = metrics.availableSlotsToday;
+    const slotsText =
+      slots > 0
+        ? `temos ${slots} horários livres hoje`
+        : "temos alguns horários livres hoje";
+    const text = `Oi meninas! Passando para avisar que ${slotsText} no ${salonName || "salão"}! ✨💅\n\nResponda esta mensagem para garantir seu horário ou reserve direto pelo link:\n${link}`;
+    navigator.clipboard.writeText(text);
+    setCopiedBroadcast(true);
+    soundEffects.playSuccess();
+    setTimeout(() => setCopiedBroadcast(false), 3000);
   };
 
   if (isLoading) {
     return (
       <div className="flex bg-[var(--background)] h-full items-center justify-center text-[var(--primary)] min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-11 w-11 border-3 border-[var(--primary)] border-t-transparent"></div>
+          <div className="animate-spin rounded-full h-10 w-10 border-2 border-[var(--primary)] border-t-transparent"></div>
           <span className="text-xs font-semibold text-[var(--muted)]">
             Carregando painel do salão...
           </span>
@@ -269,221 +316,327 @@ export default function Dashboard() {
       : 0;
 
   return (
-    <div className="flex flex-col min-h-full bg-[var(--background)] font-sans text-[var(--foreground)]">
+    <div className="flex flex-col min-h-full bg-transparent font-sans text-[var(--foreground)] relative overflow-hidden">
+      {/* Auras Sutis de Fundo: Profundidade e Vida no Modo Claro e Escuro */}
+      <div className="absolute -top-32 -left-32 w-96 h-96 bg-gradient-to-br from-rose-400/12 via-pink-400/8 to-transparent rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 -right-32 w-96 h-96 bg-gradient-to-bl from-emerald-400/12 via-teal-400/8 to-transparent rounded-full blur-3xl pointer-events-none" />
+
       <Header title="Painel Principal" />
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-[1480px] w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-[1480px] w-full mx-auto relative z-10">
         {/* =========================================================================
-            1. TOPO: SAUDAÇÃO ACOLHEDORA COM GRADIENTE VIVO & LUXO VISUAL
+            BARRA DE CONTROLE EXECUTIVA: OBJETIVA, DIRETA E SEM POLUIÇÃO
             ========================================================================= */}
-        <div className="bg-gradient-to-r from-rose-50/90 via-pink-50/50 to-amber-50/40 dark:from-rose-950/30 dark:via-[#1c151b] dark:to-amber-950/20 border border-rose-200/70 dark:border-rose-900/40 rounded-3xl p-5 md:p-7 shadow-[0_4px_20px_rgba(158,49,96,0.04)] relative overflow-hidden">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 relative z-10">
-            <div className="flex items-start gap-4">
-              {/* Badge Elegante de Identidade */}
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[var(--primary)] to-pink-500 text-white flex items-center justify-center shadow-md shadow-rose-500/25 shrink-0 mt-0.5">
-                <Scissors size={22} />
-              </div>
-
-              <div>
-                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-100/90 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-xs font-bold border border-emerald-300/70 dark:border-emerald-800/60 shadow-2xs">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Salão Aberto Hoje
-                  </span>
-                  <span className="text-xs text-rose-900/70 dark:text-rose-300/70 font-medium capitalize hidden sm:inline">
-                    {todayFormatted}
-                  </span>
-                </div>
-                <h2 className="text-2xl md:text-3xl font-bold font-sans tracking-tight text-[var(--foreground)]">
-                  Olá, {salonName}
-                </h2>
-                <p className="text-xs md:text-sm text-[var(--muted)] mt-1 flex items-center gap-2 flex-wrap">
-                  <span>
-                    Hoje você tem{" "}
-                    <strong className="text-[var(--foreground)] font-bold">
-                      {metrics.todayApts.length} atendimentos
-                    </strong>
-                  </span>
-                  <span className="text-[var(--card-border)]">•</span>
-                  <span>
-                    <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
-                      {metrics.availableSlotsToday} horários livres
-                    </strong>{" "}
-                    na grade
-                  </span>
-                </p>
-              </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-1">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-zinc-900 dark:text-white">
+                Visão Geral
+              </h1>
+              {salonName && (
+                <span className="text-xs font-bold px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs dark:bg-rose-500/15 dark:text-rose-300 dark:border-rose-500/25">
+                  {salonName}
+                </span>
+              )}
             </div>
+            <p className="text-xs text-zinc-500 dark:text-[var(--muted)] capitalize mt-1 font-medium">
+              {todayFormatted} • Salão aberto
+            </p>
+          </div>
 
-            {/* Ações Rápidas Vibrantes */}
-            <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 w-full md:w-auto self-start md:self-center shrink-0">
-              <Link
-                href="/whatsapp"
-                className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300/70 dark:border-emerald-800/60 text-xs font-bold transition-all shadow-2xs active:scale-[0.98]"
-              >
-                <MessageCircle size={16} className="text-emerald-600 dark:text-emerald-400" />
-                <span>WhatsApp Salão</span>
-              </Link>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Botão de Áudio Tátil Feminino */}
+            <button
+              onClick={() => {
+                const active = soundEffects.toggleMute();
+                setSoundActive(active);
+              }}
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-zinc-700 hover:text-zinc-900 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 dark:bg-[var(--card-bg)] dark:border-[var(--card-border)] dark:text-[var(--muted)] dark:hover:text-[var(--foreground)]"
+              title={soundActive ? "Efeitos sonoros táteis ativados ✨" : "Efeitos sonoros desativados"}
+            >
+              {soundActive ? (
+                <>
+                  <Volume2 size={14} className="text-rose-500 dark:text-rose-400 animate-pulse" />
+                  <span className="hidden sm:inline">Sons Ativos</span>
+                </>
+              ) : (
+                <>
+                  <VolumeX size={14} className="text-stone-400" />
+                  <span className="hidden sm:inline">Sem Som</span>
+                </>
+              )}
+            </button>
 
-              <Link
-                href="/agenda"
-                className="flex-1 sm:flex-initial justify-center inline-flex items-center gap-2 bg-gradient-to-r from-[var(--primary)] via-rose-600 to-pink-600 hover:opacity-95 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md shadow-rose-500/25 transition-all active:scale-[0.98]"
-              >
-                <Plus size={17} />
-                <span>Novo Agendamento</span>
-              </Link>
-            </div>
+            <button
+              onClick={handleCopyLink}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-zinc-800 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 dark:bg-[var(--card-bg)] dark:border-[var(--card-border)] dark:text-[var(--foreground)]"
+              title="Copiar link para a bio do Instagram"
+            >
+              {copiedLink ? (
+                <>
+                  <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold">Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <Link2 size={14} className="text-rose-500 dark:text-[var(--muted)]" />
+                  <span>Link da Bio</span>
+                </>
+              )}
+            </button>
+
+            <button
+              onClick={handleCopyBroadcast}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-zinc-800 text-xs font-semibold transition-all cursor-pointer shadow-xs active:scale-95 dark:bg-[var(--card-bg)] dark:border-[var(--card-border)] dark:text-[var(--foreground)]"
+              title="Copia uma mensagem pronta com seus horários livres de hoje para postar no WhatsApp ou Instagram Stories"
+            >
+              {copiedBroadcast ? (
+                <>
+                  <Check size={14} className="text-emerald-600 dark:text-emerald-400" />
+                  <span className="text-emerald-700 dark:text-emerald-400 font-bold">Copiado!</span>
+                </>
+              ) : (
+                <>
+                  <MessageCircle size={14} className="text-emerald-600 dark:text-[var(--muted)]" />
+                  <span>Divulgar Horários</span>
+                </>
+              )}
+            </button>
+
+            <Link
+              href="/agenda"
+              onClick={() => soundEffects.playSparkle()}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-rose-500 via-pink-600 to-rose-600 hover:from-rose-600 hover:to-pink-700 text-white text-xs font-bold transition-all shadow-[0_4px_16px_rgba(244,63,94,0.35)] active:scale-95 cursor-pointer"
+            >
+              <Plus size={15} />
+              <span>Novo Agendamento</span>
+            </Link>
           </div>
         </div>
 
         {/* =========================================================================
-            2. OS 4 INDICADORES COM VIDA, CORES HARMONIOSAS & DADOS REAIS
+            2. OS 4 INDICADORES CHAVE COM DESIGN VIBRANTE, LUMINOSO E VIVO (LIGHT & DARK)
             ========================================================================= */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: Faturamento no Mês (Esmeralda / Menta Fresca) */}
-          <div className="bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/30 dark:from-emerald-950/30 dark:via-[#1c151b] dark:to-transparent border border-emerald-200/80 dark:border-emerald-800/50 rounded-2xl p-5 shadow-xs hover:shadow-sm hover:border-emerald-300 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">
-                Faturamento no Mês
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-xs shadow-emerald-500/25">
-                <DollarSign size={16} />
+          {/* Card 1: Faturamento no Mês (Esmeralda & Menta Viva) */}
+          <div className="relative overflow-hidden rounded-2xl p-5 border border-emerald-300/80 bg-gradient-to-br from-emerald-50 via-white to-emerald-50/70 shadow-[0_8px_24px_-4px_rgba(16,185,129,0.18),0_2px_6px_-2px_rgba(16,185,129,0.1)] hover:-translate-y-1 hover:border-emerald-400 hover:shadow-[0_14px_30px_-4px_rgba(16,185,129,0.26)] transition-all flex flex-col justify-between group dark:border-emerald-500/30 dark:bg-gradient-to-br dark:from-emerald-950/35 dark:via-[#1e131e] dark:to-[#170e17] dark:shadow-[inset_0_1px_0_0_rgba(16,185,129,0.25),0_10px_28px_-4px_rgba(0,0,0,0.65)] dark:hover:border-emerald-400/50 dark:hover:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.8),0_0_24px_rgba(16,185,129,0.2)]">
+            {/* Ambient emerald light bloom permanente */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-emerald-400/20 blur-2xl pointer-events-none group-hover:bg-emerald-400/30 dark:bg-emerald-500/15 dark:group-hover:bg-emerald-500/25 transition-all" />
+
+            <div>
+              <div className="flex items-center justify-between mb-2.5 relative z-10">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">
+                    Faturamento no Mês
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white shadow-[0_4px_12px_rgba(16,185,129,0.35)] flex items-center justify-center dark:bg-emerald-500/15 dark:text-emerald-300 dark:border dark:border-emerald-500/35 dark:shadow-[0_0_14px_rgba(16,185,129,0.2)]">
+                  <DollarSign size={18} />
+                </div>
+              </div>
+              <div className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white tabular-nums relative z-10">
+                {formatCurrency(financialHealth.monthlyRevenue)}
               </div>
             </div>
-            <div className="text-2xl font-bold font-sans tracking-tight text-emerald-950 dark:text-emerald-100 tabular-nums">
-              {formatCurrency(financialHealth.monthlyRevenue)}
-            </div>
-            <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t border-emerald-100 dark:border-emerald-900/30">
-              <span className="text-emerald-700/80 dark:text-emerald-400/80 font-medium">
-                Meta: {formatCurrency(settings.monthlyGoal)}
-              </span>
-              {metrics.hasComparison ? (
-                <span className="font-bold text-emerald-800 dark:text-emerald-200 bg-emerald-100/90 dark:bg-emerald-900/70 px-2 py-0.5 rounded-full">
-                  ↗ {metrics.growthText}
+
+            <div className="mt-4 pt-3 border-t border-emerald-200/80 dark:border-white/[0.08] space-y-2 relative z-10">
+              <div className="flex items-center justify-between text-[11px] text-zinc-600 dark:text-[var(--muted)]">
+                <span className="font-semibold">Meta: {formatCurrency(settings.monthlyGoal)}</span>
+                <span className="font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-500/20 px-2 py-0.5 rounded-full border border-emerald-300/80 dark:border-emerald-500/30">
+                  {metrics.hasComparison ? metrics.growthText : `${goalPercent}%`}
                 </span>
-              ) : (
-                <span className="font-bold text-emerald-700 dark:text-emerald-300">
-                  {goalPercent}% atingido
-                </span>
-              )}
+              </div>
+              <div className="h-2 w-full bg-emerald-100/80 dark:bg-black/45 border border-emerald-200/60 dark:border-white/[0.06] rounded-full overflow-hidden p-[1px]">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.6)]"
+                  style={{ width: `${goalPercent}%` }}
+                />
+              </div>
             </div>
           </div>
 
-          {/* Card 2: Atendimentos Hoje (Framboesa / Rose Glow) */}
-          <div className="bg-gradient-to-br from-rose-50/70 via-white to-pink-50/30 dark:from-rose-950/30 dark:via-[#1c151b] dark:to-transparent border border-rose-200/80 dark:border-rose-800/50 rounded-2xl p-5 shadow-xs hover:shadow-sm hover:border-rose-300 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-rose-900 dark:text-rose-300">
-                Atendimentos Hoje
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white flex items-center justify-center shadow-xs shadow-rose-500/25">
-                <Calendar size={16} />
+          {/* Card 2: Atendimentos Hoje (Rosé Radiante & Framboesa) */}
+          <div className="relative overflow-hidden rounded-2xl p-5 border border-rose-300/80 bg-gradient-to-br from-rose-50 via-white to-pink-50/70 shadow-[0_8px_24px_-4px_rgba(244,63,94,0.18),0_2px_6px_-2px_rgba(244,63,94,0.1)] hover:-translate-y-1 hover:border-rose-400 hover:shadow-[0_14px_30px_-4px_rgba(244,63,94,0.26)] transition-all flex flex-col justify-between group dark:border-rose-500/30 dark:bg-gradient-to-br dark:from-rose-950/35 dark:via-[#221320] dark:to-[#170e17] dark:shadow-[inset_0_1px_0_0_rgba(244,63,94,0.25),0_10px_28px_-4px_rgba(0,0,0,0.65)] dark:hover:border-rose-400/50 dark:hover:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.8),0_0_24px_rgba(244,63,94,0.2)]">
+            {/* Ambient rose light bloom permanente */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-rose-400/20 blur-2xl pointer-events-none group-hover:bg-rose-400/30 dark:bg-rose-500/15 dark:group-hover:bg-rose-500/25 transition-all" />
+
+            <div>
+              <div className="flex items-center justify-between mb-2.5 relative z-10">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shadow-[0_0_8px_rgba(244,63,94,0.8)]" />
+                  <span className="text-xs font-bold text-rose-900 dark:text-rose-300">
+                    Atendimentos Hoje
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-[0_4px_12px_rgba(244,63,94,0.35)] flex items-center justify-center dark:bg-rose-500/15 dark:text-rose-300 dark:border dark:border-rose-500/35 dark:shadow-[0_0_14px_rgba(244,63,94,0.2)]">
+                  <Calendar size={18} />
+                </div>
+              </div>
+
+              <div className="flex items-baseline gap-2 relative z-10">
+                <span className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white tabular-nums">
+                  {metrics.todayApts.length}
+                </span>
+                <span className="text-xs font-bold text-rose-800 dark:text-rose-300 bg-rose-100 dark:bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-300/80 dark:border-rose-500/25">
+                  clientes na grade
+                </span>
               </div>
             </div>
-            <div className="text-2xl font-bold font-sans tracking-tight text-rose-950 dark:text-rose-100 tabular-nums">
-              {metrics.todayApts.length} clientes
-            </div>
-            <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t border-rose-100 dark:border-rose-900/30">
-              <span className="text-rose-700/80 dark:text-rose-400/80 font-medium">
+
+            <div className="mt-4 pt-3 border-t border-rose-200/80 dark:border-white/[0.08] flex items-center justify-between text-[11px] relative z-10">
+              <span className="inline-flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-300/80 dark:border-emerald-500/25">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.8)]" />
                 {metrics.confirmedTodayCount} confirmados
               </span>
-              <span className="font-bold text-rose-800 dark:text-rose-200 bg-rose-100/90 dark:bg-rose-900/70 px-2 py-0.5 rounded-full">
+              <span className="inline-flex items-center gap-1.5 font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-300/80 dark:border-amber-500/25">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_6px_rgba(245,158,11,0.8)]" />
                 {metrics.pendingTodayCount} aguardando
               </span>
             </div>
           </div>
 
-          {/* Card 3: Ticket Médio (Champagne Gold / Âmbar Quente) */}
-          <div className="bg-gradient-to-br from-amber-50/70 via-white to-yellow-50/30 dark:from-amber-950/30 dark:via-[#1c151b] dark:to-transparent border border-amber-200/80 dark:border-amber-800/50 rounded-2xl p-5 shadow-xs hover:shadow-sm hover:border-amber-300 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-amber-900 dark:text-amber-300">
-                Ticket Médio
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-600 text-white flex items-center justify-center shadow-xs shadow-amber-500/25">
-                <Activity size={16} />
+          {/* Card 3: Ticket Médio (Champagne Gold / Prestígio) */}
+          <div className="relative overflow-hidden rounded-2xl p-5 border border-amber-300/80 bg-gradient-to-br from-amber-50 via-white to-yellow-50/70 shadow-[0_8px_24px_-4px_rgba(245,158,11,0.18),0_2px_6px_-2px_rgba(245,158,11,0.1)] hover:-translate-y-1 hover:border-amber-400 hover:shadow-[0_14px_30px_-4px_rgba(245,158,11,0.26)] transition-all flex flex-col justify-between group dark:border-amber-500/30 dark:bg-gradient-to-br dark:from-amber-950/35 dark:via-[#211718] dark:to-[#170e17] dark:shadow-[inset_0_1px_0_0_rgba(251,191,36,0.25),0_10px_28px_-4px_rgba(0,0,0,0.65)] dark:hover:border-amber-400/50 dark:hover:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.8),0_0_24px_rgba(251,191,36,0.2)]">
+            {/* Ambient gold light bloom permanente */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-amber-400/20 blur-2xl pointer-events-none group-hover:bg-amber-400/30 dark:bg-amber-500/15 dark:group-hover:bg-amber-500/25 transition-all" />
+
+            <div>
+              <div className="flex items-center justify-between mb-2.5 relative z-10">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles size={13} className="text-amber-500 dark:text-amber-400 animate-pulse" />
+                  <span className="text-xs font-bold text-amber-900 dark:text-amber-300">
+                    Ticket Médio
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 text-white shadow-[0_4px_12px_rgba(245,158,11,0.35)] flex items-center justify-center dark:bg-amber-500/15 dark:text-amber-300 dark:border dark:border-amber-500/35 dark:shadow-[0_0_14px_rgba(251,191,36,0.2)]">
+                  <Crown size={18} />
+                </div>
+              </div>
+
+              <div className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white tabular-nums relative z-10">
+                {formatCurrency(financialHealth.averageTicket)}
               </div>
             </div>
-            <div className="text-2xl font-bold font-sans tracking-tight text-amber-950 dark:text-amber-100 tabular-nums">
-              {formatCurrency(financialHealth.averageTicket)}
-            </div>
-            <div className="flex items-center justify-between text-[11px] mt-2 pt-2 border-t border-amber-100 dark:border-amber-900/30">
-              <span className="text-amber-700/80 dark:text-amber-400/80 font-medium">
-                {metrics.completedMonthCount} finalizados no mês
-              </span>
-              <span className="font-bold text-amber-800 dark:text-amber-200 bg-amber-100/90 dark:bg-amber-900/70 px-2 py-0.5 rounded-full">
-                Média
+
+            <div className="mt-4 pt-3 border-t border-amber-200/80 dark:border-white/[0.08] flex items-center justify-between text-[11px] text-zinc-600 dark:text-[var(--muted)] relative z-10">
+              <span className="font-semibold">{metrics.completedMonthCount} concluídos</span>
+              <span className="font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-300/80 dark:border-amber-500/25">
+                Média Mês
               </span>
             </div>
           </div>
 
-          {/* Card 4: Ocupação da Grade (Lavanda / Violeta / Safira) */}
-          <div className="bg-gradient-to-br from-purple-50/70 via-white to-indigo-50/30 dark:from-purple-950/30 dark:via-[#1c151b] dark:to-transparent border border-purple-200/80 dark:border-purple-800/50 rounded-2xl p-5 shadow-xs hover:shadow-sm hover:border-purple-300 transition-all">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-bold text-purple-900 dark:text-purple-300">
-                Ocupação da Grade
-              </span>
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white flex items-center justify-center shadow-xs shadow-purple-500/25">
-                <Clock size={16} />
+          {/* Card 4: Ocupação da Grade (Lilás Orquídea com Mini-Medidor Circular SVG) */}
+          <div className="relative overflow-hidden rounded-2xl p-5 border border-purple-300/80 bg-gradient-to-br from-purple-50 via-white to-violet-50/70 shadow-[0_8px_24px_-4px_rgba(168,85,247,0.18),0_2px_6px_-2px_rgba(168,85,247,0.1)] hover:-translate-y-1 hover:border-purple-400 hover:shadow-[0_14px_30px_-4px_rgba(168,85,247,0.26)] transition-all flex flex-col justify-between group dark:border-purple-500/30 dark:bg-gradient-to-br dark:from-purple-950/35 dark:via-[#1f1325] dark:to-[#160e18] dark:shadow-[inset_0_1px_0_0_rgba(192,132,252,0.25),0_10px_28px_-4px_rgba(0,0,0,0.65)] dark:hover:border-purple-400/50 dark:hover:shadow-[0_16px_36px_-6px_rgba(0,0,0,0.8),0_0_24px_rgba(192,132,252,0.2)]">
+            {/* Ambient purple light bloom permanente */}
+            <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-purple-400/20 blur-2xl pointer-events-none group-hover:bg-purple-400/30 dark:bg-purple-500/15 dark:group-hover:bg-purple-500/25 transition-all" />
+
+            <div>
+              <div className="flex items-center justify-between mb-2 relative z-10">
+                <div className="flex items-center gap-1.5">
+                  <Clock size={13} className="text-purple-600 dark:text-purple-400" />
+                  <span className="text-xs font-bold text-purple-900 dark:text-purple-300">
+                    Ocupação da Grade
+                  </span>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-[0_4px_12px_rgba(168,85,247,0.35)] flex items-center justify-center dark:bg-purple-500/15 dark:text-purple-300 dark:border dark:border-purple-500/35 dark:shadow-[0_0_14px_rgba(192,132,252,0.2)]">
+                  <Activity size={18} />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 relative z-10">
+                <div>
+                  <div className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white tabular-nums">
+                    {metrics.occupancyRate}%
+                  </div>
+                  <span className="text-[10px] text-zinc-500 dark:text-[var(--muted)] font-semibold">da capacidade</span>
+                </div>
+
+                {/* Mini Medidor Circular Chic */}
+                <div className="relative w-11 h-11 flex items-center justify-center shrink-0">
+                  <svg className="w-11 h-11 -rotate-90 transform" viewBox="0 0 36 36">
+                    <path
+                      className="text-purple-100 dark:text-white/10"
+                      strokeWidth="3.2"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                    <path
+                      className="text-purple-600 dark:text-purple-400 transition-all duration-700 ease-out"
+                      strokeDasharray={`${metrics.occupancyRate}, 100`}
+                      strokeWidth="3.2"
+                      strokeLinecap="round"
+                      stroke="currentColor"
+                      fill="none"
+                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                    />
+                  </svg>
+                  <span className="absolute text-[10px] font-black text-purple-700 dark:text-purple-300 tabular-nums">
+                    {metrics.occupancyRate}%
+                  </span>
+                </div>
               </div>
             </div>
-            <div className="text-2xl font-bold font-sans tracking-tight text-purple-950 dark:text-purple-100 tabular-nums">
-              {metrics.occupancyRate}%
-            </div>
-            <div className="mt-2.5">
-              <div className="h-1.5 w-full bg-purple-100 dark:bg-purple-950 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-700"
-                  style={{ width: `${metrics.occupancyRate}%` }}
-                />
-              </div>
-              <span className="text-[10px] text-purple-700 dark:text-purple-300 font-semibold mt-1 block text-right">
-                {metrics.availableSlotsToday} horários livres
+
+            <div className="mt-4 pt-3 border-t border-purple-200/80 dark:border-white/[0.08] flex items-center justify-between text-[11px] relative z-10">
+              <span className="text-zinc-600 dark:text-[var(--muted)] font-medium">Vagas para encaixe</span>
+              <span className="font-bold text-purple-800 dark:text-purple-300 bg-purple-100 dark:bg-purple-500/10 px-2 py-0.5 rounded-full border border-purple-300/80 dark:border-purple-500/25">
+                {metrics.availableSlotsToday} livres
               </span>
             </div>
           </div>
         </div>
 
         {/* =========================================================================
-            3. ESTRUTURA PRINCIPAL: COLUNA CENTRAL (8 COLS) + COLUNA OPERACIONAL (4 COLS)
+            3. ESTRUTURA PRINCIPAL EM 2 COLUNAS (DESEMPENHO + OPERAÇÃO DIÁRIA)
             ========================================================================= */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* =======================================================================
-              COLUNA CENTRAL (PRINCIPAL): GRÁFICO + RANKINGS + SAÚDE FINANCEIRA REAL
+              COLUNA ESQUERDA (8 COLS): GRÁFICO + SERVIÇOS + RESERVAS FINANCEIRAS
               ======================================================================= */}
           <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-            {/* Gráfico Comparativo de Faturamento Real */}
-            <div className="bg-[var(--card-bg)] rounded-3xl p-5 md:p-6 border border-[var(--card-border)] shadow-xs flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-5 flex-wrap gap-3">
+            {/* Gráfico Comparativo de Faturamento */}
+            <div className="bg-white border border-stone-200/90 rounded-2xl p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] flex flex-col justify-between dark:bg-gradient-to-b dark:from-[#241524] dark:to-[#170e17] dark:border-white/10 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_10px_28px_-4px_rgba(0,0,0,0.65)]">
+              <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-rose-500 to-purple-600 text-white flex items-center justify-center shadow-xs shadow-rose-500/20">
-                    <TrendingUp size={18} />
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-[0_2px_8px_rgba(244,63,94,0.3)] flex items-center justify-center dark:bg-rose-500/10 dark:text-rose-400 dark:border dark:border-rose-500/20 dark:border-rose-500/35 dark:shadow-[0_0_12px_rgba(244,63,94,0.16)]">
+                    <TrendingUp size={16} />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold font-sans tracking-tight text-[var(--foreground)]">
-                      Comparativo de Faturamento
+                    <h3 className="text-base font-bold tracking-tight text-zinc-900 dark:text-white">
+                      Evolução de Faturamento
                     </h3>
-                    <p className="text-xs text-[var(--muted)]">
-                      Lançamentos reais de atendimentos concluídos e pagos
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                      Lançamentos de atendimentos concluídos e pagos
                     </p>
                   </div>
                 </div>
 
-                <div className="flex bg-[var(--background)] p-1 rounded-xl border border-[var(--card-border)]">
+                <div className="flex bg-stone-100 dark:bg-black/40 p-1 rounded-xl border border-stone-200/80 dark:border-white/10">
                   <button
-                    onClick={() => setChartPeriod("7d")}
+                    onClick={() => {
+                      soundEffects.playPop();
+                      setChartPeriod("7d");
+                    }}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       chartPeriod === "7d"
-                        ? "bg-[var(--primary)] text-white shadow-xs"
-                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                        ? "bg-white text-rose-600 shadow-sm dark:bg-rose-600 dark:text-white dark:shadow-rose-950/40"
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                     }`}
                   >
                     7 Dias
                   </button>
                   <button
-                    onClick={() => setChartPeriod("6m")}
+                    onClick={() => {
+                      soundEffects.playPop();
+                      setChartPeriod("6m");
+                    }}
                     className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                       chartPeriod === "6m"
-                        ? "bg-[var(--primary)] text-white shadow-xs"
-                        : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                        ? "bg-white text-rose-600 shadow-sm dark:bg-rose-600 dark:text-white dark:shadow-rose-950/40"
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                     }`}
                   >
                     6 Meses
@@ -491,30 +644,30 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Bar Chart Visual Vibrante */}
-              <div className="h-56 flex items-end justify-between gap-2.5 pt-6 pb-2 px-2 border-b border-[var(--card-border)]">
+              {/* Bar Chart Sóbrio e Fluido com Gradiente Radiante */}
+              <div className="h-56 flex items-end justify-between gap-3 pt-6 pb-2 px-2 border-b border-stone-200/80 dark:border-white/[0.08]">
                 {chartData.map((bar, idx) => {
                   const heightPercent =
                     bar.value > 0
                       ? Math.max(12, Math.round((bar.value / maxChartVal) * 100))
-                      : 5;
+                      : 4;
                   return (
                     <div
                       key={idx}
                       className="flex-1 flex flex-col items-center gap-2 h-full justify-end group cursor-pointer"
                     >
-                      <span className="text-[10px] font-bold text-[var(--primary)] opacity-0 group-hover:opacity-100 transition-opacity tabular-nums">
+                      <span className="text-[10px] font-bold text-rose-600 dark:text-rose-300 opacity-0 group-hover:opacity-100 transition-opacity tabular-nums whitespace-nowrap bg-white dark:bg-[#12141c] px-2 py-0.5 rounded-md shadow-md border border-rose-200 dark:border-white/10">
                         {formatCurrency(bar.value)}
                       </span>
                       <div
-                        className={`w-full max-w-[36px] rounded-t-xl transition-all duration-300 ${
+                        className={`w-full max-w-[36px] rounded-t-lg transition-all duration-300 ${
                           bar.value > 0
-                            ? "bg-gradient-to-t from-[var(--primary)] via-rose-500 to-pink-400 group-hover:from-rose-600 group-hover:to-amber-300 shadow-xs"
-                            : "bg-slate-200 dark:bg-zinc-800"
+                            ? "bg-gradient-to-t from-rose-500 via-pink-500 to-rose-400 shadow-[0_4px_12px_rgba(244,63,94,0.3)] hover:brightness-110 dark:bg-gradient-to-t dark:from-rose-600 dark:to-pink-500 dark:shadow-[0_0_12px_rgba(244,63,94,0.4)]"
+                            : "bg-rose-50/80 border border-rose-100 dark:bg-black/40 dark:border-transparent"
                         }`}
                         style={{ height: `${heightPercent}%` }}
                       />
-                      <span className="text-[10px] text-[var(--muted)] font-bold capitalize truncate max-w-full">
+                      <span className="text-[11px] text-zinc-600 dark:text-zinc-400 font-semibold capitalize truncate max-w-full">
                         {bar.label}
                       </span>
                     </div>
@@ -522,213 +675,202 @@ export default function Dashboard() {
                 })}
               </div>
 
-              {/* Resumo da Tendência do Período em Cards Coloridos Suaves */}
-              <div className="mt-4 pt-3 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <div className="p-3 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/30">
-                  <span className="text-[10px] uppercase tracking-wider text-indigo-800 dark:text-indigo-300 font-bold block">
+              {/* Resumo Consolidado do Período */}
+              <div className="mt-4 pt-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="p-3 rounded-xl bg-stone-50 border border-stone-200/80 dark:bg-black/35 dark:border-white/[0.08] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-bold block">
                     Mês Anterior
                   </span>
-                  <span className="text-sm font-bold font-sans text-[var(--foreground)] tabular-nums mt-0.5 block">
+                  <span className="text-sm font-bold text-zinc-900 dark:text-white tabular-nums mt-0.5 block">
                     {formatCurrency(financialHealth.previousMonthRevenue)}
                   </span>
                 </div>
-                <div className="p-3 rounded-2xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30">
-                  <span className="text-[10px] uppercase tracking-wider text-rose-800 dark:text-rose-300 font-bold block">
+                <div className="p-3 rounded-xl bg-stone-50 border border-stone-200/80 dark:bg-black/35 dark:border-white/[0.08] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)]">
+                  <span className="text-[10px] uppercase tracking-wider text-zinc-500 dark:text-zinc-400 font-bold block">
                     Mês Atual
                   </span>
-                  <span className="text-sm font-bold font-sans text-rose-900 dark:text-rose-200 tabular-nums mt-0.5 block">
+                  <span className="text-sm font-bold text-zinc-900 dark:text-white tabular-nums mt-0.5 block">
                     {formatCurrency(financialHealth.monthlyRevenue)}
                   </span>
                 </div>
-                <div className="p-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 col-span-2 sm:col-span-1">
-                  <span className="text-[10px] uppercase tracking-wider text-emerald-800 dark:text-emerald-300 font-bold block">
+                <div className="p-3 rounded-xl bg-emerald-50/80 border border-emerald-200/80 dark:bg-black/35 dark:border-white/[0.08] dark:shadow-[inset_0_1px_2px_rgba(0,0,0,0.5)] col-span-2 sm:col-span-1">
+                  <span className="text-[10px] uppercase tracking-wider text-emerald-800 dark:text-zinc-400 font-bold block">
                     Variação Real
                   </span>
-                  <span className="text-sm font-bold font-sans text-emerald-700 dark:text-emerald-400 tabular-nums mt-0.5 block">
+                  <span className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400 tabular-nums mt-0.5 block">
                     {metrics.growthText}
                   </span>
                 </div>
               </div>
             </div>
 
-            {/* Ranking de Serviços Mais Vendidos com Cores Vivas e Medalhas */}
-            <div className="bg-[var(--card-bg)] rounded-3xl p-5 md:p-6 border border-[var(--card-border)] shadow-xs">
-              <div className="flex items-center justify-between mb-4">
+            {/* Ranking de Serviços Mais Vendidos */}
+            <div className="bg-white border border-stone-200/90 rounded-2xl p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] dark:bg-gradient-to-b dark:from-[#241524] dark:to-[#170e17] dark:border-white/10 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_10px_28px_-4px_rgba(0,0,0,0.65)]">
+              <div className="flex items-center justify-between mb-5">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 flex items-center justify-center">
-                    <Crown size={17} />
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-white shadow-[0_2px_8px_rgba(245,158,11,0.3)] flex items-center justify-center dark:bg-amber-500/10 dark:text-amber-400 dark:border dark:border-amber-500/20 dark:border-amber-500/35 dark:shadow-[0_0_12px_rgba(251,191,36,0.16)]">
+                    <Crown size={16} />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold font-sans tracking-tight text-[var(--foreground)]">
-                      Serviços Mais Vendidos no Salão
+                    <h3 className="text-base font-bold tracking-tight text-zinc-900 dark:text-white">
+                      Serviços Mais Procurados
                     </h3>
-                    <p className="text-xs text-[var(--muted)]">
-                      Participação por faturamento e quantidade real no mês
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                      Classificação por receita e frequência no mês
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/servicos"
-                  className="text-xs font-bold text-[var(--primary)] hover:underline flex items-center gap-1"
+                  className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline flex items-center gap-1"
                 >
                   Ver Catálogo <ArrowRight size={13} />
                 </Link>
               </div>
 
               {metrics.topServices.length === 0 ? (
-                <div className="py-8 px-4 text-center rounded-2xl bg-rose-50/30 dark:bg-rose-950/10 border border-dashed border-rose-200/60">
-                  <p className="text-xs font-bold text-[var(--foreground)]">
+                <div className="py-8 px-4 text-center rounded-xl bg-stone-50/60 dark:bg-black/30 border border-dashed border-stone-200 dark:border-white/10">
+                  <Scissors size={24} className="mx-auto text-zinc-400 mb-2 opacity-60" />
+                  <p className="text-xs font-semibold text-zinc-900 dark:text-white">
                     Nenhum serviço realizado este mês ainda
                   </p>
-                  <p className="text-[11px] text-[var(--muted)] mt-1 max-w-sm mx-auto">
-                    Conforme os atendimentos forem concluídos na agenda, o ranking dos serviços mais procurados aparecerá aqui com barras de progresso.
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 max-w-sm mx-auto">
+                    Conforme os atendimentos forem concluídos na agenda, o ranking dos serviços mais procurados aparecerá aqui.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3.5">
-                  {metrics.topServices.map((srv, idx) => {
-                    const medalGradients = [
-                      "from-amber-400 to-yellow-500 text-white shadow-xs shadow-amber-500/25",
-                      "from-rose-400 to-pink-500 text-white shadow-xs",
-                      "from-amber-600 to-amber-800 text-white shadow-xs",
-                      "from-purple-400 to-indigo-500 text-white",
-                      "from-emerald-400 to-teal-500 text-white",
-                    ];
-                    const progressGradients = [
-                      "from-amber-400 via-rose-500 to-pink-500",
-                      "from-rose-500 to-purple-500",
-                      "from-purple-500 to-indigo-500",
-                      "from-emerald-500 to-teal-400",
-                      "from-sky-500 to-blue-500",
-                    ];
-
-                    return (
-                      <div key={idx} className="space-y-1.5">
-                        <div className="flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <span
-                              className={`w-5 h-5 rounded-full bg-gradient-to-br ${
-                                medalGradients[idx] || medalGradients[0]
-                              } text-[10px] font-bold flex items-center justify-center shrink-0`}
-                            >
-                              {idx + 1}
-                            </span>
-                            <span className="font-bold text-[var(--foreground)] truncate">
-                              {srv.name}
-                            </span>
-                            <span className="text-[11px] text-[var(--muted)] shrink-0 hidden sm:inline">
-                              • {srv.count} atendimentos
-                            </span>
-                          </div>
-                          <span className="font-bold text-emerald-700 dark:text-emerald-300 tabular-nums shrink-0 ml-2">
-                            {formatCurrency(srv.revenue)}
+                  {metrics.topServices.map((srv, idx) => (
+                    <div key={idx} className="space-y-1.5">
+                      <div className="flex items-center justify-between text-xs sm:text-[13px]">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="w-5 h-5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-white/[0.08] dark:text-zinc-300 dark:border-transparent text-[11px] font-bold flex items-center justify-center shrink-0">
+                            {idx + 1}
+                          </span>
+                          <span className="font-bold text-zinc-900 dark:text-white truncate">
+                            {srv.name}
+                          </span>
+                          <span className="text-[11px] text-zinc-500 dark:text-zinc-400 shrink-0 hidden sm:inline font-medium">
+                            • {srv.count} {srv.count === 1 ? "atendimento" : "atendimentos"}
                           </span>
                         </div>
-                        <div className="h-2 w-full bg-slate-100 dark:bg-zinc-800 rounded-full overflow-hidden">
-                          <div
-                            className={`h-full bg-gradient-to-r ${
-                              progressGradients[idx] || progressGradients[0]
-                            } rounded-full transition-all duration-500`}
-                            style={{ width: `${srv.percent}%` }}
-                          />
-                        </div>
+                        <span className="font-bold text-emerald-700 dark:text-emerald-400 tabular-nums shrink-0 ml-2">
+                          {formatCurrency(srv.revenue)}
+                        </span>
                       </div>
-                    );
-                  })}
+                      <div className="h-2 w-full bg-rose-50/80 dark:bg-black/40 border border-rose-100 dark:border-white/[0.06] rounded-full overflow-hidden p-[1px]">
+                        <div
+                          className="h-full bg-gradient-to-r from-rose-500 to-pink-500 shadow-[0_2px_6px_rgba(244,63,94,0.3)] dark:bg-rose-500 dark:shadow-[0_0_8px_rgba(244,63,94,0.5)] rounded-full transition-all duration-500"
+                          style={{ width: `${srv.percent}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Resumo da Saúde Financeira & Reservas (Colorido & Seguro) */}
+            {/* Resumo da Saúde Financeira & Reservas */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-blue-50/80 via-white to-sky-50/30 dark:from-blue-950/30 dark:via-[#1c151b] dark:to-transparent border border-blue-200/80 dark:border-blue-900/40 rounded-2xl p-4.5 shadow-2xs">
+              <div className="relative overflow-hidden bg-gradient-to-br from-indigo-50/70 via-white to-blue-50/40 border border-indigo-200/80 rounded-2xl p-5 shadow-[0_8px_20px_-3px_rgba(99,102,241,0.12)] dark:bg-gradient-to-b dark:from-[#241524] dark:to-[#170e17] dark:border-white/10 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_10px_28px_-4px_rgba(0,0,0,0.65)]">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
-                    <ShieldCheck size={16} className="text-blue-600" />
-                    Guardar p/ Custos Fixos
+                  <span className="text-xs font-bold text-indigo-950 dark:text-zinc-200 flex items-center gap-1.5">
+                    <ShieldCheck size={16} className="text-indigo-600 dark:text-stone-300" />
+                    Reserva de Custos Fixos
                   </span>
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 font-bold">
-                    Reserva Segura
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200 font-bold dark:bg-white/[0.08] dark:text-zinc-300 dark:border-transparent">
+                    Segurança
                   </span>
                 </div>
-                <div className="text-xl font-bold font-sans text-blue-950 dark:text-blue-100 tabular-nums">
+                <div className="text-xl font-black tracking-tight text-zinc-900 dark:text-white tabular-nums">
                   {formatCurrency(financialHealth.mustSaveForFixedCosts)}
                 </div>
-                <p className="text-[11px] text-blue-700/80 dark:text-blue-400/80 mt-1 font-medium">
-                  Garante custos fixos e despesas essenciais
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                  Montante provisionado para aluguel, luz e contas essenciais
                 </p>
               </div>
 
-              <div className="bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/30 dark:from-emerald-950/30 dark:via-[#1c151b] dark:to-transparent border border-emerald-200/80 dark:border-emerald-900/40 rounded-2xl p-4.5 shadow-2xs">
+              <div className="relative overflow-hidden bg-gradient-to-br from-emerald-50/80 via-white to-teal-50/40 border border-emerald-300/80 rounded-2xl p-5 shadow-[0_8px_20px_-3px_rgba(16,185,129,0.15)] dark:bg-gradient-to-b dark:from-[#241524] dark:to-[#170e17] dark:border-white/10 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_10px_28px_-4px_rgba(0,0,0,0.65)]">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
-                    <CheckCircle2 size={16} className="text-emerald-600" />
+                  <span className="text-xs font-bold text-emerald-950 dark:text-emerald-300 flex items-center gap-1.5">
+                    <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400" />
                     Disponível p/ Retirada
                   </span>
-                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 font-bold">
+                  <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-300/80 dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/35">
                     Pró-Labore
                   </span>
                 </div>
-                <div className="text-xl font-bold font-sans text-emerald-950 dark:text-emerald-100 tabular-nums">
+                <div className="text-xl font-black tracking-tight text-emerald-700 dark:text-emerald-200 tabular-nums">
                   {formatCurrency(financialHealth.safeToWithdraw)}
                 </div>
-                <p className="text-[11px] text-emerald-700/80 dark:text-emerald-400/80 mt-1 font-medium">
-                  Lucro líquido seguro deduzidas as despesas
+                <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                  Lucro líquido seguro do salão livre para transferência
                 </p>
               </div>
             </div>
           </div>
 
           {/* =======================================================================
-              COLUNA DA DIREITA (OPERAÇÃO / AÇÕES DO DIA): ATENDIMENTOS E CONTATOS
+              COLUNA DIREITA (4 COLS): AGENDA DO DIA + ANIVERSARIANTES
               ======================================================================= */}
           <div className="lg:col-span-5 xl:col-span-4 space-y-6">
-            {/* Próximos Atendimentos de Hoje (Vibrante & Focado em Horários) */}
-            <div className="bg-[var(--card-bg)] rounded-3xl p-5 md:p-6 border border-[var(--card-border)] shadow-xs flex flex-col">
+            {/* Próximos Atendimentos de Hoje */}
+            <div className="bg-white border border-stone-200/90 rounded-2xl p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] flex flex-col dark:bg-gradient-to-b dark:from-[#241524] dark:to-[#170e17] dark:border-white/10 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_10px_28px_-4px_rgba(0,0,0,0.65)]">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 flex items-center justify-center">
-                    <Calendar size={17} />
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-[0_2px_8px_rgba(244,63,94,0.3)] flex items-center justify-center dark:bg-rose-500/10 dark:text-rose-400 dark:border dark:border-rose-500/20 dark:border-rose-500/35 dark:shadow-[0_0_12px_rgba(244,63,94,0.16)]">
+                    <Calendar size={16} />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold font-sans tracking-tight text-[var(--foreground)]">
-                      Próximos Atendimentos
+                    <h3 className="text-base font-bold tracking-tight text-zinc-900 dark:text-white">
+                      Agenda de Hoje
                     </h3>
-                    <p className="text-xs text-[var(--muted)]">
-                      Grade de horários do dia
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 font-medium">
+                      {metrics.todayApts.length} atendimentos na grade
                     </p>
                   </div>
                 </div>
                 <Link
                   href="/agenda"
-                  className="text-xs font-bold text-[var(--primary)] hover:underline"
+                  className="text-xs font-bold text-rose-600 dark:text-rose-400 hover:underline"
                 >
-                  Abrir Agenda
+                  Ver Agenda
                 </Link>
               </div>
 
               {metrics.todayApts.length === 0 ? (
-                <div className="py-9 px-4 text-center rounded-2xl bg-rose-50/40 dark:bg-rose-950/15 border border-dashed border-rose-200/70 flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-2xl bg-rose-100 text-[var(--primary)] flex items-center justify-center mb-2.5">
+                /* Estado Vazio Amigável & Inspirador */
+                <div className="py-8 px-4 text-center rounded-2xl bg-gradient-to-br from-rose-50/60 to-pink-50/40 border border-rose-200/70 flex flex-col items-center dark:bg-black/30 dark:border-white/10">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-pink-600 text-white shadow-xs flex items-center justify-center mb-2.5 dark:bg-rose-500/15 dark:text-rose-400 dark:border dark:border-rose-500/30">
                     <Calendar size={18} />
                   </div>
-                  <p className="text-xs font-bold text-[var(--foreground)]">
-                    Nenhum agendamento para hoje
+                  <p className="text-sm font-bold text-zinc-900 dark:text-white">
+                    Sua agenda está livre hoje ✨
                   </p>
-                  <p className="text-[11px] text-[var(--muted)] mt-1 max-w-xs leading-relaxed">
-                    Sua grade está livre nesta {todayFormatted}. Cadastre um novo atendimento ou divulgue horários no WhatsApp.
+                  <p className="text-xs text-zinc-600 dark:text-[var(--muted)] mt-1 max-w-xs leading-relaxed">
+                    Você tem {metrics.availableSlotsToday} horários livres para novos encaixes hoje. Que tal avisar as clientes no WhatsApp ou agendar novo horário?
                   </p>
-                  <div className="flex items-center gap-2 mt-4">
+
+                  <div className="mt-4 flex items-center gap-2 flex-wrap justify-center">
+                    <button
+                      onClick={handleCopyBroadcast}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 bg-white text-xs font-bold text-zinc-800 hover:bg-stone-50 transition cursor-pointer shadow-2xs dark:border-white/10 dark:bg-[var(--card-bg)] dark:text-[var(--foreground)]"
+                      title="Copia uma mensagem pronta com seus horários livres de hoje para postar no WhatsApp ou Instagram Stories"
+                    >
+                      <MessageCircle size={14} className="text-emerald-600 dark:text-emerald-400" />
+                      <span>{copiedBroadcast ? "Texto Copiado!" : "Divulgar Horários Livres"}</span>
+                    </button>
                     <Link
                       href="/agenda"
-                      className="px-4 py-2 rounded-xl bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-dark)] transition shadow-xs"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-rose-500 to-pink-600 text-white text-xs font-bold transition-all shadow-xs"
                     >
-                      Novo Agendamento
+                      <Plus size={14} />
+                      <span>Agendar Cliente</span>
                     </Link>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2.5">
                   {metrics.todayApts.map((apt) => {
                     const statusStyles: Record<
                       string,
@@ -736,23 +878,23 @@ export default function Dashboard() {
                     > = {
                       confirmed: {
                         label: "Confirmado",
-                        cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border-emerald-300/80",
+                        cls: "bg-emerald-100 text-emerald-800 border-emerald-300/80 font-bold dark:bg-emerald-500/10 dark:text-emerald-300 dark:border-emerald-500/35",
                       },
                       pending: {
                         label: "Aguardando",
-                        cls: "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border-amber-300/80",
+                        cls: "bg-amber-100 text-amber-800 border-amber-300/80 font-bold dark:bg-amber-500/10 dark:text-amber-300 dark:border-amber-500/35",
                       },
                       completed: {
                         label: "Concluído",
-                        cls: "bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border-slate-300",
+                        cls: "bg-stone-100 text-stone-700 border-stone-200 font-bold dark:bg-white/[0.08] dark:text-zinc-300 dark:border-white/10",
                       },
                       cancelled: {
                         label: "Cancelado",
-                        cls: "bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300 border-rose-300",
+                        cls: "bg-rose-100 text-rose-800 border-rose-300/80 font-bold dark:bg-rose-500/10 dark:text-rose-300 dark:border-rose-500/35",
                       },
                       no_show: {
-                        label: "Não compareceu",
-                        cls: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300 border-gray-300",
+                        label: "Faltou",
+                        cls: "bg-stone-100 text-stone-700 border-stone-200 font-bold dark:bg-white/[0.05] dark:text-gray-400",
                       },
                     };
 
@@ -762,12 +904,12 @@ export default function Dashboard() {
                     return (
                       <div
                         key={apt.id}
-                        className="p-3.5 rounded-2xl border border-[var(--card-border)] hover:border-rose-300/80 transition-all bg-[var(--card-bg)] shadow-2xs hover:shadow-xs flex items-center justify-between gap-3"
+                        className="p-3.5 rounded-2xl border border-stone-200/80 bg-stone-50/70 hover:bg-white hover:border-rose-300 shadow-2xs hover:shadow-md transition-all flex items-center justify-between gap-3 dark:border-white/[0.08] dark:bg-black/35 dark:hover:border-rose-400/40"
                       >
-                        {/* Bloco de Horário em Destaque Colorido */}
+                        {/* Bloco de Horário */}
                         <div className="flex items-center gap-3 min-w-0">
-                          <div className="flex flex-col items-center justify-center px-3 py-1.5 rounded-xl bg-gradient-to-b from-rose-50 to-pink-50/80 dark:from-rose-950/40 dark:to-transparent border border-rose-200/80 dark:border-rose-900/50 min-w-[58px] text-center shrink-0">
-                            <span className="text-sm font-bold font-sans text-rose-950 dark:text-rose-100 tracking-tight">
+                          <div className="flex flex-col items-center justify-center px-2.5 py-1.5 rounded-xl bg-gradient-to-br from-rose-100/90 to-pink-100/70 border border-rose-200/90 shadow-2xs min-w-[54px] text-center shrink-0 dark:bg-rose-500/15 dark:border-rose-500/30 dark:shadow-[0_0_10px_rgba(244,63,94,0.15)]">
+                            <span className="text-xs font-black text-rose-950 dark:text-rose-200 tracking-tight">
                               {apt.time}
                             </span>
                             <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold">
@@ -776,8 +918,8 @@ export default function Dashboard() {
                           </div>
 
                           <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h4 className="font-bold text-xs sm:text-sm text-[var(--foreground)] truncate">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <h4 className="font-bold text-xs sm:text-sm text-zinc-900 dark:text-white truncate">
                                 {apt.clientName}
                               </h4>
                               <span
@@ -786,26 +928,21 @@ export default function Dashboard() {
                                 {currentStatus.label}
                               </span>
                             </div>
-                            <p className="text-xs text-[var(--muted)] truncate mt-0.5 font-medium">
+                            <p className="text-xs text-zinc-600 dark:text-zinc-400 truncate mt-0.5 font-medium">
                               {apt.serviceName}
-                            </p>
-                            <p className="text-[10px] text-[var(--muted)]/90 mt-0.5">
-                              Prof.{" "}
-                              <strong className="text-[var(--foreground)] font-semibold">
-                                {apt.professionalName}
-                              </strong>
                             </p>
                           </div>
                         </div>
 
                         {/* Valor e Ação de WhatsApp Rápido */}
-                        <div className="flex items-center gap-2.5 shrink-0">
-                          <span className="text-xs font-bold text-emerald-700 dark:text-emerald-400 tabular-nums hidden sm:inline">
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs font-black text-emerald-700 dark:text-emerald-400 tabular-nums hidden sm:inline">
                             {formatCurrency(apt.price)}
                           </span>
                           {apt.clientPhone ? (
                             <button
                               onClick={() => {
+                                soundEffects.playClick();
                                 const clean = apt.clientPhone.replace(/\D/g, "");
                                 const num =
                                   clean.length <= 11 ? `55${clean}` : clean;
@@ -817,10 +954,10 @@ export default function Dashboard() {
                                   "_blank",
                                 );
                               }}
-                              className="p-2 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white transition-all shadow-xs shadow-[#25D366]/30 shrink-0 cursor-pointer"
-                              title="Enviar confirmação via WhatsApp"
+                              className="p-2 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition-all shrink-0 cursor-pointer active:scale-95 shadow-2xs dark:text-emerald-400 dark:bg-transparent dark:hover:bg-emerald-500/10 dark:border-emerald-500/20"
+                              title="Enviar confirmação no WhatsApp"
                             >
-                              <MessageCircle size={15} />
+                              <MessageCircle size={16} />
                             </button>
                           ) : null}
                         </div>
@@ -831,55 +968,53 @@ export default function Dashboard() {
               )}
             </div>
 
-            {/* Widget de Aniversariantes do Mês (Vibrante com Festa & Mimos) */}
-            <div className="bg-gradient-to-br from-rose-50/50 via-white to-pink-50/30 dark:from-rose-950/20 dark:via-[#1c151b] dark:to-transparent rounded-3xl p-5 md:p-6 border border-rose-200/70 dark:border-rose-900/40 shadow-xs">
+            {/* Widget de Aniversariantes do Mês */}
+            <div className="bg-white border border-stone-200/90 rounded-2xl p-5 md:p-6 shadow-[0_8px_30px_rgba(0,0,0,0.06),0_1px_3px_rgba(0,0,0,0.04)] dark:bg-gradient-to-b dark:from-[#241524] dark:to-[#170e17] dark:border-white/10 dark:shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08),0_10px_28px_-4px_rgba(0,0,0,0.65)]">
               <div className="flex items-center justify-between mb-3.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-xl bg-pink-100 dark:bg-pink-950/50 text-pink-600 dark:text-pink-300 flex items-center justify-center">
-                    <Cake size={17} />
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white shadow-[0_2px_8px_rgba(244,63,94,0.3)] flex items-center justify-center dark:bg-pink-500/10 dark:text-rose-400 dark:border dark:border-rose-500/20 dark:border-rose-500/35 dark:shadow-[0_0_12px_rgba(244,63,94,0.16)]">
+                    <Cake size={16} />
                   </div>
-                  <h3 className="text-sm font-bold font-sans tracking-tight text-[var(--foreground)]">
-                    Aniversariantes do Mês
-                  </h3>
+                  <div>
+                    <h3 className="text-base font-bold tracking-tight text-zinc-900 dark:text-white">
+                      Aniversariantes do Mês
+                    </h3>
+                  </div>
                 </div>
-                <span className="text-[11px] font-bold text-rose-700 dark:text-rose-300 bg-rose-100 dark:bg-rose-900/60 px-2 py-0.5 rounded-full">
+                <span className="text-[11px] font-bold text-rose-800 bg-rose-100 border border-rose-200 px-2.5 py-0.5 rounded-full dark:text-rose-300 dark:bg-rose-500/10 dark:border-rose-500/35">
                   {metrics.birthdaysThisMonth.length} clientes
                 </span>
               </div>
 
               {metrics.birthdaysThisMonth.length === 0 ? (
-                <div className="py-6 px-4 text-center rounded-2xl bg-white/70 dark:bg-zinc-900/60 border border-dashed border-rose-200">
-                  <p className="text-xs font-bold text-[var(--foreground)]">
+                <div className="py-6 px-4 text-center rounded-2xl bg-stone-50/60 dark:bg-black/30 border border-dashed border-stone-200 dark:border-white/10">
+                  <p className="text-xs font-semibold text-zinc-900 dark:text-white">
                     Nenhuma aniversariante neste mês
                   </p>
-                  <p className="text-[11px] text-[var(--muted)] mt-1">
-                    Preencha a data de nascimento no cadastro das clientes para enviar mimos e felicitações.
+                  <p className="text-[11px] text-zinc-500 dark:text-zinc-400 mt-1">
+                    Cadastre a data de nascimento das clientes para enviar mimos especiais.
                   </p>
                 </div>
               ) : (
-                <div className="space-y-2.5">
+                <div className="space-y-2">
                   {metrics.birthdaysThisMonth.map((c) => {
                     const day = c.birthDate?.split("-")[2] || "";
 
                     return (
                       <div
                         key={c.id}
-                        className="p-3 rounded-2xl bg-white dark:bg-zinc-900/80 border border-rose-100 dark:border-rose-900/30 flex items-center justify-between gap-3 shadow-2xs"
+                        className="p-2.5 rounded-xl border border-stone-200/80 bg-stone-50/70 hover:bg-white hover:border-pink-300 shadow-2xs hover:shadow-sm transition-all flex items-center justify-between gap-3 dark:border-white/[0.08] dark:bg-black/35 dark:hover:border-rose-400/40"
                       >
-                        <div className="flex items-center gap-3 min-w-0">
-                          {/* Badge de Dia Colorido */}
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-pink-500 to-rose-600 text-white font-bold flex flex-col items-center justify-center shadow-xs shadow-pink-500/20 shrink-0">
-                            <span className="text-xs leading-none">{day}</span>
-                            <span className="text-[8px] uppercase tracking-wider opacity-90">
-                              Dia
-                            </span>
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-pink-500 to-rose-500 text-white font-black flex items-center justify-center shrink-0 shadow-xs text-xs">
+                            {day}
                           </div>
 
                           <div className="truncate">
-                            <p className="text-xs font-bold text-[var(--foreground)] truncate">
+                            <p className="text-xs font-bold text-zinc-900 dark:text-white truncate">
                               {c.name}
                             </p>
-                            <p className="text-[10px] text-[var(--muted)] truncate">
+                            <p className="text-[10px] text-zinc-500 dark:text-zinc-400 truncate font-medium">
                               {c.phone || "Sem telefone"}
                             </p>
                           </div>
@@ -888,6 +1023,7 @@ export default function Dashboard() {
                         {c.phone ? (
                           <button
                             onClick={() => {
+                              soundEffects.playClick();
                               const clean = c.phone.replace(/\D/g, "");
                               const num =
                                 clean.length <= 11 ? `55${clean}` : clean;
@@ -899,7 +1035,7 @@ export default function Dashboard() {
                                 "_blank",
                               );
                             }}
-                            className="px-3 py-1.5 rounded-xl bg-[#25D366] hover:bg-[#20bd5a] text-white text-[11px] font-bold shadow-xs shadow-[#25D366]/20 transition cursor-pointer flex items-center gap-1 shrink-0"
+                            className="px-2.5 py-1 rounded-lg text-emerald-800 bg-emerald-100 hover:bg-emerald-200/80 border border-emerald-300/80 text-[11px] font-bold transition cursor-pointer flex items-center gap-1 shrink-0 shadow-2xs dark:text-emerald-300 dark:bg-transparent dark:hover:bg-emerald-950/60 dark:border-transparent"
                           >
                             <MessageCircle size={13} /> Felicitar
                           </button>
@@ -909,48 +1045,6 @@ export default function Dashboard() {
                   })}
                 </div>
               )}
-            </div>
-
-            {/* Widget Rápido: Link de Agendamento da Bio do Instagram */}
-            <div className="bg-gradient-to-br from-purple-50 via-pink-50/40 to-amber-50/40 dark:from-purple-950/25 dark:via-pink-950/20 dark:to-amber-950/15 rounded-3xl p-5 border border-purple-200/70 dark:border-purple-900/40 shadow-xs">
-              <div className="flex items-center gap-2.5 mb-2">
-                <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 text-white flex items-center justify-center shadow-xs shadow-purple-500/25 shrink-0">
-                  <Link2 size={17} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-[var(--foreground)]">
-                    Link de Agendamento Online
-                  </h4>
-                  <p className="text-[10px] text-[var(--muted)] font-medium">
-                    Coloque na Bio do seu Instagram
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex-1 bg-white dark:bg-zinc-900 px-3 py-2 rounded-xl border border-purple-100 dark:border-purple-900/40 text-[11px] text-[var(--foreground)] truncate font-mono">
-                  bellamais.com/agendar/
-                  {(salonName || "meusalao")
-                    .toLowerCase()
-                    .replace(/\s+/g, "-")
-                    .replace(/[^\w-]/g, "")}
-                </div>
-                <button
-                  onClick={handleCopyLink}
-                  className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-95 text-white text-xs font-bold transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-xs shadow-purple-500/25"
-                  title="Copiar Link da Bio"
-                >
-                  {copiedLink ? (
-                    <>
-                      <Check size={14} /> Copiado!
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={14} /> Copiar
-                    </>
-                  )}
-                </button>
-              </div>
             </div>
           </div>
         </div>

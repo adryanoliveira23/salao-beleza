@@ -194,6 +194,117 @@ export async function initBaileys(forceRestart = false): Promise<BaileysState> {
       }
     });
 
+    // =========================================================================
+    // ESCUTA DE MENSAGENS RECEBIDAS (AUTOMAÇÃO DE RESPOSTAS "SIM" / "NÃO")
+    // =========================================================================
+    sock.ev.on("messages.upsert", async ({ messages, type }) => {
+      if (type !== "notify") return;
+
+      for (const m of messages) {
+        // Ignora mensagens enviadas pelo próprio salão
+        if (m.key.fromMe || !m.message) continue;
+
+        const remoteJid = m.key.remoteJid || "";
+        if (!remoteJid.endsWith("@s.whatsapp.net")) continue;
+
+        const cleanPhone = remoteJid.replace("@s.whatsapp.net", "");
+        const rawText =
+          m.message.conversation ||
+          m.message.extendedTextMessage?.text ||
+          m.message.buttonsResponseMessage?.selectedButtonId ||
+          m.message.templateButtonReplyMessage?.selectedId ||
+          "";
+
+        if (!rawText) continue;
+
+        const normalized = rawText.trim().toUpperCase();
+        addBaileysLog("info", `📩 Mensagem recebida de ${cleanPhone}: "${rawText}"`);
+
+        // Intenções de Confirmação
+        const isConfirm = /^(SIM|1|CONFIRMAR|CONFIRMO|OK|CONFIRMADO|VOU SIM|SIM!|CONFIRMO!|ESTAREI LA|ESTAREI LÁ)$/i.test(normalized);
+        // Intenções de Cancelamento
+        const isCancel = /^(NÃO|NAO|2|CANCELAR|DESMARCAR|NÃO VOU|NAO VOU|NAO CONSIGO|NÃO CONSIGO)$/i.test(normalized);
+
+        if (isConfirm) {
+          addBaileysLog("success", `🤖 Cliente ${cleanPhone} confirmou presença via WhatsApp!`);
+
+          // Resposta automática acolhedora
+          try {
+            await sock.sendMessage(remoteJid, {
+              text: "✨ *Maravilha! Seu agendamento foi CONFIRMADO com sucesso!*\n\nSua vaga está garantida e estamos preparando tudo com muito carinho para te receber. Se precisar de algo antes, é só avisar por aqui. Até logo! 💕",
+            });
+          } catch (replyErr: any) {
+            addBaileysLog("warn", `Falha ao responder cliente no WhatsApp: ${replyErr?.message}`);
+          }
+
+          // Atualização de banco de dados (se Firebase Admin disponível)
+          try {
+            const { adminDb } = await import("@/app/lib/firebase-admin");
+            if (adminDb) {
+              const todayStr = new Date().toISOString().split("T")[0];
+              const phoneSuffix = cleanPhone.slice(-8); // Últimos 8 dígitos para cobrir variações de DDD/9º dígito
+              const snapshot = await adminDb.collection("appointments").get();
+              let updatedCount = 0;
+
+              for (const docSnap of snapshot.docs) {
+                const data = docSnap.data();
+                const aptPhone = (data.clientPhone || "").replace(/\D/g, "");
+                if (aptPhone.endsWith(phoneSuffix) && data.date >= todayStr && data.status === "pending") {
+                  await docSnap.ref.update({
+                    status: "confirmed",
+                    confirmedViaWhatsApp: true,
+                    confirmedViaWhatsAppAt: new Date().toISOString(),
+                  });
+                  updatedCount++;
+                  addBaileysLog("success", `Agendamento de ${data.clientName} (${data.serviceName}) atualizado para CONFIRMADO!`);
+                }
+              }
+
+              if (updatedCount === 0) {
+                addBaileysLog("info", `Nenhum agendamento pendente encontrado para o telefone terminado em ${phoneSuffix}`);
+              }
+            }
+          } catch (dbErr: any) {
+            addBaileysLog("warn", `Nota de sincronização de banco de dados: ${dbErr?.message}`);
+          }
+        } else if (isCancel) {
+          addBaileysLog("warn", `🤖 Cliente ${cleanPhone} solicitou cancelamento via WhatsApp!`);
+
+          try {
+            await sock.sendMessage(remoteJid, {
+              text: "Entendido! Seu agendamento foi *cancelado* no nosso sistema. 🌸\n\nSentiremos sua falta! Caso deseje remarcar para um novo horário ou data conveniente, basta nos chamar por aqui. Tenha um excelente dia!",
+            });
+          } catch (replyErr: any) {
+            addBaileysLog("warn", `Falha ao enviar aviso de cancelamento: ${replyErr?.message}`);
+          }
+
+          try {
+            const { adminDb } = await import("@/app/lib/firebase-admin");
+            if (adminDb) {
+              const todayStr = new Date().toISOString().split("T")[0];
+              const phoneSuffix = cleanPhone.slice(-8);
+              const snapshot = await adminDb.collection("appointments").get();
+
+              for (const docSnap of snapshot.docs) {
+                const data = docSnap.data();
+                const aptPhone = (data.clientPhone || "").replace(/\D/g, "");
+                if (aptPhone.endsWith(phoneSuffix) && data.date >= todayStr && (data.status === "pending" || data.status === "confirmed")) {
+                  await docSnap.ref.update({
+                    status: "cancelled",
+                    cancelledViaWhatsApp: true,
+                    cancelledViaWhatsAppAt: new Date().toISOString(),
+                  });
+                  addBaileysLog("info", `Agendamento de ${data.clientName} marcado como CANCELADO.`);
+                }
+              }
+            }
+          } catch (dbErr: any) {
+            addBaileysLog("warn", `Nota de banco no cancelamento: ${dbErr?.message}`);
+          }
+        }
+      }
+    });
+
     state.isInitializing = false;
     return state;
   } catch (err: any) {

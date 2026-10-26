@@ -18,6 +18,24 @@
   line-height: 1.6;
   overflow-x: hidden;
   width: 100%;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+:global(html.dark) .landingPage,
+:global([data-theme="dark"]) .landingPage {
+  --secondary: #2c111e;
+  --accent: #fb7185;
+  --text-main: #fdf5f9;
+  --text-muted: #b8a3af;
+  --bg-gradient-start: #140b14;
+  --bg-gradient-end: #0d070e;
+  --white: #1c101c;
+  --glass-bg: rgba(22, 12, 22, 0.85);
+  --glass-border: rgba(244, 63, 94, 0.15);
+  --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 10px 40px rgba(0, 0, 0, 0.65);
+  color: #fdf5f9;
+  background: #0d070e;
 }
 
 .landingPage h1,
@@ -28,6 +46,14 @@
   font-weight: 700;
   color: var(--text-main);
   letter-spacing: -0.02em;
+  transition: color 0.3s ease;
+}
+
+:global(html.dark) .landingPage h1,
+:global(html.dark) .landingPage h2,
+:global(html.dark) .landingPage h3,
+:global(html.dark) .landingPage h4 {
+  color: #fdf5f9 !important;
 }
 
 /* Animations */
@@ -321,7 +347,7 @@
 
 .heroContent p {
   font-size: 1.15rem;
-  color: #443640;
+  color: var(--text-muted);
   margin-bottom: 2.25rem;
   max-width: 660px;
   margin-left: auto;
@@ -330,6 +356,7 @@
   text-align: center;
   text-wrap: balance;
   font-weight: 400;
+  transition: color 0.3s ease;
 }
 
 @keyframes statsMarquee {
@@ -357,9 +384,10 @@
   justify-content: center;
   gap: 0.75rem;
   font-size: 0.85rem;
-  color: #776a74;
+  color: var(--text-muted);
   margin-top: 0.5rem;
   flex-wrap: wrap;
+  transition: color 0.3s ease;
 }
 
 .heroTrustBadges span {
@@ -738,12 +766,13 @@
 
 .testimonialText {
   font-size: 1.1rem;
-  color: #444;
+  color: var(--text-main);
   margin-bottom: 2rem;
   line-height: 1.8;
   position: relative;
   font-family: var(--font-playfair);
   font-style: italic;
+  transition: color 0.3s ease;
 }
 
 .testimonialAuthor {
@@ -870,6 +899,17 @@
   letter-spacing: normal;
 }
 
+.period {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 0.25rem;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
 .pricingFeatures {
   list-style: none;
   margin: 2rem 0;
@@ -881,9 +921,10 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  color: #555;
+  color: var(--text-main);
   border-bottom: 1px solid #f5f5f5;
   font-size: 0.95rem;
+  transition: color 0.3s ease;
 }
 
 .pricingFeatures li::before {
@@ -942,19 +983,32 @@
   margin-bottom: 3rem;
 }
 
-.btnWhite {
+.ctaFinal .btnWhite {
   background: white;
   color: var(--primary);
   font-weight: 700;
-  padding: 1.1rem 2.5rem;
-  border-radius: 100px;
-  font-size: 1.1rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
 }
 
-.btnWhite:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+.ctaFinal .btnWhite:hover {
+  background: #fdf2f8;
+  color: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.ctaFinal .btnPrimary {
+  background: white;
+  color: var(--primary) !important;
+  font-weight: 700;
+  border: 1px solid transparent;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.ctaFinal .btnPrimary:hover {
+  background: #fdf2f8;
+  color: var(--primary-dark) !important;
+  transform: translateY(-2px);
 }
 
 /* Footer */
@@ -980,7 +1034,7 @@
 }
 
 .footerBrand p {
-  color: #aaa;
+  color: #b8a3af;
   line-height: 1.6;
   max-width: 300px;
 }
@@ -989,6 +1043,7 @@
   font-size: 1.1rem;
   margin-bottom: 1.5rem;
   font-weight: 700;
+  color: #fdf5f9;
 }
 
 .footerLinks ul {
@@ -997,7 +1052,7 @@
 }
 
 .footerLinks a {
-  color: #999;
+  color: #b8a3af;
   text-decoration: none;
   display: block;
   padding: 0.5rem 0;
@@ -1005,14 +1060,14 @@
 }
 
 .footerLinks a:hover {
-  color: white;
+  color: #ffffff;
 }
 
 .footerBottom {
   text-align: center;
   padding-top: 2rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: #666;
+  color: #8c7885;
   font-size: 0.9rem;
 }
 
@@ -1132,7 +1187,7 @@
     font-size: 0.95rem;
     margin: 0 auto 1.25rem;
     line-height: 1.55;
-    color: #443640;
+    color: var(--text-muted);
   }
   .heroCtaRow {
     flex-direction: column;
@@ -1357,4 +1412,426 @@
   :global(textarea) {
     font-size: 16px !important;
   }
+}
+
+/* =========================================================================
+   BOTÃO DE TEMA (CLARO / ESCURO) NA NAVBAR
+   ========================================================================= */
+.themeToggleBtn {
+  height: 38px;
+  padding: 0 0.85rem;
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid rgba(158, 49, 96, 0.18);
+  background: rgba(158, 49, 96, 0.05);
+  color: var(--text-main);
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.themeToggleBtn:hover {
+  background: rgba(158, 49, 96, 0.12);
+  border-color: var(--primary);
+  transform: translateY(-1px);
+}
+
+.themeToggleBtn:active {
+  transform: scale(0.97);
+}
+
+/* =========================================================================
+   SUPORTE COMPLETO AO MODO ESCURO NA LANDING PAGE
+   (Elimina qualquer conflito ou texto ilegível no tema dark)
+   ========================================================================= */
+:global(html.dark) .landingPage,
+:global([data-theme="dark"]) .landingPage {
+  background: #0d070e;
+  color: #fdf5f9;
+}
+
+:global(html.dark) .landingPage p,
+:global([data-theme="dark"]) .landingPage p {
+  color: #b8a3af;
+}
+
+:global(html.dark) .landingPage h1,
+:global(html.dark) .landingPage h2,
+:global(html.dark) .landingPage h3,
+:global(html.dark) .landingPage h4,
+:global([data-theme="dark"]) .landingPage h1,
+:global([data-theme="dark"]) .landingPage h2,
+:global([data-theme="dark"]) .landingPage h3,
+:global([data-theme="dark"]) .landingPage h4 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .themeToggleBtn,
+:global([data-theme="dark"]) .themeToggleBtn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #fdf5f9;
+}
+
+:global(html.dark) .themeToggleBtn:hover,
+:global([data-theme="dark"]) .themeToggleBtn:hover {
+  background: rgba(244, 63, 94, 0.2);
+  border-color: #f43f5e;
+}
+
+:global(html.dark) .nav,
+:global([data-theme="dark"]) .nav {
+  background: rgba(18, 9, 18, 0.94);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(html.dark) .logoText,
+:global([data-theme="dark"]) .logoText {
+  color: #fdf5f9;
+}
+
+:global(html.dark) .logoBadge,
+:global([data-theme="dark"]) .logoBadge {
+  background: rgba(244, 63, 94, 0.15);
+  border-color: rgba(244, 63, 94, 0.3);
+  color: #fb7185;
+}
+
+:global(html.dark) .navLinks a,
+:global([data-theme="dark"]) .navLinks a {
+  color: #b8a3af;
+}
+
+:global(html.dark) .navLinks a:hover,
+:global([data-theme="dark"]) .navLinks a:hover {
+  color: #f43f5e;
+}
+
+:global(html.dark) .navLoginLink,
+:global([data-theme="dark"]) .navLoginLink {
+  color: #fdf5f9;
+}
+
+:global(html.dark) .navLoginLink:hover,
+:global([data-theme="dark"]) .navLoginLink:hover {
+  background: rgba(244, 63, 94, 0.15);
+  color: #fb7185;
+}
+
+:global(html.dark) .btnWhite,
+:global([data-theme="dark"]) .btnWhite {
+  background: #1c101c !important;
+  color: #fdf5f9 !important;
+  border-color: rgba(255, 255, 255, 0.14) !important;
+}
+
+:global(html.dark) .btnWhite:hover,
+:global([data-theme="dark"]) .btnWhite:hover {
+  background: #2a1629 !important;
+  border-color: #f43f5e !important;
+  color: #f43f5e !important;
+}
+
+/* Hero Dark Mode */
+:global(html.dark) .hero,
+:global([data-theme="dark"]) .hero {
+  background: radial-gradient(circle at 50% 15%, rgba(244, 63, 94, 0.12) 0%, transparent 60%), #0d070e;
+}
+
+:global(html.dark) .heroBadge,
+:global([data-theme="dark"]) .heroBadge {
+  background: rgba(244, 63, 94, 0.12);
+  border-color: rgba(244, 63, 94, 0.3);
+  color: #fb7185;
+}
+
+:global(html.dark) .heroContent h1,
+:global([data-theme="dark"]) .heroContent h1 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .heroContent p,
+:global([data-theme="dark"]) .heroContent p {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .heroTrustBadges,
+:global([data-theme="dark"]) .heroTrustBadges,
+:global(html.dark) .heroTrustBadges span,
+:global([data-theme="dark"]) .heroTrustBadges span {
+  color: #b8a3af !important;
+}
+
+/* Transformation Dark Mode */
+:global(html.dark) .transformation,
+:global([data-theme="dark"]) .transformation {
+  background: #110712;
+}
+
+:global(html.dark) .transformation h2,
+:global([data-theme="dark"]) .transformation h2 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .transformationContainer p,
+:global([data-theme="dark"]) .transformationContainer p {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .transformCard,
+:global([data-theme="dark"]) .transformCard {
+  background: #1c101c;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+:global(html.dark) .transformCard:hover,
+:global([data-theme="dark"]) .transformCard:hover {
+  background: #251525;
+  border-color: rgba(244, 63, 94, 0.4);
+}
+
+:global(html.dark) .transformCard h3,
+:global([data-theme="dark"]) .transformCard h3 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .transformCard p,
+:global([data-theme="dark"]) .transformCard p {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .transformIcon,
+:global([data-theme="dark"]) .transformIcon {
+  color: #fb7185;
+}
+
+/* Features Dark Mode */
+:global(html.dark) .features,
+:global([data-theme="dark"]) .features {
+  background: #0d070e;
+}
+
+:global(html.dark) .sectionBadge,
+:global([data-theme="dark"]) .sectionBadge {
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: #fb7185;
+}
+
+:global(html.dark) .sectionHeader h2,
+:global([data-theme="dark"]) .sectionHeader h2 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .sectionHeader p,
+:global([data-theme="dark"]) .sectionHeader p {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .featureCard,
+:global([data-theme="dark"]) .featureCard {
+  background: #1c101c;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+:global(html.dark) .featureCard:hover,
+:global([data-theme="dark"]) .featureCard:hover {
+  background: #251525;
+  border-color: rgba(244, 63, 94, 0.4);
+}
+
+:global(html.dark) .featureIcon,
+:global([data-theme="dark"]) .featureIcon {
+  background: rgba(244, 63, 94, 0.12);
+  color: #f43f5e;
+}
+
+:global(html.dark) .featureCard h3,
+:global([data-theme="dark"]) .featureCard h3 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .featureCard p,
+:global([data-theme="dark"]) .featureCard p {
+  color: #b8a3af !important;
+}
+
+/* Testimonials Dark Mode */
+:global(html.dark) .testimonials,
+:global([data-theme="dark"]) .testimonials {
+  background: #110712;
+}
+
+:global(html.dark) .testimonialCard,
+:global([data-theme="dark"]) .testimonialCard {
+  background: #1c101c;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.65), inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+}
+
+:global(html.dark) .testimonialCard:hover,
+:global([data-theme="dark"]) .testimonialCard:hover {
+  background: #251525;
+  border-color: rgba(244, 63, 94, 0.4);
+}
+
+:global(html.dark) .testimonialCard::before,
+:global([data-theme="dark"]) .testimonialCard::before {
+  color: rgba(244, 63, 94, 0.2) !important;
+}
+
+:global(html.dark) .testimonialText,
+:global([data-theme="dark"]) .testimonialText {
+  color: #ded1d8 !important;
+}
+
+:global(html.dark) .stars,
+:global([data-theme="dark"]) .stars {
+  color: #fbbf24 !important;
+}
+
+:global(html.dark) .authorInfo h4,
+:global([data-theme="dark"]) .authorInfo h4 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .authorInfo p,
+:global([data-theme="dark"]) .authorInfo p {
+  color: #b8a3af !important;
+}
+
+/* Pricing Dark Mode */
+:global(html.dark) .pricing,
+:global([data-theme="dark"]) .pricing {
+  background: #0d070e;
+}
+
+:global(html.dark) .pricingCard,
+:global([data-theme="dark"]) .pricingCard {
+  background: #1c101c !important;
+  border-color: rgba(244, 63, 94, 0.35) !important;
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+}
+
+:global(html.dark) .pricingCard.featured,
+:global([data-theme="dark"]) .pricingCard.featured {
+  background: #1c101c !important;
+  border: 2px solid #f43f5e !important;
+  box-shadow: 0 14px 38px -4px rgba(244, 63, 94, 0.25), 0 10px 24px -4px rgba(0, 0, 0, 0.7) !important;
+}
+
+:global(html.dark) .popularBadge,
+:global([data-theme="dark"]) .popularBadge {
+  background: #f43f5e !important;
+  color: #ffffff !important;
+}
+
+:global(html.dark) .pricingCard h3,
+:global([data-theme="dark"]) .pricingCard h3 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .price,
+:global([data-theme="dark"]) .price {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .price span,
+:global([data-theme="dark"]) .price span {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .period,
+:global([data-theme="dark"]) .period {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .pricingFeatures li,
+:global([data-theme="dark"]) .pricingFeatures li {
+  color: #ded1d8 !important;
+  border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* CTA Final Dark Mode */
+:global(html.dark) .ctaFinal,
+:global([data-theme="dark"]) .ctaFinal {
+  background: linear-gradient(180deg, #1f0f1d 0%, #0d070e 100%) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:global(html.dark) .ctaContainer h2,
+:global([data-theme="dark"]) .ctaContainer h2 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .ctaContainer p,
+:global([data-theme="dark"]) .ctaContainer p {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .ctaFinal .btnWhite,
+:global([data-theme="dark"]) .ctaFinal .btnWhite {
+  background: #281427 !important;
+  color: #fdf5f9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+}
+
+:global(html.dark) .ctaFinal .btnWhite:hover,
+:global([data-theme="dark"]) .ctaFinal .btnWhite:hover {
+  background: #361b34 !important;
+  border-color: #f43f5e !important;
+  color: #f43f5e !important;
+}
+
+/* Footer Dark Mode */
+:global(html.dark) .footer,
+:global([data-theme="dark"]) .footer {
+  background: #090409 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+:global(html.dark) .footerBrand h3,
+:global([data-theme="dark"]) .footerBrand h3 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .footerBrand p,
+:global([data-theme="dark"]) .footerBrand p {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .footerLinks h4,
+:global([data-theme="dark"]) .footerLinks h4 {
+  color: #fdf5f9 !important;
+}
+
+:global(html.dark) .footerLinks a,
+:global([data-theme="dark"]) .footerLinks a {
+  color: #b8a3af !important;
+}
+
+:global(html.dark) .footerLinks a:hover,
+:global([data-theme="dark"]) .footerLinks a:hover {
+  color: #f43f5e !important;
+}
+
+:global(html.dark) .footerBottom,
+:global([data-theme="dark"]) .footerBottom,
+:global(html.dark) .footerBottom p,
+:global([data-theme="dark"]) .footerBottom p {
+  color: #b8a3af !important;
+  border-top-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:global(html.dark) .whatsappFloat,
+:global([data-theme="dark"]) .whatsappFloat {
+  background: rgba(26, 15, 26, 0.95);
+  border-color: rgba(37, 211, 102, 0.4);
+  color: #25d366 !important;
 }

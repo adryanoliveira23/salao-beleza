@@ -139,6 +139,56 @@ async function startBaileysSocket(forceRestart = false) {
         }
       }
     });
+
+    // =========================================================================
+    // ESCUTA DE RESPOSTAS AUTOMÁTICAS ("SIM" / "NÃO")
+    // =========================================================================
+    sock.ev.on("messages.upsert", async ({ messages, type }) => {
+      if (type !== "notify") return;
+
+      for (const m of messages) {
+        if (m.key.fromMe || !m.message) continue;
+
+        const remoteJid = m.key.remoteJid || "";
+        if (!remoteJid.endsWith("@s.whatsapp.net")) continue;
+
+        const cleanPhone = remoteJid.replace("@s.whatsapp.net", "");
+        const rawText =
+          m.message.conversation ||
+          m.message.extendedTextMessage?.text ||
+          m.message.buttonsResponseMessage?.selectedButtonId ||
+          m.message.templateButtonReplyMessage?.selectedId ||
+          "";
+
+        if (!rawText) continue;
+
+        const normalized = rawText.trim().toUpperCase();
+        addLog("info", `📩 Mensagem recebida de ${cleanPhone}: "${rawText}"`);
+
+        const isConfirm = /^(SIM|1|CONFIRMAR|CONFIRMO|OK|CONFIRMADO|VOU SIM|SIM!|CONFIRMO!|ESTAREI LA|ESTAREI LÁ)$/i.test(normalized);
+        const isCancel = /^(NÃO|NAO|2|CANCELAR|DESMARCAR|NÃO VOU|NAO VOU|NAO CONSIGO|NÃO CONSIGO)$/i.test(normalized);
+
+        if (isConfirm) {
+          addLog("success", `🤖 Cliente ${cleanPhone} confirmou presença via WhatsApp!`);
+          try {
+            await sock.sendMessage(remoteJid, {
+              text: "✨ *Maravilha! Seu agendamento foi CONFIRMADO com sucesso!*\n\nSua vaga está garantida e estamos preparando tudo com muito carinho para te receber. Se precisar de algo antes, é só avisar por aqui. Até logo! 💕",
+            });
+          } catch (e) {
+            addLog("warn", `Erro ao responder confirmação: ${e.message}`);
+          }
+        } else if (isCancel) {
+          addLog("warn", `🤖 Cliente ${cleanPhone} cancelou via WhatsApp!`);
+          try {
+            await sock.sendMessage(remoteJid, {
+              text: "Entendido! Seu agendamento foi *cancelado* no nosso sistema. 🌸\n\nSentiremos sua falta! Caso deseje remarcar, basta nos avisar por aqui. Tenha um excelente dia!",
+            });
+          } catch (e) {
+            addLog("warn", `Erro ao responder cancelamento: ${e.message}`);
+          }
+        }
+      }
+    });
   } catch (err) {
     addLog("error", `Falha ao iniciar Baileys: ${err.message}`);
   }

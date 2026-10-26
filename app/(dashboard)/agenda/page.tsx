@@ -22,6 +22,7 @@ import {
   Edit2,
 } from "lucide-react";
 import { Header } from "@/components/Header";
+import { CurrencyInput } from "@/components/CurrencyInput";
 import {
   useSalonData,
   Appointment,
@@ -1209,14 +1210,11 @@ function AppointmentModal({
               </label>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-[#6e5a65]">Valor Sinal (R$):</span>
-              <input
-                type="number"
-                min={0}
-                step={0.01}
+              <span className="text-xs text-[#6e5a65]">Valor Sinal:</span>
+              <CurrencyInput
                 value={depositAmount}
-                onChange={(e) => setDepositAmount(Number(e.target.value))}
-                className="w-24 p-2 rounded-xl bg-white border border-[#f2e6ea] text-xs font-bold"
+                onChangeValue={setDepositAmount}
+                className="w-32 p-2 rounded-xl bg-white border border-[#f2e6ea] text-xs font-bold text-emerald-600"
               />
             </div>
           </div>

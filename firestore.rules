@@ -2,20 +2,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 1. Perfis de usuários e salões
+    // 1. Perfis de usuários e salões (Leitura pública para permitir a página de agendamento online)
     match /profiles/{userId} {
-      allow read, write: if request.auth != null;
-    }
-
-    // 2. Serviços e combos do salão
-    match /services/{serviceId} {
-      allow read: if true; // Leitura pública para agendamento online
+      allow read: if true;
       allow write: if request.auth != null;
     }
 
-    // 3. Profissionais e colaboradores
+    // 2. Serviços e combos do salão (Leitura pública para agendamento online)
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // 3. Profissionais e colaboradores (Leitura pública para agendamento online)
     match /professionals/{profId} {
-      allow read: if true; // Leitura pública para escolha no agendamento
+      allow read: if true;
       allow write: if request.auth != null;
     }
 
@@ -23,9 +24,10 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // 4. Clientes do salão
+    // 4. Clientes do salão (Permite leitura e criação de novas clientes pelo agendamento online)
     match /clients/{clientId} {
-      allow read, write: if request.auth != null;
+      allow read, create: if true;
+      allow update, delete: if request.auth != null;
     }
 
     // 5. Agendamentos (Permite agendamento público online de clientes sem login)

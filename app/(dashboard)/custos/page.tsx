@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useFinance, VariableCost } from "@/contexts/FinanceContext";
+import { CurrencyInput } from "@/components/CurrencyInput";
 
 export default function CustosPage() {
   const {
@@ -28,12 +29,12 @@ export default function CustosPage() {
 
   // Fixed Cost Form
   const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amount, setAmount] = useState<number>(0);
   const [dayDue, setDayDue] = useState("");
 
   // Variable Cost Form
   const [varName, setVarName] = useState("");
-  const [varAmount, setVarAmount] = useState("");
+  const [varAmount, setVarAmount] = useState<number>(0);
   const [varDate, setVarDate] = useState(
     new Date().toISOString().split("T")[0],
   );
@@ -42,33 +43,33 @@ export default function CustosPage() {
 
   const handleAddFixedCost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !amount || !dayDue) return;
+    if (!name || amount <= 0 || !dayDue) return;
 
     await addFixedCost({
       name,
-      amount: Number(amount),
+      amount,
       dayDue: Number(dayDue),
     });
 
     setName("");
-    setAmount("");
+    setAmount(0);
     setDayDue("");
     setIsFixedModalOpen(false);
   };
 
   const handleAddVariableCost = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!varName || !varAmount) return;
+    if (!varName || varAmount <= 0) return;
 
     await addVariableCost({
       name: varName,
-      amount: Number(varAmount),
+      amount: varAmount,
       date: varDate,
       category: varCategory,
     });
 
     setVarName("");
-    setVarAmount("");
+    setVarAmount(0);
     setIsVariableModalOpen(false);
   };
 
@@ -308,15 +309,12 @@ export default function CustosPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-[#2d1b2e] mb-1">
-                    Valor (R$)
+                    Valor (R$) *
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
+                  <CurrencyInput
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="0,00"
-                    className="w-full border border-[#f2e6ea] rounded-xl px-3.5 py-2.5 outline-none"
+                    onChangeValue={setAmount}
+                    className="w-full border border-[#f2e6ea] rounded-xl px-3.5 py-2.5 outline-none font-bold text-[#b83b6b]"
                     required
                   />
                 </div>
@@ -384,15 +382,12 @@ export default function CustosPage() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block font-bold text-[#2d1b2e] mb-1">
-                    Valor (R$)
+                    Valor (R$) *
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
+                  <CurrencyInput
                     value={varAmount}
-                    onChange={(e) => setVarAmount(e.target.value)}
-                    placeholder="0,00"
-                    className="w-full border border-[#f2e6ea] rounded-xl px-3.5 py-2.5 outline-none"
+                    onChangeValue={setVarAmount}
+                    className="w-full border border-[#f2e6ea] rounded-xl px-3.5 py-2.5 outline-none font-bold text-[#b83b6b]"
                     required
                   />
                 </div>

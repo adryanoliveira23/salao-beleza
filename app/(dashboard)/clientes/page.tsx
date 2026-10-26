@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useSalonData, Client } from "@/contexts/SalonDataContext";
+import { useToast } from "@/contexts/ToastContext";
 
 const AVAILABLE_TAGS = [
   "Nova",
@@ -968,6 +969,7 @@ function ImportModal({
   ) => void;
 }) {
   const [text, setText] = useState("");
+  const toast = useToast();
 
   const handleImport = () => {
     const lines = text.split("\n");
@@ -984,7 +986,7 @@ function ImportModal({
       .filter(Boolean) as Array<{ name: string; phone: string; email: string }>;
 
     if (parsed.length === 0) {
-      alert("Use o formato: Nome, Telefone, Email (um por linha)");
+      toast.warning("Use o formato: Nome, Telefone, Email (um por linha)", "Formato Inválido");
       return;
     }
     onImport(parsed);

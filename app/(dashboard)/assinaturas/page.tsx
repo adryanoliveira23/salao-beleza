@@ -9,6 +9,7 @@ import {
   SalonSubscriptionPlan,
 } from "@/contexts/SalonDataContext";
 import { Crown, Check, Plus, Trash2, Edit2, X, Users } from "lucide-react";
+import { CurrencyInput } from "@/components/CurrencyInput";
 
 export default function AssinaturasPage() {
   const {
@@ -312,13 +313,11 @@ export default function AssinaturasPage() {
                   <label className="block text-xs font-bold uppercase text-[var(--muted)] mb-1">
                     Valor (R$) *
                   </label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
+                  <CurrencyInput
                     value={price}
-                    onChange={(e) => setPrice(Number(e.target.value))}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm"
+                    onChangeValue={setPrice}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-sm font-bold text-rose-600 dark:text-rose-400"
+                    required
                   />
                 </div>
                 <div>

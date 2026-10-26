@@ -22,8 +22,8 @@ export default function MeuLinkPage() {
 
   const bookingUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/agendar/${username || ""}`
-      : `/agendar/${username || ""}`;
+      ? `${window.location.origin}/agendamento/${username || ""}`
+      : `/agendamento/${username || ""}`;
 
   const copyLink = async () => {
     try {
@@ -130,8 +130,14 @@ export default function MeuLinkPage() {
                 </div>
 
                 <p className="text-xs text-[var(--muted)] mt-5 text-center">
-                  Seu link é único:{" "}
-                  <strong className="text-[var(--primary)]">BELLAMAIS.COM/AGENDAR/{username?.toUpperCase()}</strong>
+                  Seu link é exclusivo:{" "}
+                  <strong className="text-[var(--primary)] font-mono">
+                    {(typeof window !== "undefined"
+                      ? window.location.host
+                      : "bellamais.com"
+                    ).toUpperCase()}
+                    /AGENDAMENTO/{username?.toUpperCase()}
+                  </strong>
                 </p>
               </>
             )}
