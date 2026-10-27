@@ -19,6 +19,8 @@ import {
   Sparkles,
   Sun,
   Moon,
+  Menu,
+  X,
 } from "lucide-react";
 import { DemoSection } from "@/components/LandingPage/DemoSection";
 import { FAQSection } from "@/components/LandingPage/FAQSection";
@@ -28,6 +30,7 @@ import { soundEffects } from "@/lib/soundEffects";
 export default function LandingPage() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isDark, setIsDark] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const lastScrollY = useRef(0);
 
   // Sincronização do tema (Claro / Escuro)
@@ -45,6 +48,16 @@ export default function LandingPage() {
       document.documentElement.setAttribute("data-theme", "light");
     }
   }, []);
+
+  const toggleMobileMenu = () => {
+    soundEffects.playClick();
+    setIsMobileMenuOpen((prev) => !prev);
+  };
+
+  const handleNavClick = () => {
+    soundEffects.playClick();
+    setIsMobileMenuOpen(false);
+  };
 
   const toggleTheme = () => {
     soundEffects.playClick();
@@ -65,8 +78,9 @@ export default function LandingPage() {
 
   useEffect(() => {
     let ticking = false;
-    const threshold = 10;
+    const threshold = 18;
     const handleScroll = () => {
+      if (isMobileMenuOpen) return;
       if (!ticking) {
         window.requestAnimationFrame(() => {
           const currentScrollY =
@@ -92,6 +106,17 @@ export default function LandingPage() {
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
+  }, [isMobileMenuOpen]);
+
+  // Fecha menu mobile ao redimensionar para telas maiores
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
@@ -167,8 +192,66 @@ export default function LandingPage() {
             >
               Começar Agora
             </a>
+            <button
+              type="button"
+              onClick={toggleMobileMenu}
+              className={styles.mobileMenuBtn}
+              aria-label={isMobileMenuOpen ? "Fechar menu" : "Abrir menu de navegação"}
+              aria-expanded={isMobileMenuOpen}
+            >
+              {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer Dropdown */}
+        {isMobileMenuOpen && (
+          <div className={styles.mobileNavDrawer}>
+            <ul className={styles.mobileNavLinks}>
+              <li>
+                <a href="#recursos" onClick={handleNavClick}>
+                  Soluções
+                </a>
+              </li>
+              <li>
+                <a href="#demo" onClick={handleNavClick}>
+                  Demonstração
+                </a>
+              </li>
+              <li>
+                <a href="#precos" onClick={handleNavClick}>
+                  Planos
+                </a>
+              </li>
+              <li>
+                <a href="#depoimentos" onClick={handleNavClick}>
+                  Depoimentos
+                </a>
+              </li>
+              <li>
+                <a href="#faq" onClick={handleNavClick}>
+                  Dúvidas Frequentes
+                </a>
+              </li>
+            </ul>
+            <div className={styles.mobileDrawerActions}>
+              <a
+                href="/login"
+                className={styles.mobileDrawerLoginLink}
+                onClick={handleNavClick}
+              >
+                Entrar na Conta
+              </a>
+              <a
+                href="#precos"
+                className={`${styles.btn} ${styles.btnPrimary} ${styles.mobileDrawerCta}`}
+                onClick={handleNavClick}
+              >
+                Começar Agora
+              </a>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
