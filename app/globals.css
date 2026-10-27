@@ -3,71 +3,73 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 :root {
-  /* Paleta BellaMais Glow 2026: Feminina, Vibrante & Cheia de Energia
-     Fundo aquecido de porcelana suave, cartões com bordas sutis em quartzo rosa, acentos vivos em framboesa vibrante e esmeralda */
-  --background: #faf5f2;
-  --foreground: #20181b;
+  /* Paleta BellaMais Luxo Sereno: Sofisticada, Feminina & Harmoniosa
+     Fundo linho/porcelana suave, cartões brancos nobres com bordas aquecidas sutis,
+     acento principal em Borgonha / Rosa Veludo Queimado e toques refinados de sálvia e âmbar */
+  --background: #faf7f5;
+  --foreground: #221a1d;
 
-  --primary: #be185d;
-  --primary-dark: #9d174d;
-  --primary-light: #fdf2f8;
-  --primary-light-hover: #fce7f3;
+  --primary: #7e1639;
+  --primary-dark: #64112e;
+  --primary-light: #faeef2;
+  --primary-light-hover: #f5dde5;
 
-  --accent-gold: #d97706;
+  --accent-gold: #b45309;
   --accent-gold-light: #fef3c7;
-  --accent-wine: #831843;
+  --accent-wine: #7e1639;
 
-  --accent-emerald: #059669;
+  --accent-emerald: #15803d;
   --accent-emerald-light: #ecfdf5;
 
   --accent-violet: #7c3aed;
   --accent-violet-light: #f5f3ff;
 
-  --beige-bg: #faf5f2;
-  --beige-card: #fffdfb;
-  --surface: #fffdfb;
-  --surface-hover: #fdf4f8;
-  --border-subtle: #eae2dc;
-  --grey-text: #73646d;
-  --dark-text: #20181b;
+  --beige-bg: #faf7f5;
+  --beige-card: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #faf3f6;
+  --border-subtle: #ede6e1;
+  --grey-text: #73656c;
+  --dark-text: #221a1d;
 
-  --card-bg: #fffdfb;
-  --card-border: #eae2dc;
-  --muted: #706268;
+  --card-bg: #ffffff;
+  --card-border: #ede6e1;
+  --muted: #73656c;
 }
 
 html.dark,
 [data-theme="dark"] {
-  /* Modo Escuro Premium: Slate/Obsidian Neutro e Limpo com Destaques Vivos em Rosa Radiante e Esmeralda */
-  --background: #0e0c10;
-  --foreground: #f6eef2;
+  /* Modo Escuro Sofisticado: Carvão/Veludo Profundo e Suave (Sem Preto Puro / Sem Vermelho Agressivo)
+     Superfícies em ardósia aveludada, acentos elegantes em Rosa Queimado e Dourado Âmbar */
+  --background: #151419;
+  --foreground: #f4eef1;
 
-  --primary: #f43f5e;
-  --primary-dark: #fb7185;
-  --primary-light: #26111b;
-  --primary-light-hover: #361726;
+  --primary: #e27d9a;
+  --primary-dark: #d86888;
+  --primary-light: #2a1e26;
+  --primary-light-hover: #362430;
 
-  --accent-gold: #fbbf24;
-  --accent-gold-light: #2c200a;
-  --accent-wine: #f43f5e;
+  --accent-gold: #f59e0b;
+  --accent-gold-light: #2c210d;
+  --accent-wine: #e27d9a;
 
-  --accent-emerald: #10b981;
-  --accent-emerald-light: #064e3b;
+  --accent-emerald: #34d399;
+  --accent-emerald-light: #0d2b1f;
 
   --accent-violet: #c084fc;
-  --accent-violet-light: #2e1065;
+  --accent-violet-light: #251739;
 
-  --beige-bg: #090a0f;
-  --beige-card: #12141c;
-  --surface: #171924;
-  --surface-hover: #1f2230;
+  --beige-bg: #151419;
+  --beige-card: #1c1a22;
+  --surface: #1c1a22;
+  --surface-hover: #24222b;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --grey-text: #94a3b8;
-  --dark-text: #f8fafc;
+  --grey-text: #a0949c;
+  --dark-text: #f4eef1;
 
-  --card-bg: #161218;
+  --card-bg: #1c1a22;
   --card-border: rgba(255, 255, 255, 0.08);
-  --muted: #94a3b8;
+  --muted: #a0949c;
 }
 
 @theme inline {
@@ -90,7 +92,7 @@ html.dark,
 
 html,
 body {
-  overflow-x: hidden;
+  overflow-x: clip;
   max-width: 100vw;
   width: 100%;
 }
@@ -121,7 +123,7 @@ body {
   }
   50% {
     opacity: 1;
-    transform: scale(1.03);
+    transform: scale(1.02);
   }
 }
 
@@ -130,7 +132,7 @@ body {
     transform: translateY(0);
   }
   50% {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
   }
 }
 
@@ -150,8 +152,8 @@ body {
   background-image: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0,
-    rgba(255, 255, 255, 0.25) 20%,
-    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0.35) 60%,
     rgba(255, 255, 255, 0)
   );
   animation: shimmer 3s infinite;
@@ -165,24 +167,24 @@ body {
   animation: floatGentle 5s ease-in-out infinite;
 }
 
-/* Utilitários de Superfície Glassmorphic & Aura de Luz */
+/* Utilitários de Superfície Glassmorphic & Cards Nobres */
 .lux-glass-card {
   background: var(--card-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--card-border);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.25s ease;
 }
 
 .lux-glass-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px -10px rgba(190, 24, 93, 0.12);
-  border-color: rgba(244, 63, 94, 0.35);
+  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.08);
+  border-color: rgba(126, 22, 57, 0.25);
 }
 
 html.dark .lux-glass-card:hover {
-  box-shadow: 0 14px 34px -10px rgba(244, 63, 94, 0.2);
-  border-color: rgba(244, 63, 94, 0.4);
+  box-shadow: 0 12px 28px -8px rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* =========================================================================
@@ -192,21 +194,22 @@ html.dark .lux-glass-card:hover {
 html.dark .bg-white:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
 html.dark .lux-card:not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
 html.dark .bg-\[var\(--card-bg\)\]:not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *) {
-  background: #12141c !important;
+  background: #1c1a22 !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 0 10px 28px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25) !important;
   color: var(--foreground);
 }
 
 html.dark .bg-white:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *):hover,
 html.dark .lux-card:not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *):hover,
 html.dark .bg-\[var\(--card-bg\)\]:not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *):hover {
-  border-color: rgba(244, 63, 94, 0.4) !important;
-  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.65), 0 0 20px -2px rgba(244, 63, 94, 0.15), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35) !important;
 }
 
 /* Recintos e caixas aninhadas (sub-cards, inputs, tabelas e filtros) */
 html.dark .bg-\[\#faf6f2\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
+html.dark .bg-\[\#faf5f2\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
 html.dark .bg-\[\#fcfaf8\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
 html.dark .bg-\[\#fffcf9\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
 html.dark .bg-\[\#fdfbfc\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
@@ -215,9 +218,9 @@ html.dark .bg-gray-50:not([class*="dark:"]):not(#demo *):not([class*="landingPag
 html.dark .bg-gray-100:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
 html.dark .bg-stone-50:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
 html.dark .bg-stone-100:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *) {
-  background-color: #0b0c12 !important;
-  border-color: rgba(255, 255, 255, 0.06) !important;
-  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.4) !important;
+  background-color: #151419 !important;
+  border-color: rgba(255, 255, 255, 0.07) !important;
+  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.2) !important;
 }
 
 html.dark .border-\[\#f2e6ea\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
@@ -230,26 +233,26 @@ html.dark .border-stone-100:not([class*="dark:"]):not(#demo *):not([class*="land
 }
 
 /* Selos e chips de ícones com iluminação sutil (Jewel Chips) */
-html.dark .bg-emerald-500\/10 {
-  background-color: rgba(16, 185, 129, 0.16) !important;
-  border-color: rgba(16, 185, 129, 0.35) !important;
-  box-shadow: 0 0 12px rgba(16, 185, 129, 0.12);
+html.dark .bg-emerald-500\/10,
+html.dark .bg-emerald-50 {
+  background-color: rgba(52, 211, 153, 0.12) !important;
+  border-color: rgba(52, 211, 153, 0.25) !important;
 }
 html.dark .bg-rose-500\/10,
-html.dark .bg-pink-500\/10 {
-  background-color: rgba(244, 63, 94, 0.16) !important;
-  border-color: rgba(244, 63, 94, 0.35) !important;
-  box-shadow: 0 0 12px rgba(244, 63, 94, 0.15);
+html.dark .bg-pink-500\/10,
+html.dark .bg-rose-50 {
+  background-color: rgba(226, 125, 154, 0.12) !important;
+  border-color: rgba(226, 125, 154, 0.25) !important;
 }
-html.dark .bg-amber-500\/10 {
-  background-color: rgba(251, 191, 36, 0.16) !important;
-  border-color: rgba(251, 191, 36, 0.35) !important;
-  box-shadow: 0 0 12px rgba(251, 191, 36, 0.12);
+html.dark .bg-amber-500\/10,
+html.dark .bg-amber-50 {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.25) !important;
 }
-html.dark .bg-purple-500\/10 {
-  background-color: rgba(192, 132, 252, 0.16) !important;
-  border-color: rgba(192, 132, 252, 0.35) !important;
-  box-shadow: 0 0 12px rgba(192, 132, 252, 0.12);
+html.dark .bg-purple-500\/10,
+html.dark .bg-purple-50 {
+  background-color: rgba(192, 132, 252, 0.12) !important;
+  border-color: rgba(192, 132, 252, 0.25) !important;
 }
 
 html.dark .text-\[\#2d1b2e\]:not([class*="dark:"]):not(#demo *):not([class*="landingPage"] *):not([class*="bookingPage"] *):not(.bookingPage *),
@@ -274,18 +277,19 @@ html.dark .text-stone-500:not([class*="dark:"]):not(#demo *):not([class*="landin
 }
 
 html.dark .text-\[\#88234b\]:not([class*="dark:"]),
-html.dark .text-\[\#b83b6b\]:not([class*="dark:"]) {
+html.dark .text-\[\#b83b6b\]:not([class*="dark:"]),
+html.dark .text-\[\#be185d\]:not([class*="dark:"]) {
   color: var(--primary) !important;
 }
 
 html.dark .bg-\[\#fff0f5\]:not([class*="dark:"]),
 html.dark .bg-\[\#fce4ed\]:not([class*="dark:"]) {
-  background-color: rgba(244, 63, 94, 0.18) !important;
-  color: #fca5a5 !important;
+  background-color: rgba(226, 125, 154, 0.12) !important;
+  color: #f9a8d4 !important;
 }
 
 html.dark .bg-\[\#fdf8e7\]:not([class*="dark:"]) {
-  background-color: rgba(251, 191, 36, 0.18) !important;
+  background-color: rgba(245, 158, 11, 0.12) !important;
   color: #fde68a !important;
 }
 
@@ -297,31 +301,31 @@ html.dark .hover\:bg-gray-50:hover,
 html.dark .hover\:bg-\[\#faf6f2\]:hover,
 html.dark .hover\:bg-\[\#fff0f5\]:hover,
 html.dark .hover\:bg-white:hover {
-  background-color: rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 html.dark input:not([type="checkbox"]):not([type="radio"]):not([type="color"]),
 html.dark select,
 html.dark textarea {
-  background-color: #0b0c12 !important;
+  background-color: #151419 !important;
   color: var(--foreground) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
-  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.35);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: inset 0 1px 2px 0 rgba(0, 0, 0, 0.2);
 }
 
 html.dark input::placeholder,
 html.dark textarea::placeholder {
-  color: #64748b !important;
+  color: #716973 !important;
 }
 
 html.dark table thead th {
-  background-color: #0e1017 !important;
-  color: #94a3b8 !important;
+  background-color: #151419 !important;
+  color: #a0949c !important;
   border-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 html.dark table tbody td {
-  border-color: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.06) !important;
 }
 
 /* Custom Scrollbar */
@@ -340,12 +344,12 @@ html.dark table tbody td {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9e3b66;
+  background: #7e1639;
 }
 
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -353,12 +357,16 @@ html.dark table tbody td {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #decdd4;
+  background: #d8c8cf;
   border-radius: 4px;
 }
 
+html.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #9e3b66;
+  background: #7e1639;
 }
 
 .sidebar-scrollbar::-webkit-scrollbar {
@@ -370,12 +378,12 @@ html.dark table tbody td {
 }
 
 .sidebar-scrollbar::-webkit-scrollbar-thumb {
-  background: rgba(158, 59, 102, 0.2) !important;
+  background: rgba(126, 22, 57, 0.2) !important;
   border-radius: 4px !important;
 }
 
 .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: rgba(158, 59, 102, 0.4) !important;
+  background: rgba(126, 22, 57, 0.4) !important;
 }
 
 .sidebar-scrollbar::-webkit-scrollbar-button {
@@ -426,7 +434,7 @@ textarea {
 }
 
 .lux-card:hover {
-  border-color: rgba(159, 18, 57, 0.25);
+  border-color: rgba(126, 22, 57, 0.25);
   box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
 }
 
@@ -438,6 +446,6 @@ textarea {
 }
 
 html.dark .lux-glass {
-  background: rgba(28, 26, 29, 0.95);
+  background: rgba(28, 26, 34, 0.95);
   border-bottom: 1px solid var(--card-border);
 }

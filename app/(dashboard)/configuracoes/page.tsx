@@ -567,7 +567,7 @@ export default function Settings() {
                           })
                         }
                         className="w-full p-3 border border-[var(--card-border)] rounded-xl text-sm bg-[var(--background)]"
-                        placeholder="Ex: Studio Glow Beleza"
+                        placeholder="Ex: BellaMais Salão de Beleza"
                       />
                     </div>
                   </div>
