@@ -11,6 +11,8 @@ import {
   CalendarPlus,
   MessageCircle,
   Settings,
+  PanelLeft,
+  PanelLeftClose,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "@/contexts/SidebarContext";
@@ -22,7 +24,7 @@ interface HeaderProps {
 }
 
 export function Header({ title }: HeaderProps) {
-  const { toggle } = useSidebar();
+  const { toggle, isDesktopOpen } = useSidebar();
   const router = useRouter();
   const { user, profile, themeMode, signOut, toggleThemeMode } = useAuth();
   const { unreadCount } = useNotifications();
@@ -50,26 +52,48 @@ export function Header({ title }: HeaderProps) {
   };
 
   return (
-    <header className="h-16 bg-[var(--card-bg)] border-b border-[var(--card-border)] flex items-center justify-between px-4 md:px-6 lg:px-8 sticky top-0 z-30">
-      <div className="flex items-center gap-3 min-w-0">
+    <header className="h-16 bg-white dark:bg-[#1C1A22] border-b border-[#EDE6E1] dark:border-white/[0.08] flex items-center justify-between px-3.5 sm:px-6 lg:px-8 sticky top-0 z-30">
+      <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        {/* Botão de Toggle do Menu Lateral */}
         <button
+          type="button"
           onClick={toggle}
-          className="md:hidden p-2 -ml-2 hover:bg-stone-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-[var(--foreground)] cursor-pointer"
-          aria-label="Abrir menu"
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer shrink-0 ${
+            !isDesktopOpen
+              ? "bg-[#7E1639] hover:bg-[#9E204A] text-white shadow-xs"
+              : "bg-stone-100 dark:bg-white/[0.06] hover:bg-stone-200/80 dark:hover:bg-white/[0.12] text-stone-700 dark:text-stone-200 border border-stone-200/80 dark:border-white/10"
+          }`}
+          aria-label={isDesktopOpen ? "Recolher menu lateral" : "Abrir menu lateral"}
+          title={isDesktopOpen ? "Recolher menu lateral" : "Abrir menu lateral"}
         >
-          <Menu size={20} />
+          {isDesktopOpen ? (
+            <>
+              <PanelLeftClose size={16} className="text-[#7E1639] dark:text-[#E27D9A]" />
+              <span className="hidden sm:inline text-stone-600 dark:text-stone-300">Recolher</span>
+            </>
+          ) : (
+            <>
+              <PanelLeft size={16} />
+              <span>Abrir Menu</span>
+            </>
+          )}
         </button>
         <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-base md:text-lg font-bold tracking-tight text-[var(--foreground)] truncate">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <h1 className="text-base md:text-lg font-bold tracking-tight text-[#221A1D] dark:text-[#F4EEF1] truncate">
               {title}
             </h1>
-            {profile?.salon_name && (
-              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-white/[0.06] text-[var(--muted)] dark:text-rose-100/80 text-[11px] font-medium border border-stone-200 dark:border-white/10">
+            {profile?.salon_name && profile.salon_name.toLowerCase() !== "studio glow" ? (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-[#A0949C] text-[11px] font-medium border border-stone-200/80 dark:border-white/10">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 {profile.salon_name}
               </span>
-            )}
+            ) : profile?.name && profile.name.toLowerCase() !== "profissional" ? (
+              <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-[#A0949C] text-[11px] font-medium border border-stone-200/80 dark:border-white/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                {profile.name}
+              </span>
+            ) : null}
           </div>
         </div>
       </div>
@@ -80,7 +104,7 @@ export function Header({ title }: HeaderProps) {
           className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-stone-200 dark:border-white/10 bg-transparent dark:bg-white/[0.04] hover:bg-stone-50 dark:hover:bg-white/[0.08] text-stone-700 dark:text-zinc-200 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
           title="Ir para Agenda"
         >
-          <CalendarPlus size={14} className="text-[var(--primary)] dark:text-rose-400" />
+          <CalendarPlus size={14} className="text-[#7E1639] dark:text-[#E27D9A]" />
           <span>Agenda</span>
         </button>
 
