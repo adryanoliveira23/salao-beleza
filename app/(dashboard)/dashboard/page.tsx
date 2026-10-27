@@ -93,8 +93,37 @@ export default function Dashboard() {
     }
   }, [now, todayStr]);
 
-  const salonName = useMemo(() => {
-    return profile?.salon_name?.trim() || "Studio Glow";
+  const displayName = useMemo(() => {
+    // 1. Tenta o nome do usuário cadastrado (ex: primeiro nome do dono/profissional)
+    const userName = (profile?.name || user?.displayName || "").trim();
+    if (userName && userName.toLowerCase() !== "profissional") {
+      return userName.split(" ")[0];
+    }
+
+    // 2. Se houver nome do salão real cadastrado (diferente de Studio Glow)
+    const salon = profile?.salon_name?.trim();
+    if (salon && salon.toLowerCase() !== "studio glow" && salon !== "Meu Espaço de Beleza") {
+      return salon;
+    }
+
+    // 3. Nome completo se disponível
+    if (userName) {
+      return userName;
+    }
+
+    // 4. Se tiver email, extrai o nome do usuário
+    if (user?.email) {
+      const emailPrefix = user.email.split("@")[0];
+      return emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1);
+    }
+
+    return "Bem-vindo";
+  }, [profile, user]);
+
+  const realSalonName = useMemo(() => {
+    const s = profile?.salon_name?.trim();
+    if (s && s.toLowerCase() !== "studio glow") return s;
+    return profile?.name || "Nosso Salão";
   }, [profile]);
 
   // Processamento 100% REAL dos dados do salão
@@ -305,10 +334,10 @@ export default function Dashboard() {
 
   if (isLoading) {
     return (
-      <div className="flex bg-[#FAF5F2] dark:bg-[#0E0C10] h-full items-center justify-center min-h-[60vh]">
+      <div className="flex bg-[#FAF7F5] dark:bg-[#151419] h-full items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#BE185D] border-t-transparent" />
-          <span className="text-xs font-medium text-[#706268] dark:text-[#A1949B]">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#7E1639] border-t-transparent" />
+          <span className="text-xs font-medium text-[#73656C] dark:text-[#A0949C]">
             Carregando painel do estúdio...
           </span>
         </div>
@@ -357,34 +386,42 @@ export default function Dashboard() {
     chartPoints[Math.floor(chartPoints.length / 2)];
 
   return (
-    <div className="flex flex-col min-h-full bg-[#FAF5F2] dark:bg-[#0E0C10] text-[#20181B] dark:text-[#F6EEF2] transition-colors duration-200 font-sans">
+    <div className="flex flex-col min-h-full bg-[#FAF7F5] dark:bg-[#151419] text-[#221A1D] dark:text-[#F4EEF1] transition-colors duration-200 font-sans">
       <Header title="Painel Principal" />
 
-      <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 space-y-6 max-w-[1440px] w-full mx-auto">
+      <div className="flex-1 overflow-y-auto p-3.5 sm:p-6 md:p-8 space-y-5 sm:space-y-6 max-w-[1440px] w-full mx-auto">
         {/* =========================================================================
-            1. BARRA SUPERIOR: SAUDAÇÃO & AÇÕES RÁPIDAS (SEM EMOJIS, APENAS LUCIDE)
+            1. BARRA SUPERIOR: SAUDAÇÃO & AÇÕES RÁPIDAS
             ========================================================================= */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <Sparkles size={18} className="text-[#BE185D] dark:text-rose-400" />
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#20181B] dark:text-[#F6EEF2]">
-                {greeting}, {salonName}
+              <Sparkles size={18} className="text-[#7E1639] dark:text-[#E27D9A]" />
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[#221A1D] dark:text-[#F4EEF1]">
+                {greeting}, {displayName}
               </h1>
             </div>
-            <div className="flex items-center gap-2 mt-1 text-xs text-[#706268] dark:text-[#A1949B]">
+            <div className="flex items-center gap-2 mt-1 text-xs text-[#73656C] dark:text-[#A0949C]">
               <span>{todayFormatted}</span>
+              {profile?.salon_name && profile.salon_name.toLowerCase() !== "studio glow" && (
+                <>
+                  <span>•</span>
+                  <span className="font-semibold text-stone-700 dark:text-stone-300">
+                    {profile.salon_name}
+                  </span>
+                </>
+              )}
               <span>•</span>
-              <span className="inline-flex items-center gap-1.5 font-medium text-[#15803D] dark:text-[#4ADE80]">
-                <span className="w-2 h-2 rounded-full bg-[#15803D] dark:bg-[#4ADE80]" />
+              <span className="inline-flex items-center gap-1.5 font-medium text-[#15803D] dark:text-[#34D399]">
+                <span className="w-2 h-2 rounded-full bg-[#15803D] dark:bg-[#34D399]" />
                 Salão Aberto
               </span>
             </div>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
             {/* Campo de Busca */}
-            <div className="relative flex-1 sm:w-64 min-w-[200px]">
+            <div className="relative flex-1 sm:w-60 min-w-[160px]">
               <Search
                 size={14}
                 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"
@@ -394,16 +431,16 @@ export default function Dashboard() {
                 placeholder="Buscar cliente, agendamento..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-9 pr-4 py-2 text-xs rounded-full bg-white dark:bg-[#16131A] border border-[#E8DFD8] dark:border-white/[0.08] text-[#20181B] dark:text-[#F6EEF2] placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#BE185D] shadow-2xs font-normal"
+                className="w-full pl-9 pr-3.5 py-2 text-xs rounded-full bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] text-[#221A1D] dark:text-[#F4EEF1] placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#7E1639] shadow-2xs font-normal transition-all"
               />
             </div>
 
             {/* Link WhatsApp Salão */}
             <Link
               href="/whatsapp"
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white dark:bg-[#16131A] border border-[#E8DFD8] dark:border-white/[0.08] text-xs font-medium text-stone-700 dark:text-stone-300 hover:text-[#15803D] transition shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] text-xs font-medium text-stone-700 dark:text-stone-300 hover:text-[#15803D] transition shadow-2xs"
             >
-              <MessageCircle size={14} className="text-[#15803D] dark:text-[#4ADE80]" />
+              <MessageCircle size={14} className="text-[#15803D] dark:text-[#34D399]" />
               <span>WhatsApp</span>
             </Link>
 
@@ -411,7 +448,7 @@ export default function Dashboard() {
             <Link
               href="/agenda"
               onClick={() => soundEffects.playSparkle()}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#7B1832] hover:bg-[#621327] text-white text-xs font-semibold transition-all shadow-[0_2px_8px_rgba(123,24,50,0.25)] active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#7E1639] hover:bg-[#68112E] text-white text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer"
             >
               <Plus size={14} />
               <span>Novo Agendamento</span>
@@ -420,181 +457,179 @@ export default function Dashboard() {
         </div>
 
         {/* =========================================================================
-            2. OS 4 CARDS DE INDICADORES (DESIGN SUAVE, CORES NOBRES & DADOS REAIS)
+            2. OS 4 CARDS DE INDICADORES — SISTEMA HARMONIOSO SEPARADO
+               - Light: Superfície branca pura, borda acolhedora suave, zero poluição visual
+               - Dark: Ardósia aveludada com brilho luminoso sutil e elegante no canto
             ========================================================================= */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* CARD 1: FATURAMENTO NO MÊS (Rosa Editorial / Blush Suave) */}
-          <div className="rounded-2xl p-5 bg-[#FFF6F8] dark:bg-[#1C1318] border border-[#FCE7F0] dark:border-rose-950/40 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-pink-200/50 to-rose-200/20 dark:from-pink-900/20 dark:to-transparent blur-xl pointer-events-none" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+
+          {/* CARD 1: FATURAMENTO */}
+          <div className="rounded-2xl p-5 bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] relative overflow-hidden flex flex-col justify-between transition-all">
+            {/* Luminous aura suave no canto superior direito exclusivo do dark mode */}
+            <div className="hidden dark:block absolute top-0 right-0 w-36 h-36 rounded-full bg-[radial-gradient(ellipse_at_top_right,rgba(226,125,154,0.18),transparent_70%)] pointer-events-none" />
 
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl bg-pink-100/90 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center">
-                  <BarChart3 size={16} />
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="w-9 h-9 rounded-xl bg-[#FBF0F4] text-[#7E1639] dark:bg-white/[0.06] dark:text-[#E27D9A] dark:border dark:border-rose-400/20 flex items-center justify-center">
+                  <BarChart3 size={17} />
                 </div>
-                <div className="w-7 h-7 rounded-full bg-[#FFD9E2] dark:bg-rose-900/40 text-[#9E1B42] dark:text-rose-300 flex items-center justify-center text-xs">
-                  <DollarSign size={13} />
+                <div className="w-8 h-8 rounded-full bg-[#FBF0F4] text-[#7E1639] dark:bg-white/[0.06] dark:text-[#E27D9A] flex items-center justify-center text-xs font-semibold">
+                  <DollarSign size={14} />
                 </div>
               </div>
 
-              <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
+              <span className="text-xs font-medium text-stone-500 dark:text-[#A0949C] block mb-1">
                 Faturamento no mês
               </span>
 
               <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums">
+                <span className="text-2xl sm:text-3xl font-bold tracking-tight text-[#221A1D] dark:text-[#F4EEF1] tabular-nums">
                   {formatBRL(metrics.currentRev)}
                 </span>
-                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#34D399] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
                   <ArrowUpRight size={11} /> {metrics.growthText}
                 </span>
               </div>
             </div>
 
-            <div className="relative z-10 mt-5 pt-3 space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
+            <div className="relative z-10 mt-5 space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-stone-500 dark:text-[#A0949C]">
                 <span>Meta: {formatBRL(metrics.monthlyGoal)}</span>
-                <span className="font-semibold text-stone-700 dark:text-stone-300">
-                  {metrics.goalPercent}%
-                </span>
+                <span className="font-semibold text-stone-800 dark:text-[#F4EEF1]">{metrics.goalPercent}%</span>
               </div>
-              <div className="h-2 w-full bg-stone-200/60 dark:bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-stone-100 dark:bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#9D174D] to-[#BE185D] rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-[#7E1639] to-[#9E204A] dark:from-[#7E1639] dark:to-[#E27D9A] rounded-full transition-all duration-500"
                   style={{ width: `${metrics.goalPercent}%` }}
                 />
               </div>
             </div>
           </div>
 
-          {/* CARD 2: ATENDIMENTOS HOJE (Pêssego / Marfim Acolhedor) */}
-          <div className="rounded-2xl p-5 bg-[#FFF9F2] dark:bg-[#1C1712] border border-[#FEEBD0] dark:border-amber-950/40 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-amber-200/50 to-amber-200/20 dark:from-amber-900/20 dark:to-transparent blur-xl pointer-events-none" />
+          {/* CARD 2: ATENDIMENTOS HOJE */}
+          <div className="rounded-2xl p-5 bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] relative overflow-hidden flex flex-col justify-between transition-all">
+            {/* Luminous aura suave no canto superior direito exclusivo do dark mode */}
+            <div className="hidden dark:block absolute top-0 right-0 w-36 h-36 rounded-full bg-[radial-gradient(ellipse_at_top_right,rgba(245,158,11,0.16),transparent_70%)] pointer-events-none" />
 
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl bg-amber-100/90 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center">
-                  <Calendar size={16} />
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="w-9 h-9 rounded-xl bg-[#FEF6EE] text-[#B45309] dark:bg-white/[0.06] dark:text-[#FBBF24] dark:border dark:border-amber-400/20 flex items-center justify-center">
+                  <Calendar size={17} />
                 </div>
-                <div className="w-7 h-7 rounded-full bg-[#FFEAD0] dark:bg-amber-900/40 text-[#9A5B15] dark:text-amber-300 flex items-center justify-center text-xs">
-                  <Calendar size={13} />
+                <div className="w-8 h-8 rounded-full bg-[#FEF6EE] text-[#B45309] dark:bg-white/[0.06] dark:text-[#FBBF24] flex items-center justify-center text-xs font-semibold">
+                  <Calendar size={14} />
                 </div>
               </div>
 
-              <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
+              <span className="text-xs font-medium text-stone-500 dark:text-[#A0949C] block mb-1">
                 Atendimentos hoje
               </span>
 
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums">
+                <span className="text-2xl sm:text-3xl font-bold tracking-tight text-[#221A1D] dark:text-[#F4EEF1] tabular-nums">
                   {metrics.todayApts.length}
                 </span>
-                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#34D399] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
                   <ArrowUpRight size={11} /> +{metrics.confirmedTodayCount || 0}
                 </span>
               </div>
             </div>
 
-            <div className="relative z-10 mt-5 pt-3 space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-stone-500 dark:text-stone-400">
-                <span>de {metrics.totalSlotsCapacity} agendados</span>
-                <span className="font-semibold text-stone-700 dark:text-stone-300">
-                  {metrics.occupancyRate}%
-                </span>
+            <div className="relative z-10 mt-5 space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-stone-500 dark:text-[#A0949C]">
+                <span>de {metrics.totalSlotsCapacity} horários</span>
+                <span className="font-semibold text-stone-800 dark:text-[#F4EEF1]">{metrics.occupancyRate}%</span>
               </div>
-              <div className="h-2 w-full bg-stone-200/60 dark:bg-white/[0.06] rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-stone-100 dark:bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-gradient-to-r from-[#B45309] to-[#D97706] rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-[#B45309] to-[#D97706] dark:from-[#B45309] dark:to-[#FBBF24] rounded-full transition-all duration-500"
                   style={{ width: `${metrics.occupancyRate}%` }}
                 />
               </div>
             </div>
           </div>
 
-          {/* CARD 3: TICKET MÉDIO (Lavanda / Violeta Névoa) */}
-          <div className="rounded-2xl p-5 bg-[#FAF7FF] dark:bg-[#18131E] border border-[#EDE2FF] dark:border-purple-950/40 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-purple-200/50 to-violet-200/20 dark:from-purple-900/20 dark:to-transparent blur-xl pointer-events-none" />
+          {/* CARD 3: TICKET MÉDIO */}
+          <div className="rounded-2xl p-5 bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] relative overflow-hidden flex flex-col justify-between transition-all">
+            {/* Luminous aura suave no canto superior direito exclusivo do dark mode */}
+            <div className="hidden dark:block absolute top-0 right-0 w-36 h-36 rounded-full bg-[radial-gradient(ellipse_at_top_right,rgba(168,85,247,0.16),transparent_70%)] pointer-events-none" />
 
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl bg-purple-100/90 dark:bg-purple-950/60 text-[#7C3AED] dark:text-purple-400 flex items-center justify-center">
-                  <Crown size={16} />
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="w-9 h-9 rounded-xl bg-[#F5F3FF] text-[#7C3AED] dark:bg-white/[0.06] dark:text-[#C084FC] dark:border dark:border-purple-400/20 flex items-center justify-center">
+                  <Crown size={17} />
                 </div>
-                <div className="w-7 h-7 rounded-full bg-[#E9DCFF] dark:bg-purple-900/40 text-[#692EBF] dark:text-purple-300 flex items-center justify-center text-xs">
-                  <BarChart3 size={13} />
+                <div className="w-8 h-8 rounded-full bg-[#F5F3FF] text-[#7C3AED] dark:bg-white/[0.06] dark:text-[#C084FC] flex items-center justify-center text-xs font-semibold">
+                  <BarChart3 size={14} />
                 </div>
               </div>
 
-              <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
+              <span className="text-xs font-medium text-stone-500 dark:text-[#A0949C] block mb-1">
                 Ticket médio
               </span>
 
               <div className="flex items-baseline gap-2 flex-wrap">
-                <span className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums">
+                <span className="text-2xl sm:text-3xl font-bold tracking-tight text-[#221A1D] dark:text-[#F4EEF1] tabular-nums">
                   {formatBRL(metrics.avgTicket)}
                 </span>
-                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
+                <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#34D399] border border-emerald-200/60 dark:border-emerald-800/40 text-[11px] font-semibold">
                   <ArrowUpRight size={11} /> +8%
                 </span>
               </div>
             </div>
 
             <div className="relative z-10 mt-5 pt-3">
-              <span className="text-xs text-stone-500 dark:text-stone-400">
+              <span className="text-xs text-stone-500 dark:text-[#A0949C]">
                 com base nos atendimentos concluídos
               </span>
             </div>
           </div>
 
-          {/* CARD 4: OCUPAÇÃO DA GRADE (Sálvia / Eucalipto Suave) */}
-          <div className="rounded-2xl p-5 bg-[#F4FAF7] dark:bg-[#111A16] border border-[#D8EFE5] dark:border-emerald-950/40 shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] relative overflow-hidden flex flex-col justify-between">
-            <div className="absolute -top-10 -right-10 w-36 h-36 rounded-full bg-gradient-to-br from-emerald-200/50 to-teal-200/20 dark:from-emerald-900/20 dark:to-transparent blur-xl pointer-events-none" />
+          {/* CARD 4: OCUPAÇÃO DA GRADE */}
+          <div className="rounded-2xl p-5 bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] relative overflow-hidden flex flex-col justify-between transition-all">
+            {/* Luminous aura suave no canto superior direito exclusivo do dark mode */}
+            <div className="hidden dark:block absolute top-0 right-0 w-36 h-36 rounded-full bg-[radial-gradient(ellipse_at_top_right,rgba(52,211,153,0.16),transparent_70%)] pointer-events-none" />
 
             <div className="relative z-10">
-              <div className="flex items-center justify-between mb-3">
-                <div className="w-8 h-8 rounded-xl bg-emerald-100/90 dark:bg-emerald-950/60 text-[#0F766E] dark:text-emerald-400 flex items-center justify-center">
-                  <Users size={16} />
+              <div className="flex items-center justify-between mb-3.5">
+                <div className="w-9 h-9 rounded-xl bg-[#ECFDF5] text-[#15803D] dark:bg-white/[0.06] dark:text-[#34D399] dark:border dark:border-emerald-400/20 flex items-center justify-center">
+                  <Users size={17} />
                 </div>
-                <div className="w-7 h-7 rounded-full bg-[#D4EFE4] dark:bg-emerald-900/40 text-[#1E7158] dark:text-emerald-300 flex items-center justify-center text-xs">
-                  <Calendar size={13} />
+                <div className="w-8 h-8 rounded-full bg-[#ECFDF5] text-[#15803D] dark:bg-white/[0.06] dark:text-[#34D399] flex items-center justify-center text-xs font-semibold">
+                  <Calendar size={14} />
                 </div>
               </div>
 
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <span className="text-xs font-medium text-stone-500 dark:text-stone-400 block mb-1">
+                  <span className="text-xs font-medium text-stone-500 dark:text-[#A0949C] block mb-1">
                     Ocupação da grade
                   </span>
-                  <span className="text-2xl sm:text-3xl font-bold tracking-tight text-stone-900 dark:text-stone-100 tabular-nums block">
+                  <span className="text-2xl sm:text-3xl font-bold tracking-tight text-[#221A1D] dark:text-[#F4EEF1] tabular-nums block">
                     {metrics.occupancyRate}%
                   </span>
-                  <span className="text-xs text-stone-500 dark:text-stone-400 block mt-1">
-                    {metrics.nonCancelledToday} de {metrics.totalSlotsCapacity} horários preenchidos
+                  <span className="text-xs text-stone-500 dark:text-[#A0949C] block mt-1">
+                    {metrics.nonCancelledToday} de {metrics.totalSlotsCapacity} horários
                   </span>
                 </div>
 
-                {/* Donut Chart SVG alinhado à direita conforme Stitch */}
+                {/* Donut Chart SVG alinhado à direita */}
                 <div className="relative w-14 h-14 flex items-center justify-center shrink-0">
                   <svg className="w-14 h-14 -rotate-90 transform" viewBox="0 0 36 36">
                     <circle
-                      cx="18"
-                      cy="18"
-                      r="15.9155"
-                      className="text-stone-200/60 dark:text-white/[0.06]"
-                      strokeWidth="3.8"
-                      stroke="currentColor"
+                      cx="18" cy="18" r="15.9155"
+                      strokeWidth="3.6"
                       fill="none"
+                      className="stroke-stone-100 dark:stroke-white/10"
                     />
                     <circle
-                      cx="18"
-                      cy="18"
-                      r="15.9155"
-                      className="text-[#134E4A] dark:text-[#2DD4BF] transition-all duration-700 ease-out"
-                      strokeWidth="3.8"
+                      cx="18" cy="18" r="15.9155"
+                      stroke="#15803D"
+                      strokeWidth="3.6"
                       strokeDasharray={`${metrics.occupancyRate}, 100`}
                       strokeLinecap="round"
-                      stroke="currentColor"
                       fill="none"
+                      className="transition-all duration-700 ease-out dark:[stroke:#34D399]"
                     />
                   </svg>
                 </div>
@@ -606,35 +641,35 @@ export default function Dashboard() {
         {/* =========================================================================
             3. ESTRUTURA PRINCIPAL: GRÁFICO EM CURVA SUAVE + AGENDA DO DIA
             ========================================================================= */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* COLUNA ESQUERDA (8 COLS): GRÁFICO DE FATURAMENTO COM CURVA & STATS */}
-          <div className="lg:col-span-7 xl:col-span-8 space-y-6">
-            <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 sm:p-6 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6">
+          {/* COLUNA ESQUERDA: GRÁFICO DE FATURAMENTO COM CURVA & STATS */}
+          <div className="lg:col-span-7 xl:col-span-8 space-y-5 sm:space-y-6">
+            <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 sm:p-6 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-5 sm:space-y-6">
               {/* Cabeçalho do Gráfico */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-xl bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-xl bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center shrink-0">
                     <BarChart3 size={16} />
                   </div>
                   <div>
-                    <h3 className="text-base font-bold text-stone-900 dark:text-stone-100">
+                    <h3 className="text-sm sm:text-base font-bold text-[#221A1D] dark:text-[#F4EEF1]">
                       Evolução de Faturamento
                     </h3>
-                    <p className="text-xs text-stone-400 dark:text-stone-400">
+                    <p className="text-[11px] sm:text-xs text-stone-500 dark:text-[#A0949C]">
                       Receita de atendimentos realizados e confirmados no caixa
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <div className="flex items-center p-1 rounded-full bg-stone-100 dark:bg-[#201822] text-xs">
+                  <div className="flex items-center p-1 rounded-full bg-stone-100 dark:bg-white/[0.06] text-xs">
                     <button
                       type="button"
                       onClick={() => setChartPeriod("7d")}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
+                      className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold transition cursor-pointer ${
                         chartPeriod === "7d"
-                          ? "bg-[#6E132A] text-white shadow-xs"
-                          : "text-stone-600 dark:text-stone-400 hover:text-stone-900"
+                          ? "bg-[#7E1639] text-white shadow-xs"
+                          : "text-stone-600 dark:text-[#A0949C] hover:text-[#221A1D] dark:hover:text-[#F4EEF1]"
                       }`}
                     >
                       7 Dias
@@ -642,10 +677,10 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={() => setChartPeriod("30d")}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
+                      className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold transition cursor-pointer ${
                         chartPeriod === "30d"
-                          ? "bg-[#6E132A] text-white shadow-xs"
-                          : "text-stone-600 dark:text-stone-400 hover:text-stone-900"
+                          ? "bg-[#7E1639] text-white shadow-xs"
+                          : "text-stone-600 dark:text-[#A0949C] hover:text-[#221A1D] dark:hover:text-[#F4EEF1]"
                       }`}
                     >
                       30 Dias
@@ -653,10 +688,10 @@ export default function Dashboard() {
                     <button
                       type="button"
                       onClick={() => setChartPeriod("6m")}
-                      className={`px-3 py-1 rounded-full text-xs font-semibold transition cursor-pointer ${
+                      className={`px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-semibold transition cursor-pointer ${
                         chartPeriod === "6m"
-                          ? "bg-[#6E132A] text-white shadow-xs"
-                          : "text-stone-600 dark:text-stone-400 hover:text-stone-900"
+                          ? "bg-[#7E1639] text-white shadow-xs"
+                          : "text-stone-600 dark:text-[#A0949C] hover:text-[#221A1D] dark:hover:text-[#F4EEF1]"
                       }`}
                     >
                       6 Meses
@@ -675,39 +710,39 @@ export default function Dashboard() {
               {/* Área Gráfica com Curva SVG Real, Grid Horizontal & Tooltip de Pico */}
               <div className="relative pt-6 pb-2">
                 {/* Eixo Y com Guias Horizontais */}
-                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[10px] text-stone-400 pb-8 pl-1">
-                  <div className="flex items-center gap-3">
-                    <span className="w-12 text-right">
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none text-[9px] sm:text-[10px] text-stone-400 pb-8 pl-1">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="w-8 sm:w-11 text-right">
                       {formatBRL(maxValY).replace(",00", "")}
                     </span>
                     <div className="flex-1 border-b border-stone-100 dark:border-white/[0.04]" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="w-12 text-right">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="w-8 sm:w-11 text-right">
                       {formatBRL(maxValY * 0.75).replace(",00", "")}
                     </span>
                     <div className="flex-1 border-b border-stone-100 dark:border-white/[0.04]" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="w-12 text-right">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="w-8 sm:w-11 text-right">
                       {formatBRL(maxValY * 0.5).replace(",00", "")}
                     </span>
                     <div className="flex-1 border-b border-stone-100 dark:border-white/[0.04]" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="w-12 text-right">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="w-8 sm:w-11 text-right">
                       {formatBRL(maxValY * 0.25).replace(",00", "")}
                     </span>
                     <div className="flex-1 border-b border-stone-100 dark:border-white/[0.04]" />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="w-12 text-right">R$ 0</span>
-                    <div className="flex-1 border-b border-stone-200 dark:border-white/[0.08]" />
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <span className="w-8 sm:w-11 text-right">R$ 0</span>
+                    <div className="flex-1 border-b border-stone-100 dark:border-white/[0.06]" />
                   </div>
                 </div>
 
                 {/* SVG da Curva Suave & Preenchimento */}
-                <div className="relative ml-14 h-44">
+                <div className="relative ml-9 sm:ml-12 h-40 sm:h-44">
                   <svg
                     viewBox={`0 0 ${svgWidth} ${svgHeight}`}
                     className="w-full h-full overflow-visible"
@@ -715,9 +750,9 @@ export default function Dashboard() {
                   >
                     <defs>
                       <linearGradient id="roseCurveFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#BE185D" stopOpacity="0.25" />
-                        <stop offset="80%" stopColor="#BE185D" stopOpacity="0.03" />
-                        <stop offset="100%" stopColor="#BE185D" stopOpacity="0" />
+                        <stop offset="0%" stopColor="#7E1639" stopOpacity="0.22" className="dark:[stop-color:#E27D9A]" />
+                        <stop offset="80%" stopColor="#7E1639" stopOpacity="0.03" className="dark:[stop-color:#E27D9A]" />
+                        <stop offset="100%" stopColor="#7E1639" stopOpacity="0" className="dark:[stop-color:#E27D9A]" />
                       </linearGradient>
                     </defs>
 
@@ -728,9 +763,10 @@ export default function Dashboard() {
                     <path
                       d={curvedLineD}
                       fill="none"
-                      stroke="#BE185D"
+                      stroke="#7E1639"
                       strokeWidth="2.5"
                       strokeLinecap="round"
+                      className="dark:[stroke:#E27D9A]"
                     />
 
                     {/* Linha vertical no ponto de maior faturamento */}
@@ -740,9 +776,10 @@ export default function Dashboard() {
                         y1={peakPoint.y}
                         x2={peakPoint.x}
                         y2={svgHeight}
-                        stroke="#BE185D"
+                        stroke="#7E1639"
                         strokeWidth="1.2"
                         strokeDasharray="3 3"
+                        className="dark:[stroke:#E27D9A]"
                       />
                     )}
 
@@ -754,9 +791,9 @@ export default function Dashboard() {
                         cy={p.y}
                         r={p === peakPoint && p.data.value > 0 ? "4.5" : "3.5"}
                         fill="#FFFFFF"
-                        stroke="#BE185D"
+                        stroke="#7E1639"
                         strokeWidth="2.5"
-                        className="transition-all hover:scale-125"
+                        className="transition-all hover:scale-125 dark:[stroke:#E27D9A] dark:[fill:#1C1A22]"
                       />
                     ))}
                   </svg>
@@ -767,11 +804,11 @@ export default function Dashboard() {
                       className="absolute -top-3 transform -translate-x-1/2 pointer-events-none"
                       style={{ left: `${(peakPoint.x / svgWidth) * 100}%` }}
                     >
-                      <div className="px-3 py-1.5 rounded-xl bg-white dark:bg-[#201822] border border-[#EAE2DC] dark:border-white/[0.08] shadow-md text-center whitespace-nowrap">
-                        <span className="text-[10px] text-stone-500 block leading-tight">
+                      <div className="px-2.5 sm:px-3 py-1.5 rounded-xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-md text-center whitespace-nowrap">
+                        <span className="text-[10px] text-stone-500 dark:text-[#A0949C] block leading-tight">
                           {peakPoint.data.label}
                         </span>
-                        <strong className="text-xs font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                        <strong className="text-xs font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums">
                           {formatBRL(peakPoint.data.value)}
                         </strong>
                       </div>
@@ -780,7 +817,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Rótulos do Eixo X */}
-                <div className="flex items-center justify-between ml-14 pt-2 text-[11px] text-stone-400">
+                <div className="flex items-center justify-between ml-9 sm:ml-12 pt-2 text-[10px] sm:text-[11px] text-stone-400">
                   {activeChartData.map((d, idx) => (
                     <span key={idx} className="flex-1 text-center truncate">
                       {d.label}
@@ -790,54 +827,54 @@ export default function Dashboard() {
               </div>
 
               {/* Faixa Inferior com os 3 Indicadores de Performance Reais */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                <div className="p-3.5 rounded-2xl bg-[#FAF5F2]/70 dark:bg-white/[0.03] border border-[#EAE2DC]/80 dark:border-white/[0.06] flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center shrink-0">
-                      <Compass size={17} />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 pt-2">
+                <div className="p-3.5 rounded-2xl bg-[#FAF7F5] dark:bg-white/[0.02] border border-[#EDE6E1] dark:border-white/[0.06] flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center shrink-0">
+                      <Compass size={16} />
                     </div>
                     <div>
-                      <span className="text-[11px] text-stone-500 dark:text-stone-400 block">
+                      <span className="text-[11px] text-stone-500 dark:text-[#A0949C] block">
                         Total no período
                       </span>
-                      <strong className="text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                      <strong className="text-xs sm:text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums">
                         {formatBRL(totalPeriodRevenue)}
                       </strong>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] text-[10px] font-semibold border border-emerald-200/60 dark:border-emerald-800/40">
+                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#34D399] text-[10px] font-semibold border border-emerald-200/60 dark:border-emerald-800/40">
                     <ArrowUpRight size={10} /> +18%
                   </span>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-[#FAF5F2]/70 dark:bg-white/[0.03] border border-[#EAE2DC]/80 dark:border-white/[0.06] flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-white/10 text-stone-600 dark:text-stone-300 flex items-center justify-center shrink-0">
-                      <BarChart3 size={17} />
+                <div className="p-3.5 rounded-2xl bg-[#FAF7F5] dark:bg-white/[0.02] border border-[#EDE6E1] dark:border-white/[0.06] flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 sm:gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-stone-100 dark:bg-white/10 text-stone-600 dark:text-stone-300 flex items-center justify-center shrink-0">
+                      <BarChart3 size={16} />
                     </div>
                     <div>
-                      <span className="text-[11px] text-stone-500 dark:text-stone-400 block">
+                      <span className="text-[11px] text-stone-500 dark:text-[#A0949C] block">
                         Média diária
                       </span>
-                      <strong className="text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums">
+                      <strong className="text-xs sm:text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums">
                         {formatBRL(avgDailyRevenue)}
                       </strong>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#4ADE80] text-[10px] font-semibold border border-emerald-200/60 dark:border-emerald-800/40">
+                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-[#15803D] dark:text-[#34D399] text-[10px] font-semibold border border-emerald-200/60 dark:border-emerald-800/40">
                     <ArrowUpRight size={10} /> +12%
                   </span>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-[#FAF5F2]/70 dark:bg-white/[0.03] border border-[#EAE2DC]/80 dark:border-white/[0.06] flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-100/80 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center shrink-0">
-                    <Star size={17} />
+                <div className="p-3.5 rounded-2xl bg-[#FAF7F5] dark:bg-white/[0.02] border border-[#EDE6E1] dark:border-white/[0.06] flex items-center gap-2.5 sm:gap-3">
+                  <div className="w-8 h-8 rounded-xl bg-[#FEF6EE] dark:bg-white/[0.06] text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
+                    <Star size={16} />
                   </div>
                   <div className="min-w-0">
-                    <span className="text-[11px] text-stone-500 dark:text-stone-400 block">
+                    <span className="text-[11px] text-stone-500 dark:text-[#A0949C] block">
                       Melhor dia
                     </span>
-                    <strong className="text-xs sm:text-sm font-bold text-stone-900 dark:text-stone-100 tabular-nums block truncate">
+                    <strong className="text-xs sm:text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums block truncate">
                       {peakChartItem.label ? `${peakChartItem.label} (${formatBRL(peakChartItem.value)})` : "Hoje"}
                     </strong>
                   </div>
@@ -846,19 +883,19 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* COLUNA DIREITA (4 COLS): AGENDA DE HOJE REAL EM LINHA DO TEMPO */}
-          <div className="lg:col-span-5 xl:col-span-4 space-y-6">
-            <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 sm:p-6 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-4">
+          {/* COLUNA DIREITA: AGENDA DE HOJE REAL EM LINHA DO TEMPO */}
+          <div className="lg:col-span-5 xl:col-span-4 space-y-5 sm:space-y-6">
+            <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 sm:p-6 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-4">
               <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-white/[0.06]">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-rose-100/80 dark:bg-rose-950/60 text-[#BE185D] dark:text-rose-400 flex items-center justify-center">
+                  <div className="w-7 h-7 rounded-lg bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center">
                     <Calendar size={15} />
                   </div>
                   <div>
-                    <h3 className="text-sm sm:text-base font-bold text-stone-900 dark:text-stone-100">
+                    <h3 className="text-sm sm:text-base font-bold text-[#221A1D] dark:text-[#F4EEF1]">
                       Agenda de Hoje
                     </h3>
-                    <p className="text-[11px] text-stone-400">
+                    <p className="text-[11px] text-stone-500 dark:text-[#A0949C]">
                       {todayFormatted}
                     </p>
                   </div>
@@ -866,7 +903,7 @@ export default function Dashboard() {
 
                 <Link
                   href="/agenda"
-                  className="text-xs font-semibold text-[#BE185D] dark:text-rose-400 hover:underline flex items-center gap-1"
+                  className="text-xs font-semibold text-[#7E1639] dark:text-[#E27D9A] hover:underline flex items-center gap-1"
                 >
                   Ver Completa <ArrowRight size={13} />
                 </Link>
@@ -874,18 +911,18 @@ export default function Dashboard() {
 
               {/* Lista dos Horários Reais */}
               {metrics.todayApts.length === 0 ? (
-                <div className="py-8 px-4 text-center rounded-xl bg-[#FAF5F2]/60 dark:bg-white/[0.02] border border-dashed border-[#EAE2DC] dark:border-white/[0.06]">
+                <div className="py-8 px-4 text-center rounded-xl bg-[#FAF7F5] dark:bg-white/[0.02] border border-dashed border-[#EDE6E1] dark:border-white/[0.06]">
                   <Calendar size={20} className="mx-auto text-stone-400 mb-2" />
-                  <p className="text-xs font-semibold text-stone-900 dark:text-stone-100">
+                  <p className="text-xs font-semibold text-[#221A1D] dark:text-[#F4EEF1]">
                     Nenhum cliente agendado para hoje ainda
                   </p>
-                  <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                  <p className="text-[11px] text-stone-500 dark:text-[#A0949C] mt-0.5">
                     Você possui horários livres na grade prontos para receber novos agendamentos.
                   </p>
                   <div className="mt-3.5">
                     <Link
                       href="/agenda"
-                      className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-[#7B1832] text-white text-xs font-semibold hover:bg-[#621327] transition"
+                      className="inline-flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-[#7E1639] text-white text-xs font-semibold hover:bg-[#68112E] transition"
                     >
                       <Plus size={13} />
                       <span>Agendar Cliente</span>
@@ -901,27 +938,27 @@ export default function Dashboard() {
                     > = {
                       confirmed: {
                         label: "Confirmado",
-                        badgeCls: "bg-emerald-50 text-emerald-700 border-emerald-200/50",
-                        barCls: "bg-[#15803D]",
+                        badgeCls: "bg-emerald-50 text-[#15803D] dark:bg-emerald-950/30 dark:text-[#34D399] border-emerald-200/50 dark:border-emerald-800/40",
+                        barCls: "bg-[#15803D] dark:bg-[#34D399]",
                       },
                       pending: {
                         label: "Aguardando",
-                        badgeCls: "bg-amber-50 text-amber-700 border-amber-200/50",
-                        barCls: "bg-[#D97706]",
+                        badgeCls: "bg-[#FEF6EE] text-[#B45309] dark:bg-amber-950/30 dark:text-[#FBBF24] border-amber-200/50 dark:border-amber-800/40",
+                        barCls: "bg-[#B45309] dark:bg-[#FBBF24]",
                       },
                       completed: {
                         label: "Concluído",
-                        badgeCls: "bg-emerald-50 text-emerald-700 border-emerald-200/50",
-                        barCls: "bg-[#BE185D]",
+                        badgeCls: "bg-[#FBF0F4] text-[#7E1639] dark:bg-white/[0.06] dark:text-[#E27D9A] border-[#F2DCE5] dark:border-white/[0.08]",
+                        barCls: "bg-[#7E1639] dark:bg-[#E27D9A]",
                       },
                       in_progress: {
                         label: "Em atendimento",
-                        badgeCls: "bg-rose-50 text-rose-700 border-rose-200/50",
-                        barCls: "bg-[#8E5138]",
+                        badgeCls: "bg-[#FBF0F4] text-[#7E1639] dark:bg-white/[0.06] dark:text-[#E27D9A] border-rose-200/50 dark:border-white/[0.08]",
+                        barCls: "bg-[#7E1639] dark:bg-[#E27D9A]",
                       },
                       cancelled: {
                         label: "Cancelado",
-                        badgeCls: "bg-stone-100 text-stone-600 border-stone-200",
+                        badgeCls: "bg-stone-100 text-stone-600 dark:bg-white/[0.04] dark:text-stone-400 border-stone-200 dark:border-white/[0.06]",
                         barCls: "bg-stone-400",
                       },
                     };
@@ -931,7 +968,7 @@ export default function Dashboard() {
                     return (
                       <div
                         key={apt.id || index}
-                        className="p-2.5 rounded-xl bg-[#FAF5F2]/50 dark:bg-white/[0.02] border border-[#EAE2DC]/60 dark:border-white/[0.04] hover:bg-white dark:hover:bg-[#1C1822] transition flex items-center justify-between gap-3"
+                        className="p-2.5 rounded-xl bg-[#FAF7F5] dark:bg-white/[0.02] border border-[#EDE6E1] dark:border-white/[0.04] hover:bg-stone-50 dark:hover:bg-white/[0.04] transition flex items-center justify-between gap-3"
                       >
                         <div className="flex items-center gap-2.5 min-w-0">
                           <div className={`w-1 h-8 rounded-full ${currentStatus.barCls} shrink-0`} />
@@ -946,10 +983,10 @@ export default function Dashboard() {
                           </div>
 
                           <div className="truncate">
-                            <h4 className="text-xs font-semibold text-stone-900 dark:text-stone-100 truncate">
+                            <h4 className="text-xs font-semibold text-[#221A1D] dark:text-[#F4EEF1] truncate">
                               {apt.clientName}
                             </h4>
-                            <p className="text-[11px] text-stone-500 dark:text-stone-400 truncate">
+                            <p className="text-[11px] text-stone-500 dark:text-[#A0949C] truncate">
                               {apt.serviceName}
                             </p>
                           </div>
@@ -957,7 +994,7 @@ export default function Dashboard() {
 
                         <div className="flex items-center gap-1.5 shrink-0">
                           <span
-                            className={`text-[10px] font-medium px-2.5 py-0.5 rounded-full border ${currentStatus.badgeCls}`}
+                            className={`text-[10px] font-medium px-2 py-0.5 rounded-full border ${currentStatus.badgeCls}`}
                           >
                             {currentStatus.label}
                           </span>
@@ -969,11 +1006,11 @@ export default function Dashboard() {
                                 const clean = apt.clientPhone.replace(/\D/g, "");
                                 const num = clean.length <= 11 ? `55${clean}` : clean;
                                 const msg = encodeURIComponent(
-                                  `Olá ${apt.clientName}! Passando para confirmar seu horário hoje às ${apt.time} no ${salonName}.`,
+                                  `Olá ${apt.clientName}! Passando para confirmar seu horário hoje às ${apt.time} no ${realSalonName}.`,
                                 );
                                 window.open(`https://wa.me/${num}?text=${msg}`, "_blank");
                               }}
-                              className="p-1 rounded-lg text-[#15803D] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
+                              className="p-1 rounded-lg text-[#15803D] dark:text-[#34D399] hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition cursor-pointer"
                               title="Enviar WhatsApp"
                             >
                               <MessageCircle size={14} />
@@ -992,16 +1029,16 @@ export default function Dashboard() {
         {/* =========================================================================
             4. LINHA INFERIOR (3 CARDS REAIS): SERVIÇOS, NOVOS CLIENTES E LEMBRETES
             ========================================================================= */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
           {/* CARD 1: SERVIÇOS MAIS REALIZADOS */}
-          <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-4">
+          <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 sm:p-5 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center">
                   <SlidersHorizontal size={14} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                  <h3 className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">
                     Serviços mais realizados
                   </h3>
                   <p className="text-[10px] text-stone-400">
@@ -1011,7 +1048,7 @@ export default function Dashboard() {
               </div>
               <Link
                 href="/servicos"
-                className="text-xs font-semibold text-[#BE185D] dark:text-rose-400 hover:underline"
+                className="text-xs font-semibold text-[#7E1639] dark:text-[#E27D9A] hover:underline"
               >
                 Ver todos
               </Link>
@@ -1026,7 +1063,7 @@ export default function Dashboard() {
                 {metrics.topServices.map((srv, idx) => (
                   <div key={idx} className="flex items-center justify-between gap-3 text-xs">
                     <div className="flex items-center gap-2.5 min-w-[90px]">
-                      <div className="w-6 h-6 rounded-md bg-pink-50 dark:bg-pink-950/40 text-[#BE185D] dark:text-pink-400 flex items-center justify-center shrink-0">
+                      <div className="w-6 h-6 rounded-md bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center shrink-0">
                         <Scissors size={12} />
                       </div>
                       <span className="font-medium text-stone-800 dark:text-stone-200 truncate">
@@ -1036,14 +1073,14 @@ export default function Dashboard() {
 
                     <div className="flex-1 h-2 bg-stone-100 dark:bg-white/[0.06] rounded-full overflow-hidden mx-2">
                       <div
-                        className="h-full bg-[#BE185D] rounded-full transition-all duration-500"
+                        className="h-full bg-[#7E1639] dark:bg-[#E27D9A] rounded-full transition-all duration-500"
                         style={{ width: `${srv.percent}%` }}
                       />
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0 text-stone-500 dark:text-stone-400">
+                    <div className="flex items-center gap-2 shrink-0 text-stone-500 dark:text-[#A0949C]">
                       <span>{srv.count} {srv.count === 1 ? "atendimento" : "atendimentos"}</span>
-                      <strong className="text-stone-800 dark:text-stone-200 w-7 text-right font-semibold">
+                      <strong className="text-stone-800 dark:text-[#F4EEF1] w-7 text-right font-semibold">
                         {srv.percent}%
                       </strong>
                     </div>
@@ -1054,14 +1091,14 @@ export default function Dashboard() {
           </div>
 
           {/* CARD 2: NOVOS CLIENTES */}
-          <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-4">
+          <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 sm:p-5 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-pink-100/80 dark:bg-pink-950/60 text-[#BE185D] dark:text-pink-400 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center">
                   <Users size={14} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                  <h3 className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">
                     Novos clientes
                   </h3>
                   <p className="text-[10px] text-stone-400">
@@ -1071,7 +1108,7 @@ export default function Dashboard() {
               </div>
               <Link
                 href="/clientes"
-                className="text-xs font-semibold text-[#BE185D] dark:text-rose-400 hover:underline"
+                className="text-xs font-semibold text-[#7E1639] dark:text-[#E27D9A] hover:underline"
               >
                 Ver todos
               </Link>
@@ -1102,21 +1139,21 @@ export default function Dashboard() {
           </div>
 
           {/* CARD 3: LEMBRETES E AVISOS */}
-          <div className="bg-white dark:bg-[#16131A] rounded-2xl p-5 border border-[#EAE2DC] dark:border-white/[0.08] shadow-[0_2px_8px_-2px_rgba(0,0,0,0.03)] space-y-4">
+          <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 sm:p-5 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-amber-100/80 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center">
+                <div className="w-7 h-7 rounded-lg bg-[#FEF6EE] dark:bg-white/[0.06] text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center">
                   <Bell size={14} />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-stone-900 dark:text-stone-100">
+                  <h3 className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">
                     Lembretes e Avisos
                   </h3>
                 </div>
               </div>
               <Link
                 href="/whatsapp"
-                className="text-xs font-semibold text-[#BE185D] dark:text-rose-400 hover:underline"
+                className="text-xs font-semibold text-[#7E1639] dark:text-[#E27D9A] hover:underline"
               >
                 Ver todos
               </Link>
@@ -1125,14 +1162,14 @@ export default function Dashboard() {
             <div className="pt-1">
               <Link
                 href="/whatsapp"
-                className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/30 flex items-center justify-between gap-3 group hover:border-amber-300 transition"
+                className="p-3.5 rounded-xl bg-[#FEF6EE]/60 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 flex items-center justify-between gap-3 group hover:border-amber-300 transition"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-white/10 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
                     <Calendar size={15} />
                   </div>
                   <div>
-                    <h4 className="text-xs font-semibold text-stone-900 dark:text-stone-100 group-hover:text-amber-800 transition">
+                    <h4 className="text-xs font-semibold text-[#221A1D] dark:text-[#F4EEF1] group-hover:text-amber-800 dark:group-hover:text-amber-300 transition">
                       {metrics.pendingAppointments.length > 0
                         ? `${metrics.pendingAppointments.length} ${
                             metrics.pendingAppointments.length === 1
@@ -1141,7 +1178,7 @@ export default function Dashboard() {
                           }`
                         : "Tudo em dia! Sem pendências"}
                     </h4>
-                    <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">
+                    <p className="text-[11px] text-stone-500 dark:text-[#A0949C] mt-0.5">
                       {metrics.pendingAppointments.length > 0
                         ? "Entre em contato pelo WhatsApp para confirmar os horários."
                         : "Todos os agendamentos registrados estão confirmados."}
