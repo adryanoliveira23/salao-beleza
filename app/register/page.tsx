@@ -179,7 +179,7 @@ export default function RegisterPage() {
                   value={salonName}
                   onChange={(e) => setSalonName(e.target.value)}
                   className="w-full pl-10 sm:pl-11 pr-4 py-2.5 sm:py-3 bg-stone-50/70 hover:bg-white focus:bg-white dark:bg-[#0b0c12] border border-stone-200 dark:border-zinc-700/80 rounded-xl focus:outline-none focus:border-rose-500 dark:focus:border-rose-400 focus:ring-2 focus:ring-rose-500/20 text-base sm:text-sm text-zinc-900 dark:text-white placeholder:text-zinc-400 dark:placeholder:text-zinc-500 font-medium transition-all shadow-2xs"
-                  placeholder="Ex: Studio Bella"
+                  placeholder="Ex: BellaMais Centro de Beleza"
                   required
                 />
               </div>

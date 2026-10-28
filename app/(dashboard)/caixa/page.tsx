@@ -227,7 +227,7 @@ export default function CaixaPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#b83b6b]"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#7e1639] dark:border-[#e27d9a]"></div>
       </div>
     );
   }
@@ -250,12 +250,12 @@ export default function CaixaPage() {
   const funds = settings.customFunds || [];
 
   return (
-    <div className="flex flex-col min-h-full bg-[#faf6f2] dark:bg-[#161016]">
+    <div className="flex flex-col min-h-full bg-[var(--background)]">
       <Header title="Financeiro Completo & Fluxo de Caixa" />
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 space-y-6 max-w-[1440px] w-full mx-auto">
         {/* Top Action Bar */}
-        <div className="bg-white rounded-3xl p-4 md:p-5 shadow-xs border border-[#f2e6ea] flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
+        <div className="bg-[var(--card-bg)] rounded-2xl p-4 md:p-5 shadow-xs border border-[var(--card-border)] flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4">
           <div className="flex overflow-x-auto items-center gap-2 pb-1 no-scrollbar w-full lg:w-auto">
             {(
               [
@@ -270,8 +270,8 @@ export default function CaixaPage() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition shrink-0 whitespace-nowrap cursor-pointer ${
                   activeTab === tab.id
-                    ? "bg-[#b83b6b] text-white shadow-xs"
-                    : "bg-[#faf6f2] text-[#6e5a65] hover:text-[#2d1b2e]"
+                    ? "bg-[#7e1639] text-white shadow-xs"
+                    : "bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)]"
                 }`}
               >
                 {tab.label}
@@ -284,11 +284,11 @@ export default function CaixaPage() {
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="px-3 py-2 rounded-xl bg-[#faf6f2] border border-[#f2e6ea] text-xs font-bold text-[#2d1b2e]"
+              className="px-3 py-2 rounded-xl bg-[var(--surface-hover)] border border-[var(--card-border)] text-xs font-bold text-[var(--foreground)]"
             />
             <button
               onClick={exportFinancialCSV}
-              className="px-3.5 py-2 rounded-xl bg-[#faf6f2] text-[#2d1b2e] border border-[#f2e6ea] text-xs font-bold flex items-center gap-1.5 hover:bg-[#fff0f5]"
+              className="px-3.5 py-2 rounded-xl bg-[var(--surface-hover)] text-[var(--foreground)] border border-[var(--card-border)] text-xs font-bold flex items-center gap-1.5 hover:bg-[var(--primary-light)]"
             >
               <Download size={15} /> Exportar CSV
             </button>
@@ -315,11 +315,11 @@ export default function CaixaPage() {
 
         {/* Summary KPI Strip (Faturamento vs Despesas vs Lucro Real) */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-white rounded-2xl p-4 border border-[#f2e6ea] shadow-xs">
-            <span className="text-xs text-[#6e5a65] block mb-1">
+          <div className="bg-[var(--card-bg)] rounded-2xl p-4 border border-[var(--card-border)] shadow-xs">
+            <span className="text-xs text-[var(--muted)] block mb-1">
               Faturamento Mensal Bruto
             </span>
-            <span className="text-xl font-bold text-[#2d1b2e]">
+            <span className="text-xl font-bold text-[var(--foreground)]">
               R$ {monthlyRevenue.toFixed(2)}
             </span>
             <span className="text-[11px] text-[#0ca678] block mt-0.5">
@@ -327,8 +327,8 @@ export default function CaixaPage() {
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-[#f2e6ea] shadow-xs">
-            <span className="text-xs text-[#6e5a65] block mb-1">
+          <div className="bg-[var(--card-bg)] rounded-2xl p-4 border border-[var(--card-border)] shadow-xs">
+            <span className="text-xs text-[var(--muted)] block mb-1">
               Despesas + Custos Mês
             </span>
             <span className="text-xl font-bold text-red-600">
@@ -339,31 +339,31 @@ export default function CaixaPage() {
                 financialHealth.totalProductCosts
               ).toFixed(2)}
             </span>
-            <span className="text-[11px] text-[#6e5a65] block mt-0.5">
+            <span className="text-[11px] text-[var(--muted)] block mt-0.5">
               Pagas hoje: R$ {expensesPaidToday.toFixed(2)}
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-[#f2e6ea] shadow-xs">
-            <span className="text-xs text-[#6e5a65] block mb-1">
+          <div className="bg-[var(--card-bg)] rounded-2xl p-4 border border-[var(--card-border)] shadow-xs">
+            <span className="text-xs text-[var(--muted)] block mb-1">
               Contas a Receber / Sinais
             </span>
             <span className="text-xl font-bold text-blue-600">
               R$ {accountsReceivable.toFixed(2)}
             </span>
-            <span className="text-[11px] text-[#6e5a65] block mt-0.5">
+            <span className="text-[11px] text-[var(--muted)] block mt-0.5">
               Pendentes de quitação
             </span>
           </div>
 
-          <div className="bg-white rounded-2xl p-4 border border-[#f2e6ea] shadow-xs">
-            <span className="text-xs text-[#6e5a65] block mb-1">
+          <div className="bg-[var(--card-bg)] rounded-2xl p-4 border border-[var(--card-border)] shadow-xs">
+            <span className="text-xs text-[var(--muted)] block mb-1">
               Contas a Pagar Hoje
             </span>
             <span className="text-xl font-bold text-amber-600">
               R$ {billsDueToday.toFixed(2)}
             </span>
-            <span className="text-[11px] text-[#6e5a65] block mt-0.5">
+            <span className="text-[11px] text-[var(--muted)] block mt-0.5">
               Semana: R$ {financialHealth.billsDueThisWeek.toFixed(2)}
             </span>
           </div>
@@ -372,10 +372,10 @@ export default function CaixaPage() {
             <span className="text-xs font-bold text-[#c59b27] block mb-1">
               Lucro Líquido Real (Est.)
             </span>
-            <span className="text-xl font-bold text-[#2d1b2e]">
+            <span className="text-xl font-bold text-[var(--foreground)]">
               R$ {estimatedNetProfit.toFixed(2)}
             </span>
-            <span className="text-[10px] text-[#6e5a65] block mt-0.5">
+            <span className="text-[10px] text-[var(--muted)] block mt-0.5">
               Já descontando custos e comissões
             </span>
           </div>
@@ -445,12 +445,12 @@ export default function CaixaPage() {
 
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="font-bold font-serif text-[#2d1b2e]">
+                <h3 className="font-bold font-sans font-bold tracking-tight text-[var(--foreground)]">
                   Caixinhas & Fundos do Salão
                 </h3>
                 <button
                   onClick={() => setShowManageFundsModal(true)}
-                  className="text-xs font-bold text-[#b83b6b] flex items-center gap-1 hover:underline"
+                  className="text-xs font-bold text-[#7e1639] dark:text-[#e27d9a] flex items-center gap-1 hover:underline"
                 >
                   <Settings2 size={14} /> Gerenciar Caixinhas
                 </button>
@@ -462,30 +462,30 @@ export default function CaixaPage() {
                 return (
                   <div
                     key={fund.id}
-                    className="rounded-2xl p-5 bg-white border border-[#f2e6ea] flex items-center justify-between shadow-2xs"
+                    className="rounded-2xl p-5 bg-[var(--card-bg)] border border-[var(--card-border)] flex items-center justify-between shadow-2xs"
                   >
                     <div>
-                      <span className="font-bold text-sm text-[#2d1b2e] block">
+                      <span className="font-bold text-sm text-[var(--foreground)] block">
                         {fund.name}
                       </span>
-                      <span className="text-xs text-[#6e5a65]">
+                      <span className="text-xs text-[var(--muted)]">
                         Reserva automática de {fund.percentage}% do faturamento
                       </span>
                     </div>
-                    <span className="text-xl font-bold text-[#b83b6b]">
+                    <span className="text-xl font-bold text-[#7e1639] dark:text-[#e27d9a]">
                       R$ {amount.toFixed(2)}
                     </span>
                   </div>
                 );
               })}
 
-              <div className="bg-[#fff0f5] rounded-2xl p-5 border border-[#b83b6b]/20 flex items-center justify-between">
+              <div className="bg-[var(--primary-light)] rounded-2xl p-5 border border-[#7e1639] dark:border-[#e27d9a]/20 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2 text-[#88234b] font-bold text-sm">
                     <Coins size={18} />
                     Pró-Labore / Retirada Segura
                   </div>
-                  <p className="text-xs text-[#6e5a65] mt-0.5">
+                  <p className="text-xs text-[var(--muted)] mt-0.5">
                     Livre para você retirar sem afetar as contas do salão
                   </p>
                 </div>
@@ -499,16 +499,16 @@ export default function CaixaPage() {
 
         {/* TAB 2: LANÇAMENTOS (RECEITAS, DESPESAS, SINAIS, REEMBOLSOS) */}
         {activeTab === "lancamentos" && (
-          <div className="bg-white rounded-3xl border border-[#f2e6ea] overflow-hidden shadow-xs">
-            <div className="p-4 md:p-5 border-b border-[#f2e6ea] flex justify-between items-center">
-              <h3 className="font-bold font-serif text-[#2d1b2e]">
+          <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] overflow-hidden shadow-xs">
+            <div className="p-4 md:p-5 border-b border-[var(--card-border)] flex justify-between items-center">
+              <h3 className="font-bold font-sans font-bold tracking-tight text-[var(--foreground)]">
                 Extrato Detalhado de Receitas e Despesas ({ledgerItems.length})
               </h3>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full min-w-[780px] border-collapse text-xs">
                 <thead>
-                  <tr className="bg-[#faf6f2] text-[#6e5a65] uppercase">
+                  <tr className="bg-[var(--surface-hover)] text-[var(--muted)] uppercase">
                     <th className="p-3.5 text-left">Data</th>
                     <th className="p-3.5 text-left">Descrição / Categoria</th>
                     <th className="p-3.5 text-left">Pagamento</th>
@@ -518,29 +518,29 @@ export default function CaixaPage() {
                     <th className="p-3.5 text-right">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#f2e6ea]">
+                <tbody className="divide-y divide-[var(--card-border)]">
                   {ledgerItems.map((item) => {
                     const net = Math.max(0, item.amount - item.discount);
                     return (
-                      <tr key={item.id} className="hover:bg-[#faf6f2]/50">
-                        <td className="p-3.5 font-medium text-[#2d1b2e]">
+                      <tr key={item.id} className="hover:bg-[var(--surface-hover)]/50">
+                        <td className="p-3.5 font-medium text-[var(--foreground)]">
                           {item.date.split("-").reverse().join("/")}
                         </td>
                         <td className="p-3.5">
-                          <span className="font-bold text-[#2d1b2e] block">
+                          <span className="font-bold text-[var(--foreground)] block">
                             {item.description}
                           </span>
-                          <span className="text-[#6e5a65]">
+                          <span className="text-[var(--muted)]">
                             {item.category}{" "}
                             {item.professionalName
                               ? `• Prof. ${item.professionalName}`
                               : ""}
                           </span>
                         </td>
-                        <td className="p-3.5 uppercase font-semibold text-[#6e5a65]">
+                        <td className="p-3.5 uppercase font-semibold text-[var(--muted)]">
                           {item.paymentMethod.replace("_", " ")}
                         </td>
-                        <td className="p-3.5 text-[#6e5a65]">
+                        <td className="p-3.5 text-[var(--muted)]">
                           R$ {item.amount.toFixed(2)}
                           {item.discount > 0 && (
                             <span className="text-amber-600 ml-1">
@@ -629,7 +629,7 @@ export default function CaixaPage() {
                 </tbody>
               </table>
               {ledgerItems.length === 0 && (
-                <p className="text-center py-10 text-xs text-[#6e5a65]">
+                <p className="text-center py-10 text-xs text-[var(--muted)]">
                   Nenhum lançamento registrado neste mês.
                 </p>
               )}
@@ -643,44 +643,44 @@ export default function CaixaPage() {
             {resultsByProfessional.map((r) => (
               <div
                 key={r.prof.id}
-                className="bg-white rounded-3xl p-5 border border-[#f2e6ea] shadow-xs space-y-3"
+                className="bg-[var(--card-bg)] rounded-2xl p-5 border border-[var(--card-border)] shadow-xs space-y-3"
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="font-bold font-serif text-base text-[#2d1b2e]">
+                    <h4 className="font-bold font-sans font-bold tracking-tight text-base text-[var(--foreground)]">
                       {r.prof.name}
                     </h4>
-                    <span className="text-xs text-[#6e5a65]">
+                    <span className="text-xs text-[var(--muted)]">
                       {r.prof.specialty} • {r.count} atendimentos no mês
                     </span>
                   </div>
-                  <span className="px-2.5 py-1 rounded-full bg-[#fff0f5] text-[#b83b6b] text-xs font-bold">
+                  <span className="px-2.5 py-1 rounded-full bg-[var(--primary-light)] text-[#7e1639] dark:text-[#e27d9a] text-xs font-bold">
                     {r.prof.commission}% com.
                   </span>
                 </div>
-                <div className="space-y-1.5 pt-2 border-t border-[#f2e6ea] text-xs">
+                <div className="space-y-1.5 pt-2 border-t border-[var(--card-border)] text-xs">
                   <div className="flex justify-between">
-                    <span className="text-[#6e5a65]">Faturamento Bruto:</span>
-                    <strong className="text-[#2d1b2e]">
+                    <span className="text-[var(--muted)]">Faturamento Bruto:</span>
+                    <strong className="text-[var(--foreground)]">
                       R$ {r.grossRevenue.toFixed(2)}
                     </strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#6e5a65]">Custo de Produtos:</span>
+                    <span className="text-[var(--muted)]">Custo de Produtos:</span>
                     <strong className="text-orange-600">
                       - R$ {r.productCost.toFixed(2)}
                     </strong>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[#6e5a65]">
+                    <span className="text-[var(--muted)]">
                       Comissão da Profissional:
                     </span>
                     <strong className="text-blue-600">
                       - R$ {r.commissionTotal.toFixed(2)}
                     </strong>
                   </div>
-                  <div className="flex justify-between pt-2 border-t border-[#f2e6ea] text-sm">
-                    <span className="font-bold text-[#2d1b2e]">
+                  <div className="flex justify-between pt-2 border-t border-[var(--card-border)] text-sm">
+                    <span className="font-bold text-[var(--foreground)]">
                       Resultado Líquido p/ Salão:
                     </span>
                     <strong className="text-[#0ca678]">
@@ -696,39 +696,39 @@ export default function CaixaPage() {
         {/* TAB 4: FECHAMENTO DIÁRIO DE CAIXA */}
         {activeTab === "fechamento" && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-3xl p-6 border border-[#f2e6ea] shadow-xs space-y-4">
-              <h3 className="font-bold font-serif text-lg text-[#2d1b2e]">
+            <div className="bg-[var(--card-bg)] rounded-2xl p-6 border border-[var(--card-border)] shadow-xs space-y-4">
+              <h3 className="font-bold font-sans font-bold tracking-tight text-lg text-[var(--foreground)]">
                 Conferência e Fechamento de Hoje (
                 {todayBreakdown.today.split("-").reverse().join("/")})
               </h3>
               <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="p-3 rounded-2xl bg-[#faf6f2]">
-                  <span className="text-[#6e5a65] block">Recebido em PIX</span>
-                  <strong className="text-base text-[#2d1b2e]">
+                <div className="p-3 rounded-2xl bg-[var(--surface-hover)]">
+                  <span className="text-[var(--muted)] block">Recebido em PIX</span>
+                  <strong className="text-base text-[var(--foreground)]">
                     R$ {todayBreakdown.byMethod.pix.toFixed(2)}
                   </strong>
                 </div>
-                <div className="p-3 rounded-2xl bg-[#faf6f2]">
-                  <span className="text-[#6e5a65] block">
+                <div className="p-3 rounded-2xl bg-[var(--surface-hover)]">
+                  <span className="text-[var(--muted)] block">
                     Recebido em Cartão Crédito
                   </span>
-                  <strong className="text-base text-[#2d1b2e]">
+                  <strong className="text-base text-[var(--foreground)]">
                     R$ {todayBreakdown.byMethod.cartao_credito.toFixed(2)}
                   </strong>
                 </div>
-                <div className="p-3 rounded-2xl bg-[#faf6f2]">
-                  <span className="text-[#6e5a65] block">
+                <div className="p-3 rounded-2xl bg-[var(--surface-hover)]">
+                  <span className="text-[var(--muted)] block">
                     Recebido em Cartão Débito
                   </span>
-                  <strong className="text-base text-[#2d1b2e]">
+                  <strong className="text-base text-[var(--foreground)]">
                     R$ {todayBreakdown.byMethod.cartao_debito.toFixed(2)}
                   </strong>
                 </div>
-                <div className="p-3 rounded-2xl bg-[#faf6f2]">
-                  <span className="text-[#6e5a65] block">
+                <div className="p-3 rounded-2xl bg-[var(--surface-hover)]">
+                  <span className="text-[var(--muted)] block">
                     Recebido em Dinheiro
                   </span>
-                  <strong className="text-base text-[#2d1b2e]">
+                  <strong className="text-base text-[var(--foreground)]">
                     R$ {todayBreakdown.byMethod.dinheiro.toFixed(2)}
                   </strong>
                 </div>
@@ -763,12 +763,12 @@ export default function CaixaPage() {
               </button>
             </div>
 
-            <div className="bg-white rounded-3xl p-6 border border-[#f2e6ea] shadow-xs">
-              <h3 className="font-bold font-serif text-lg text-[#2d1b2e] mb-4">
+            <div className="bg-[var(--card-bg)] rounded-2xl p-6 border border-[var(--card-border)] shadow-xs">
+              <h3 className="font-bold font-sans font-bold tracking-tight text-lg text-[var(--foreground)] mb-4">
                 Histórico de Fechamentos Diários ({dailyClosings.length})
               </h3>
               {dailyClosings.length === 0 ? (
-                <p className="text-xs text-[#6e5a65] py-8 text-center">
+                <p className="text-xs text-[var(--muted)] py-8 text-center">
                   Nenhum fechamento diário salvo ainda.
                 </p>
               ) : (
@@ -776,13 +776,13 @@ export default function CaixaPage() {
                   {dailyClosings.map((c) => (
                     <div
                       key={c.id}
-                      className="p-3.5 rounded-2xl border border-[#f2e6ea] flex justify-between items-center text-xs bg-[#fffcf9]"
+                      className="p-3.5 rounded-2xl border border-[var(--card-border)] flex justify-between items-center text-xs bg-[#fffcf9]"
                     >
                       <div>
-                        <span className="font-bold text-[#2d1b2e] block">
+                        <span className="font-bold text-[var(--foreground)] block">
                           Dia {c.date.split("-").reverse().join("/")}
                         </span>
-                        <span className="text-[#6e5a65]">
+                        <span className="text-[var(--muted)]">
                           Entradas: R$ {c.totalIncome.toFixed(2)} • Saídas: R${" "}
                           {c.totalExpense.toFixed(2)}
                         </span>
@@ -873,9 +873,9 @@ function TransactionModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl">
+      <div className="bg-[var(--card-bg)] rounded-2xl w-full max-w-lg p-6 shadow-2xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold font-serif text-[#2d1b2e]">
+          <h3 className="text-lg font-bold font-sans font-bold tracking-tight text-[var(--foreground)]">
             {type === "income"
               ? "Registrar Nova Receita / Entrada"
               : "Registrar Nova Despesa / Saída"}
@@ -889,14 +889,14 @@ function TransactionModal({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-          <div className="grid grid-cols-2 gap-2 p-1 bg-[#faf6f2] rounded-xl">
+          <div className="grid grid-cols-2 gap-2 p-1 bg-[var(--surface-hover)] rounded-xl">
             <button
               type="button"
               onClick={() => setType("income")}
               className={`py-2 rounded-lg font-bold ${
                 type === "income"
                   ? "bg-[#0ca678] text-white"
-                  : "text-[#6e5a65]"
+                  : "text-[var(--muted)]"
               }`}
             >
               Receita (Entrada)
@@ -905,7 +905,7 @@ function TransactionModal({
               type="button"
               onClick={() => setType("expense")}
               className={`py-2 rounded-lg font-bold ${
-                type === "expense" ? "bg-red-600 text-white" : "text-[#6e5a65]"
+                type === "expense" ? "bg-red-600 text-white" : "text-[var(--muted)]"
               }`}
             >
               Despesa (Saída)
@@ -913,7 +913,7 @@ function TransactionModal({
           </div>
 
           <div>
-            <label className="font-bold text-[#2d1b2e] block mb-1">
+            <label className="font-bold text-[var(--foreground)] block mb-1">
               Descrição *
             </label>
             <input
@@ -922,78 +922,78 @@ function TransactionModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Ex: Venda de Kit Home Care / Compra de Esmaltes"
-              className="w-full p-2.5 border border-[#f2e6ea] rounded-xl"
+              className="w-full p-2.5 border border-[var(--card-border)] rounded-xl"
             />
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-[#2d1b2e] block mb-1">
+              <label className="font-bold text-[var(--foreground)] block mb-1">
                 Categoria
               </label>
               <input
                 type="text"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl"
+                className="w-full p-2.5 border border-[var(--card-border)] rounded-xl"
               />
             </div>
             <div>
-              <label className="font-bold text-[#2d1b2e] block mb-1">
+              <label className="font-bold text-[var(--foreground)] block mb-1">
                 Data
               </label>
               <input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl"
+                className="w-full p-2.5 border border-[var(--card-border)] rounded-xl"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <label className="font-bold text-[#2d1b2e] block mb-1">
+              <label className="font-bold text-[var(--foreground)] block mb-1">
                 Valor Bruto (R$) *
               </label>
               <CurrencyInput
                 value={amount}
                 onChangeValue={setAmount}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl font-bold"
+                className="w-full p-2.5 border border-[var(--card-border)] rounded-xl font-bold"
                 required
               />
             </div>
             <div>
-              <label className="font-bold text-[#2d1b2e] block mb-1">
+              <label className="font-bold text-[var(--foreground)] block mb-1">
                 Desconto (R$)
               </label>
               <CurrencyInput
                 value={discount}
                 onChangeValue={setDiscount}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl text-amber-600 font-bold"
+                className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-amber-600 font-bold"
               />
             </div>
             <div>
-              <label className="font-bold text-[#2d1b2e] block mb-1">
+              <label className="font-bold text-[var(--foreground)] block mb-1">
                 Sinal Pago (R$)
               </label>
               <CurrencyInput
                 value={depositAmount}
                 onChangeValue={setDepositAmount}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl text-blue-600 font-bold"
+                className="w-full p-2.5 border border-[var(--card-border)] rounded-xl text-blue-600 font-bold"
               />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="font-bold text-[#2d1b2e] block mb-1">
+              <label className="font-bold text-[var(--foreground)] block mb-1">
                 Forma de Pagamento
               </label>
               <select
                 value={paymentMethod}
                 onChange={(e) => setPaymentMethod(e.target.value as any)}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl"
+                className="w-full p-2.5 border border-[var(--card-border)] rounded-xl"
               >
                 <option value="pix">Pix</option>
                 <option value="dinheiro">Dinheiro</option>
@@ -1003,13 +1003,13 @@ function TransactionModal({
               </select>
             </div>
             <div>
-              <label className="font-bold text-[#2d1b2e] block mb-1">
+              <label className="font-bold text-[var(--foreground)] block mb-1">
                 Status
               </label>
               <select
                 value={status}
                 onChange={(e) => setStatus(e.target.value as any)}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl"
+                className="w-full p-2.5 border border-[var(--card-border)] rounded-xl"
               >
                 <option value="paid">Pago / Recebido</option>
                 <option value="partial">Sinal / Pagamento Parcial</option>
@@ -1020,13 +1020,13 @@ function TransactionModal({
 
           {type === "income" && professionals.length > 0 && (
             <div>
-              <label className="font-bold text-[#2d1b2e] block mb-1">
+              <label className="font-bold text-[var(--foreground)] block mb-1">
                 Vincular Profissional (Opcional)
               </label>
               <select
                 value={professionalId}
                 onChange={(e) => setProfessionalId(e.target.value)}
-                className="w-full p-2.5 border border-[#f2e6ea] rounded-xl"
+                className="w-full p-2.5 border border-[var(--card-border)] rounded-xl"
               >
                 <option value="">Receita geral do salão</option>
                 {professionals.map((p) => (
@@ -1038,7 +1038,7 @@ function TransactionModal({
             </div>
           )}
 
-          <div className="flex justify-end gap-2 pt-3 border-t border-[#f2e6ea]">
+          <div className="flex justify-end gap-2 pt-3 border-t border-[var(--card-border)]">
             <button
               type="button"
               onClick={onClose}
@@ -1048,7 +1048,7 @@ function TransactionModal({
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-[#b83b6b] text-white font-bold"
+              className="px-5 py-2 rounded-xl bg-[#7e1639] text-white font-bold"
             >
               Salvar Lançamento
             </button>
@@ -1090,9 +1090,9 @@ function ManageFundsModal({
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl">
+      <div className="bg-[var(--card-bg)] rounded-2xl w-full max-w-lg p-6 shadow-2xl">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-bold font-serif text-[#2d1b2e]">
+          <h3 className="text-lg font-bold font-sans font-bold tracking-tight text-[var(--foreground)]">
             Gerenciar Caixinhas de Reserva
           </h3>
           <button
@@ -1107,23 +1107,23 @@ function ManageFundsModal({
           {funds.map((fund) => (
             <div
               key={fund.id}
-              className="flex items-center gap-3 p-3 bg-[#faf6f2] rounded-xl border border-[#f2e6ea]"
+              className="flex items-center gap-3 p-3 bg-[var(--surface-hover)] rounded-xl border border-[var(--card-border)]"
             >
               <input
-                className="font-bold text-xs text-[#2d1b2e] bg-transparent outline-none flex-1"
+                className="font-bold text-xs text-[var(--foreground)] bg-transparent outline-none flex-1"
                 value={fund.name}
                 onChange={(e) => onUpdate(fund.id, { name: e.target.value })}
               />
               <div className="flex items-center gap-1">
                 <input
                   type="number"
-                  className="w-14 bg-white border border-[#f2e6ea] rounded-lg p-1 text-center text-xs font-bold"
+                  className="w-14 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-lg p-1 text-center text-xs font-bold"
                   value={fund.percentage}
                   onChange={(e) =>
                     onUpdate(fund.id, { percentage: Number(e.target.value) })
                   }
                 />
-                <span className="text-xs text-[#6e5a65]">%</span>
+                <span className="text-xs text-[var(--muted)]">%</span>
               </div>
               <button
                 onClick={() => onRemove(fund.id)}
@@ -1135,28 +1135,28 @@ function ManageFundsModal({
           ))}
         </div>
 
-        <div className="border-t border-[#f2e6ea] pt-4 space-y-3">
-          <h4 className="font-bold text-xs text-[#6e5a65] uppercase">
+        <div className="border-t border-[var(--card-border)] pt-4 space-y-3">
+          <h4 className="font-bold text-xs text-[var(--muted)] uppercase">
             Nova Caixinha
           </h4>
           <div className="flex gap-2">
             <input
               placeholder="Nome (ex: Reforma do Salão)"
-              className="flex-1 p-2.5 bg-[#faf6f2] rounded-xl text-xs outline-none border border-[#f2e6ea]"
+              className="flex-1 p-2.5 bg-[var(--surface-hover)] rounded-xl text-xs outline-none border border-[var(--card-border)]"
               value={newFundName}
               onChange={(e) => setNewFundName(e.target.value)}
             />
             <input
               type="number"
               placeholder="%"
-              className="w-20 p-2.5 bg-[#faf6f2] rounded-xl text-xs outline-none border border-[#f2e6ea]"
+              className="w-20 p-2.5 bg-[var(--surface-hover)] rounded-xl text-xs outline-none border border-[var(--card-border)]"
               value={newFundPercent}
               onChange={(e) => setNewFundPercent(Number(e.target.value))}
             />
             <button
               onClick={handleAdd}
               disabled={!newFundName}
-              className="px-4 py-2.5 bg-[#b83b6b] text-white rounded-xl text-xs font-bold disabled:opacity-50"
+              className="px-4 py-2.5 bg-[#7e1639] text-white rounded-xl text-xs font-bold disabled:opacity-50"
             >
               Criar
             </button>

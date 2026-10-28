@@ -3,10 +3,13 @@
 // import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { PlatformUser, PlatformConfig } from "@/contexts/PlatformConfigContext";
 
-const ADMIN_ACCESS_KEY = "Adiel&Adryan2026@!"; // In a real app, use existing environment variable or Context constant
+const ADMIN_ACCESS_KEY =
+  process.env.ADMIN_ACCESS_KEY ||
+  process.env.NEXT_PUBLIC_ADMIN_ACCESS_KEY ||
+  "Adiel&Adryan2026@!";
 
 function authorize(key: string) {
-  if (key !== ADMIN_ACCESS_KEY) {
+  if (key?.trim() !== ADMIN_ACCESS_KEY) {
     throw new Error("Acesso negado: Chave de administrador inválida.");
   }
 }

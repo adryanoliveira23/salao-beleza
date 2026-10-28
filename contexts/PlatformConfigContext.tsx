@@ -30,6 +30,7 @@ const createAuthUserAndProfile = async (
     password?: string;
     name: string;
     salonName?: string;
+    phone?: string;
     plan: string;
     status: string;
     trialEndsAt?: string;
@@ -56,6 +57,7 @@ const createAuthUserAndProfile = async (
       email: userData.email,
       name: userData.name,
       salon_name: userData.salonName || userData.name || "Meu Salão",
+      phone: userData.phone || null,
       plan: userData.plan,
       status: userData.status,
       created_at: createdAt,
@@ -141,6 +143,7 @@ export interface PlatformUser {
   email: string;
   name: string;
   salonName?: string;
+  phone?: string;
   plan: PlanType;
   status: "active" | "trial" | "inactive" | "suspended";
   createdAt: string;
@@ -267,6 +270,7 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
             email: data.email || "",
             name: data.name || "Sem Nome",
             salonName: data.salon_name || "",
+            phone: data.phone || data.whatsapp || "",
             plan: (data.plan as PlanType) || "essencial",
             status: (data.status as PlatformUser["status"]) || "active",
             createdAt: data.created_at || new Date().toISOString(),
@@ -388,6 +392,7 @@ export function PlatformConfigProvider({ children }: { children: ReactNode }) {
         const dbUpdates: Partial<DocumentData> = {};
         if (updates.name) dbUpdates.name = updates.name;
         if (updates.salonName !== undefined) dbUpdates.salon_name = updates.salonName;
+        if (updates.phone !== undefined) dbUpdates.phone = updates.phone;
         if (updates.plan) dbUpdates.plan = updates.plan;
         if (updates.status) dbUpdates.status = updates.status;
         if (updates.email) dbUpdates.email = updates.email;

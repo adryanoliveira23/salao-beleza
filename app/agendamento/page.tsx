@@ -50,7 +50,7 @@ export default function AgendarIndexPage() {
               required
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
-              placeholder="ex: studioglow"
+              placeholder="ex: bellamais"
               className="w-full py-3.5 pl-8 pr-4 rounded-xl border border-[var(--card-border)] bg-[var(--background)] text-xs sm:text-sm text-[var(--foreground)] outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/20 transition font-mono"
             />
           </div>
