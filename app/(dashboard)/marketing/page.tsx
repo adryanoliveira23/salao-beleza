@@ -130,7 +130,7 @@ export default function MarketingPage() {
 
   // Helper to format text replacing human variables without confusing user
   const formatMessage = (template: string, clientName?: string) => {
-    const firstName = (clientName || "Camila").trim().split(" ")[0];
+    const firstName = (clientName || "Cliente").trim().split(" ")[0];
     return template
       .replace(/\{nome\}|\{cliente\}|\[Nome da Cliente\]/gi, firstName)
       .replace(/\{salao\}|\[Nome do Salão\]/gi, salonName);
@@ -648,7 +648,7 @@ export default function MarketingPage() {
                   {/* WhatsApp Balloon */}
                   <div className="p-4 rounded-2xl bg-emerald-500/5 dark:bg-emerald-950/20 border border-emerald-500/20 relative">
                     <div className="bg-[#DCF8C6] dark:bg-[#054740] text-gray-900 dark:text-emerald-50 p-3.5 rounded-2xl rounded-tl-none max-w-[92%] shadow-sm text-xs sm:text-sm leading-relaxed">
-                      {formatMessage(activeMessage, "Camila")}
+                      {formatMessage(activeMessage, clients[0]?.name || "Cliente")}
                       <div className="flex items-center justify-end gap-1 mt-1.5 text-[10px] text-gray-500 dark:text-emerald-200/70">
                         <span>14:35</span>
                         <Check size={12} className="text-blue-500" />
@@ -662,7 +662,7 @@ export default function MarketingPage() {
                     <div>
                       <strong>100% Automático e Sem Código:</strong> O Bella substitui
                       o nome da cliente e do seu salão sozinho na hora do envio.
-                      Sua cliente sempre recebe com o nome dela (ex: <em>Oi Camila!</em>).
+                      Sua cliente sempre recebe personalizada com o nome real dela no WhatsApp.
                     </div>
                   </div>
                 </div>

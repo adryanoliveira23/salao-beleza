@@ -14,14 +14,7 @@ import {
   Clock,
   AlertCircle,
   ChevronRight,
-  Plus,
-  Mic,
-  Paperclip,
-  Image,
-  Smile,
   ExternalLink,
-  MoreVertical,
-  Star,
   Phone,
   CheckCheck,
   Check,
@@ -29,33 +22,29 @@ import {
   Scissors,
   Gift,
   HeartHandshake,
-  ArrowUpRight,
   Sparkles,
-  Settings,
-  QrCode,
   Smartphone,
   LogOut,
   Bot,
-  BellRing,
-  UserCheck,
-  TrendingUp,
   SlidersHorizontal,
-  Forward,
-  X,
-  ArrowLeft,
+  ArrowRight,
+  ShieldCheck,
+  Copy,
+  Plus,
+  Users,
   PanelLeft,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { useSidebar } from "@/contexts/SidebarContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useSalonData, Appointment } from "@/contexts/SalonDataContext";
+import { useSalonData, Client, Appointment } from "@/contexts/SalonDataContext";
 import { db } from "@/app/lib/firebase";
 import { doc, setDoc } from "firebase/firestore";
 import { soundEffects } from "@/lib/soundEffects";
 import { useToast } from "@/contexts/ToastContext";
 import { formatBRL } from "@/lib/formatters";
 
-// ─── Types ─────────────────────────────────────────────────────────────────────
+// ─── Interfaces ────────────────────────────────────────────────────────────────
 
 export interface AutomationRule {
   id: "confirm_24h" | "reminder_2h" | "instant_booking" | "post_review";
@@ -68,120 +57,94 @@ export interface AutomationRule {
   template: string;
 }
 
-interface ChatMessage {
-  id: string;
-  text: string;
-  sender: "salon" | "client";
-  time: string;
-  read?: boolean;
-}
-
-interface ConversationPreview {
+interface MessageLogItem {
   id: string;
   clientName: string;
-  initials: string;
-  lastMessage: string;
-  time: string;
-  unread: number;
-  status: "pending" | "confirmed" | "resolved" | "awaiting";
-  statusLabel: string;
-  isOnline?: boolean;
-  isVip?: boolean;
-  subtitle?: string;
-  clientPhone?: string;
-  price?: number;
-  date?: string;
-  timeValue?: string;
-  professionalName?: string;
+  clientPhone: string;
+  message: string;
+  type: "confirm_24h" | "reminder_2h" | "instant_booking" | "post_review" | "manual";
+  timestamp: string;
+  status: "sent" | "delivered";
 }
 
-// ─── Constants ─────────────────────────────────────────────────────────────────
+// ─── Default Automation Rules ──────────────────────────────────────────────────
 
 const DEFAULT_AUTOMATION_RULES: AutomationRule[] = [
   {
     id: "instant_booking",
     title: "Confirmação Imediata de Agendamento",
-    subtitle: "Disparada no exato segundo em que a cliente agenda pelo link online",
+    subtitle: "Disparada no instante em que a cliente conclui a reserva pelo link online",
     badge: "Instantâneo",
     badgeColor: "emerald",
     scheduleInfo: "Automático no agendamento",
     enabled: true,
     template:
-      "Olá [Nome da Cliente]! Seu agendamento foi realizado com sucesso!\n\nProcedimento: [Procedimento]\nData: [Data] às [Horário]\nEspecialista: [Profissional]\nSalão: [Nome do Salão]\n\nEstamos ansiosas para cuidar de você!",
+      "Olá, [Nome da Cliente]! ✨ Seu agendamento foi realizado com sucesso!\n\nProcedimento: [Procedimento]\nData: [Data] às [Horário]\nEspecialista: [Profissional]\nSalão: [Nome do Salão]\n\nEstamos ansiosas para cuidar de você!",
   },
   {
     id: "confirm_24h",
-    title: "Lembrete de Véspera (24 Horas Antes)",
-    subtitle: "Pede confirmação ativa da cliente e reconhece a resposta SIM ou 1",
+    title: "Lembrete de Véspera (24h Antes)",
+    subtitle: "Pede confirmação ativa da cliente e reconhece respostas SIM para atualizar a agenda",
     badge: "Evita 80% das faltas",
     badgeColor: "rose",
     scheduleInfo: "Disparo automático às 08:00 na véspera",
     enabled: true,
     template:
-      "Oi, [Nome da Cliente]! Passando para confirmar seu horário amanhã ([Data]) às [Horário] para [Procedimento] no [Nome do Salão].\n\nPodemos confirmar sua presença?\nResponda SIM para confirmar ou NÃO para reagendar.",
+      "Oi, [Nome da Cliente]! ✨ Passando para confirmar seu horário amanhã ([Data]) às [Horário] para [Procedimento] no [Nome do Salão].\n\nPodemos confirmar sua presença?\nResponda *SIM* para confirmar ou *NÃO* para reagendar.",
   },
   {
     id: "reminder_2h",
     title: "Lembrete 2 Horas Antes",
-    subtitle: "Avisa que a equipe está pronta e mantém a agenda pontual",
+    subtitle: "Avisa que a bancada está pronta e incentiva pontualidade no atendimento",
     badge: "Pontualidade",
     badgeColor: "amber",
-    scheduleInfo: "Disparo 2h antes de cada horário",
+    scheduleInfo: "Disparo 2h antes do atendimento",
     enabled: true,
     template:
-      "Oi, [Nome da Cliente]! Sua bancada está pronta te esperando!\n\nLembrando que seu horário de [Procedimento] é hoje às [Horário]. Até logo no [Nome do Salão]!",
+      "Oi, [Nome da Cliente]! Sua bancada já está pronta te esperando! 💖\n\nLembrando que seu horário de [Procedimento] é hoje às [Horário]. Até logo no [Nome do Salão]!",
   },
   {
     id: "post_review",
-    title: "Agradecimento & Avaliação 5 Estrelas",
-    subtitle: "Disparada após o atendimento para atrair novas clientes pelo Google",
+    title: "Pós-Atendimento & Avaliação 5 Estrelas",
+    subtitle: "Enviada após o serviço para atrair novas clientes organicamente pelo Google",
     badge: "Fidelização & Google",
     badgeColor: "purple",
     scheduleInfo: "Disparo 30 minutos pós-serviço",
     enabled: true,
     template:
-      "Oi, [Nome da Cliente]! Foi um prazer cuidar de você hoje no [Nome do Salão]!\n\nSe você amou seu novo visual, deixe 5 estrelas no Google? Seu carinho apoia muito nossa equipe: [Link do Google]",
+      "Oi, [Nome da Cliente]! 💖 Foi um enorme prazer cuidar de você hoje no [Nome do Salão]!\n\nSe você amou seu novo visual, deixe 5 estrelas no Google? Seu carinho apoia muito nossa equipe: [Link do Google]",
   },
 ];
-
-const QUICK_REPLIES = [
-  "Horários disponíveis amanhã",
-  "Localização e estacionamento",
-  "Chave Pix / Pagamentos",
-  "Cuidados pós-química",
-  "Tabela de Preços",
-  "Política de cancelamento",
-];
-
-// ─── Component ─────────────────────────────────────────────────────────────────
 
 export default function WhatsAppPage() {
   const { user, profile } = useAuth();
   const { isDesktopOpen, openDesktop } = useSidebar();
-  const { appointments, updateAppointment } = useSalonData();
+  const { appointments, clients, updateAppointment } = useSalonData();
   const toast = useToast();
 
   // ── Connection state
   const [isConnected, setIsConnected] = useState(false);
   const [connectedPhone, setConnectedPhone] = useState("");
-  const [isProcessing, setIsProcessing] = useState(false);
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
   const [isLoadingQr, setIsLoadingQr] = useState(false);
-  const [isVerifyingConnection, setIsVerifyingConnection] = useState(false);
   const [salonPhone, setSalonPhone] = useState(profile?.phone || "");
   const [pixKey, setPixKey] = useState("");
   const [googleReviewLink, setGoogleReviewLink] = useState("");
   const [rules, setRules] = useState<AutomationRule[]>(DEFAULT_AUTOMATION_RULES);
 
-  // ── UI state
-  const [activeTab, setActiveTab] = useState<"chat" | "automation" | "connection">("chat");
-  const [chatFilter, setChatFilter] = useState<"all" | "unread" | "awaiting" | "resolved">("all");
-  const [chatSearch, setChatSearch] = useState("");
-  const [activeConvId, setActiveConvId] = useState<string>("");
-  const [messageInput, setMessageInput] = useState("");
-  const [mobileView, setMobileView] = useState<"list" | "chat" | "profile">("list");
-  const [showRightPanel, setShowRightPanel] = useState(true);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  // ── Active View & Tabs (when connected)
+  const [activeTab, setActiveTab] = useState<"automations" | "clients" | "history">("automations");
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // ── Client Queue & Dispatch State
+  const [clientSearch, setClientSearch] = useState("");
+  const [clientFilter, setClientFilter] = useState<"all" | "today_tomorrow" | "pending">("today_tomorrow");
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
+  const [customMessage, setCustomMessage] = useState("");
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+
+  // ── Sent logs
+  const [sentLogs, setSentLogs] = useState<MessageLogItem[]>([]);
 
   const salonName = useMemo(() => {
     const s = profile?.salon_name?.trim();
@@ -197,7 +160,7 @@ export default function WhatsAppPage() {
     return d.toISOString().split("T")[0];
   }, []);
 
-  // ── Real data
+  // ── Appointments data
   const todayApts = useMemo(
     () => (appointments || []).filter((a) => a.date === todayStr).sort((a, b) => a.time.localeCompare(b.time)),
     [appointments, todayStr],
@@ -206,108 +169,71 @@ export default function WhatsAppPage() {
     () => (appointments || []).filter((a) => a.date === tomorrowStr).sort((a, b) => a.time.localeCompare(b.time)),
     [appointments, tomorrowStr],
   );
-  const pendingTomorrow = useMemo(() => tomorrowApts.filter((a) => a.status === "pending").length, [tomorrowApts]);
-  const confirmedToday = useMemo(() => todayApts.filter((a) => a.status === "confirmed").length, [todayApts]);
+
+  const pendingTomorrow = useMemo(
+    () => tomorrowApts.filter((a) => a.status === "pending").length,
+    [tomorrowApts],
+  );
+  const confirmedToday = useMemo(
+    () => todayApts.filter((a) => a.status === "confirmed").length,
+    [todayApts],
+  );
   const savedRevenue = useMemo(
     () => (appointments || []).filter((a) => a.status === "confirmed").reduce((acc, a) => acc + (a.price || 95), 0),
     [appointments],
   );
 
-  // ── Conversations built strictly from real salon appointments
-  const conversations = useMemo<ConversationPreview[]>(() => {
-    const convs: ConversationPreview[] = [];
-    const used = new Set<string>();
-    const all = [...todayApts, ...tomorrowApts];
+  // ── Enrich all clients with their next or recent appointment
+  const enrichedClients = useMemo(() => {
+    return (clients || []).map((c) => {
+      const clientAppts = (appointments || [])
+        .filter((a) => a.clientId === c.id || a.clientPhone === c.phone || a.clientName.toLowerCase() === c.name.toLowerCase())
+        .sort((a, b) => b.date.localeCompare(a.date));
 
-    all.forEach((apt, i) => {
-      const key = apt.clientPhone || apt.clientName;
-      if (!key || used.has(key)) return;
-      used.add(key);
-      const parts = (apt.clientName || "Cliente").trim().split(" ");
-      const initials = ((parts[0]?.[0] || "") + (parts[1]?.[0] || parts[0]?.[1] || "")).toUpperCase();
-      const isPending = apt.status === "pending";
-      const isConfirmed = apt.status === "confirmed";
-      const timeLabel = apt.date === todayStr ? apt.time : "Amanhã";
-      convs.push({
-        id: apt.id || `conv-${i}`,
-        clientName: apt.clientName || "Cliente",
-        initials: initials || "CL",
-        lastMessage: isPending
-          ? `Gostaria de confirmar meu horário de ${apt.serviceName}`
-          : isConfirmed
-            ? `Confirmado! Estarei aí às ${apt.time}.`
-            : `Agendamento de ${apt.serviceName}`,
-        time: timeLabel,
-        unread: isPending ? 1 : 0,
-        status: isPending ? "pending" : isConfirmed ? "confirmed" : "awaiting",
-        statusLabel: isPending
-          ? "Pendente de confirmação"
-          : isConfirmed
-            ? "Agendamento Confirmado"
-            : "Aguardando resposta",
-        isOnline: isConfirmed,
-        isVip: (apt.price || 0) >= 120,
-        subtitle: apt.serviceName,
-        clientPhone: apt.clientPhone,
-        price: apt.price,
-        date: apt.date,
-        timeValue: apt.time,
-        professionalName: apt.professionalName,
-      });
+      const nextAppt = clientAppts.find((a) => a.date >= todayStr);
+      const recentAppt = clientAppts[0];
+
+      return {
+        ...c,
+        upcomingAppointment: nextAppt || null,
+        mostRecentAppointment: recentAppt || null,
+      };
     });
+  }, [clients, appointments, todayStr]);
 
-    return convs;
-  }, [todayApts, tomorrowApts, todayStr]);
+  // ── Filtered clients list
+  const filteredClients = useMemo(() => {
+    return enrichedClients.filter((c) => {
+      const q = clientSearch.toLowerCase().trim();
+      const matchSearch =
+        !q ||
+        c.name.toLowerCase().includes(q) ||
+        (c.phone && c.phone.includes(q)) ||
+        (c.upcomingAppointment?.serviceName && c.upcomingAppointment.serviceName.toLowerCase().includes(q));
 
-  const activeConv = useMemo(
-    () => (activeConvId ? conversations.find((c) => c.id === activeConvId) : null) || conversations[0] || null,
-    [conversations, activeConvId],
-  );
+      if (!matchSearch) return false;
 
-  // ── Chat messages per conversation (iniciadas vazias, alimentadas por conversas reais)
-  const [chatMessages, setChatMessages] = useState<Record<string, ChatMessage[]>>({});
+      if (clientFilter === "today_tomorrow") {
+        const apptDate = c.upcomingAppointment?.date;
+        return apptDate === todayStr || apptDate === tomorrowStr;
+      }
 
-  const activeMessages = useMemo(() => {
-    if (!activeConv) return [];
-    if (chatMessages[activeConv.id]) return chatMessages[activeConv.id];
-    // Mensagem contextual inicial gerada dinamicamente a partir do agendamento real
-    return [
-      {
-        id: `init-${activeConv.id}`,
-        text: activeConv.status === "pending"
-          ? `Olá, gostaria de confirmar meu agendamento de ${activeConv.subtitle} para ${activeConv.time === "Amanhã" ? "amanhã" : `hoje às ${activeConv.timeValue || activeConv.time}`}.`
-          : `Olá! Confirmado meu agendamento de ${activeConv.subtitle}${activeConv.timeValue ? ` às ${activeConv.timeValue}` : ""}.`,
-        sender: "client" as const,
-        time: activeConv.timeValue || activeConv.time || "Hoje",
-      },
-    ];
-  }, [chatMessages, activeConv]);
+      if (clientFilter === "pending") {
+        return c.upcomingAppointment?.status === "pending";
+      }
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [activeMessages]);
+      return true;
+    });
+  }, [enrichedClients, clientSearch, clientFilter, todayStr, tomorrowStr]);
 
-  // ── Send message
-  const handleSend = () => {
-    if (!messageInput.trim() || !activeConv) return;
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
-    const newMsg: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      text: messageInput.trim(),
-      sender: "salon",
-      time: timeStr,
-      read: true,
-    };
-    setChatMessages((prev) => ({
-      ...prev,
-      [activeConv.id]: [...(prev[activeConv.id] || []), newMsg],
-    }));
-    setMessageInput("");
-    soundEffects.playClick();
-  };
+  const activeClient = useMemo(() => {
+    if (selectedClientId) {
+      return enrichedClients.find((c) => c.id === selectedClientId) || null;
+    }
+    return filteredClients[0] || enrichedClients[0] || null;
+  }, [enrichedClients, filteredClients, selectedClientId]);
 
-  // ── Load saved settings
+  // ── Load saved settings & logs
   useEffect(() => {
     if (!user) return;
     try {
@@ -317,6 +243,10 @@ export default function WhatsAppPage() {
         if (d.rules) setRules(d.rules);
         if (d.pixKey) setPixKey(d.pixKey);
         if (d.googleReviewLink) setGoogleReviewLink(d.googleReviewLink);
+      }
+      const logsLocal = localStorage.getItem(`bellamais_wa_logs_${user.uid}`);
+      if (logsLocal) {
+        setSentLogs(JSON.parse(logsLocal));
       }
     } catch {}
   }, [user]);
@@ -330,7 +260,22 @@ export default function WhatsAppPage() {
     } catch {}
   };
 
-  // ── Check connection status
+  const addSentLog = (log: Omit<MessageLogItem, "id" | "timestamp">) => {
+    const newLog: MessageLogItem = {
+      ...log,
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
+    };
+    const updated = [newLog, ...sentLogs.slice(0, 49)];
+    setSentLogs(updated);
+    if (user) {
+      try {
+        localStorage.setItem(`bellamais_wa_logs_${user.uid}`, JSON.stringify(updated));
+      } catch {}
+    }
+  };
+
+  // ── Check connection status periodically
   useEffect(() => {
     let mounted = true;
     const check = async () => {
@@ -344,20 +289,15 @@ export default function WhatsAppPage() {
           const data = await res.json();
           if (mounted) {
             setIsConnected(Boolean(data.connected));
-            setConnectedPhone(data.phoneNumber || "");
+            if (data.phoneNumber) setConnectedPhone(data.phoneNumber);
           }
         }
       } catch {}
     };
     check();
-    const interval = setInterval(check, 15000);
-    return () => {
-      mounted = false;
-      clearInterval(interval);
-    };
   }, []);
 
-  // ── QR Code
+  // ── Fetch QR Code when disconnected
   const fetchQrCode = async () => {
     setIsLoadingQr(true);
     try {
@@ -367,36 +307,51 @@ export default function WhatsAppPage() {
         body: JSON.stringify({ action: "generate", provider: "baileys", phoneNumber: salonPhone }),
       });
       const data = await res.json();
-      if (data.qrCodeBase64) setQrCodeDataUrl(data.qrCodeBase64);
+      if (data.qrCodeBase64) {
+        setQrCodeDataUrl(data.qrCodeBase64);
+      }
+      if (data.connected) {
+        setIsConnected(true);
+        setConnectedPhone(data.phoneNumber || "WhatsApp Conectado");
+      }
     } catch {} finally {
       setIsLoadingQr(false);
     }
   };
 
+  // Auto-fetch QR code if disconnected on page load
   useEffect(() => {
-    if (activeTab === "connection" && !isConnected && !qrCodeDataUrl) fetchQrCode();
-  }, [activeTab, isConnected]);
-
-  const handleVerify = async () => {
-    setIsVerifyingConnection(true);
-    try {
-      const res = await fetch("/api/whatsapp/connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "confirm" }),
-      });
-      const data = await res.json();
-      if (data.connected) {
-        setIsConnected(true);
-        setConnectedPhone(data.phoneNumber || salonPhone || "WhatsApp Ativo");
-        toast.success("WhatsApp conectado! O robô está ativo.", "Conectado");
-      } else {
-        toast.warning(data.message || "Aponte a câmera para o QR Code.", "Aguardando");
-      }
-    } finally {
-      setIsVerifyingConnection(false);
+    if (!isConnected && !qrCodeDataUrl) {
+      fetchQrCode();
     }
-  };
+  }, [isConnected]);
+
+  // ── AUTO-RECOGNITION POLLING (O usuário não precisa clicar em "Já escaneei")
+  useEffect(() => {
+    if (isConnected) return;
+
+    const autoPoll = setInterval(async () => {
+      try {
+        const res = await fetch("/api/whatsapp/connect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "confirm" }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.connected) {
+            setIsConnected(true);
+            setConnectedPhone(data.phoneNumber || salonPhone || "WhatsApp Conectado");
+            setQrCodeDataUrl(null);
+            soundEffects.playSuccess();
+            toast.success("WhatsApp conectado com sucesso! O robô de automação está pronto.", "Conexão Estabelecida");
+          }
+        }
+      } catch {}
+    }, 2500);
+
+    return () => clearInterval(autoPoll);
+  }, [isConnected, salonPhone]);
 
   const handleDisconnect = async () => {
     setIsConnected(false);
@@ -409,10 +364,11 @@ export default function WhatsAppPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "disconnect" }),
       });
+      fetchQrCode();
     } catch {}
   };
 
-  // ── Run automation
+  // ── Executar Automação em Massa (Lembretes)
   const handleRunAutomation = async () => {
     setIsProcessing(true);
     soundEffects.playClick();
@@ -422,11 +378,19 @@ export default function WhatsAppPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           appointments: (appointments || []).map((a) => ({
-            id: a.id, clientName: a.clientName, clientPhone: a.clientPhone,
-            serviceName: a.serviceName, date: a.date, time: a.time,
-            price: a.price, status: a.status, professionalName: a.professionalName,
+            id: a.id,
+            clientName: a.clientName,
+            clientPhone: a.clientPhone,
+            serviceName: a.serviceName,
+            date: a.date,
+            time: a.time,
+            price: a.price,
+            status: a.status,
+            professionalName: a.professionalName,
           })),
-          salonName, salonPhone, pixKey,
+          salonName,
+          salonPhone,
+          pixKey,
           rulesConfig: {
             confirm24h: rules.find((r) => r.id === "confirm_24h")?.enabled,
             reminder2h: rules.find((r) => r.id === "reminder_2h")?.enabled,
@@ -436,787 +400,731 @@ export default function WhatsAppPage() {
       });
       const data = await res.json();
       if (data.ok) {
-        toast.success(data.message || "Mensagens disparadas com sucesso!", "Automação Executada");
+        soundEffects.playSuccess();
+        toast.success(data.message || "Lembretes disparados com sucesso pelo robô!", "Automação Concluída");
+        addSentLog({
+          clientName: `${pendingTomorrow || todayApts.length} Clientes (Lote)`,
+          clientPhone: "Múltiplos",
+          message: "Lembretes de confirmação de agendamento disparados via piloto automático.",
+          type: "confirm_24h",
+          status: "sent",
+        });
       } else {
-        toast.warning(data.message || "Conecte o WhatsApp primeiro.", "WhatsApp Não Conectado");
+        toast.warning(data.message || "Verifique a conexão do WhatsApp.", "Aviso");
       }
     } catch {
-      toast.error("Erro ao acionar o robô.", "Falha no Envio");
+      toast.error("Erro ao disparar mensagens de automação.", "Falha no Envio");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // ── Badge color helper
-  const badgeColorMap: Record<string, string> = {
-    rose: "bg-rose-50 text-rose-700 border-rose-200/60 dark:bg-rose-950/30 dark:text-rose-300 dark:border-rose-800/40",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200/60 dark:bg-emerald-950/30 dark:text-emerald-300 dark:border-emerald-800/40",
-    amber: "bg-amber-50 text-amber-700 border-amber-200/60 dark:bg-amber-950/30 dark:text-amber-300 dark:border-amber-800/40",
-    purple: "bg-purple-50 text-purple-700 border-purple-200/60 dark:bg-purple-950/30 dark:text-purple-300 dark:border-purple-800/40",
+  // ── Disparo individual para uma cliente específica
+  const handleSendToClient = async (textToSend?: string) => {
+    const text = textToSend || customMessage;
+    if (!text.trim() || !activeClient) return;
+
+    setIsSendingMessage(true);
+    soundEffects.playClick();
+    try {
+      const res = await fetch("/api/whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          toPhone: activeClient.phone,
+          messageText: text,
+        }),
+      });
+      const data = await res.json();
+      if (data.sent) {
+        soundEffects.playSuccess();
+        toast.success(`Mensagem enviada com sucesso para ${activeClient.name}!`, "Enviado");
+        setCustomMessage("");
+        addSentLog({
+          clientName: activeClient.name,
+          clientPhone: activeClient.phone,
+          message: text,
+          type: "manual",
+          status: "delivered",
+        });
+      } else {
+        toast.warning(data.message || "Falha ao enviar pelo robô. Verifique se o WhatsApp está conectado.", "Erro no Envio");
+      }
+    } catch {
+      toast.error("Erro de comunicação com o servidor WhatsApp.", "Falha no Envio");
+    } finally {
+      setIsSendingMessage(false);
+    }
   };
 
-  const filteredConversations = useMemo(() => {
-    let list = conversations;
-    if (chatSearch) {
-      list = list.filter((c) => c.clientName.toLowerCase().includes(chatSearch.toLowerCase()));
-    }
-    if (chatFilter === "unread") list = list.filter((c) => c.unread > 0);
-    if (chatFilter === "awaiting") list = list.filter((c) => c.status === "awaiting" || c.status === "pending");
-    if (chatFilter === "resolved") list = list.filter((c) => c.status === "resolved");
-    return list;
-  }, [conversations, chatSearch, chatFilter]);
+  // ── Abrir conversa nativa no WhatsApp Web
+  const openDirectWhatsApp = (phone: string, text?: string) => {
+    const cleanPhone = (phone || "").replace(/\D/g, "");
+    const fullPhone = cleanPhone.startsWith("55") ? cleanPhone : `55${cleanPhone}`;
+    const url = `https://web.whatsapp.com/send?phone=${fullPhone}${text ? `&text=${encodeURIComponent(text)}` : ""}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // RENDER
+  // RENDERIZAÇÃO 1: ESTADO DESCONECTADO (TELA DE CONEXÃO EM DESTAQUE)
+  // Se o WhatsApp NÃO está conectado, NÃO exibe telas de chat vazias!
+  // Apresenta o QR Code grande, nítido e com auto-carregamento imediato.
   // ─────────────────────────────────────────────────────────────────────────────
-  return (
-    <div className="flex flex-col min-h-full bg-[#FAF7F5] dark:bg-[#151419] text-[#221A1D] dark:text-[#F4EEF1] transition-colors duration-200 font-sans">
-      <Header title="WhatsApp Salão" />
+  if (!isConnected) {
+    return (
+      <div className="flex flex-col min-h-full bg-[var(--background)] text-[var(--foreground)] font-sans">
+        <Header title="Conectar WhatsApp" />
 
-      {/* ─── HEADER SUPERIOR ──────────────────────────────────────────────── */}
-      <div className="bg-white dark:bg-[#1C1A22] border-b border-[#EDE6E1] dark:border-white/[0.08] px-3.5 sm:px-6 md:px-8 py-3.5 sm:py-4 shadow-[0_1px_4px_rgba(0,0,0,0.03)]">
-        <div className="max-w-[1440px] mx-auto flex flex-col gap-3">
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-10">
+          <div className="bg-[var(--card-bg)] border border-[var(--card-border)] rounded-3xl p-6 sm:p-10 shadow-xl max-w-xl w-full text-center relative overflow-hidden">
+            {/* Aura sutil decorativa */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-[#7e1639]/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Título + Status + Ações */}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2.5 flex-wrap">
-                {!isDesktopOpen && (
-                  <button
-                    type="button"
-                    onClick={openDesktop}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white dark:bg-[#25222E] border border-[#EDE6E1] dark:border-white/[0.12] hover:bg-[#7E1639] hover:text-white hover:border-[#7E1639] dark:hover:bg-[#7E1639] dark:hover:text-white text-[#7E1639] dark:text-[#E27D9A] text-xs font-semibold shadow-xs transition-all cursor-pointer group shrink-0"
-                    title="Abrir menu lateral"
-                    aria-label="Abrir menu lateral"
-                  >
-                    <PanelLeft size={16} className="group-hover:scale-105 transition-transform" />
-                    <span>Menu</span>
-                  </button>
-                )}
-                <h1 className="text-base sm:text-lg font-bold tracking-tight text-[#221A1D] dark:text-[#F4EEF1]">
-                  Central de Atendimento WhatsApp
-                </h1>
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${
-                  isConnected
-                    ? "bg-emerald-50 dark:bg-emerald-950/30 text-[#15803D] dark:text-[#34D399] border-emerald-200/60 dark:border-emerald-800/40"
-                    : "bg-[#FEF6EE] dark:bg-amber-950/30 text-[#B45309] dark:text-[#FBBF24] border-amber-200/60 dark:border-amber-800/40"
-                }`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${isConnected ? "bg-[#15803D] dark:bg-[#34D399] animate-pulse" : "bg-[#B45309] dark:bg-[#FBBF24]"}`} />
-                  {isConnected ? `Conectado${connectedPhone ? ` · ${connectedPhone}` : ""}` : "Desconectado"}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("connection")}
-                  className="w-6 h-6 rounded-lg bg-stone-100 dark:bg-white/[0.06] text-stone-500 hover:text-[#7E1639] flex items-center justify-center transition-colors cursor-pointer"
-                  title="Configurar conexão"
-                >
-                  <RefreshCw size={13} />
-                </button>
-              </div>
-              <p className="text-xs text-stone-500 dark:text-[#A0949C] mt-0.5">
-                Converse, organize pendências e converta mensagens em agendamentos sem sair daqui.
-              </p>
+            <div className="w-14 h-14 rounded-2xl bg-[var(--primary-light)] text-[#7e1639] dark:text-[#e27d9a] flex items-center justify-center mx-auto mb-4 shadow-xs">
+              <Smartphone size={28} />
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-[var(--foreground)]">
+              Conecte o WhatsApp do seu Salão
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--muted)] mt-1.5 max-w-md mx-auto leading-relaxed">
+              Aponte a câmera do WhatsApp para o QR Code abaixo. Ao escanear, o sistema
+              reconhecerá <strong>automaticamente</strong> e ativará os lembretes do seu salão.
+            </p>
+
+            {/* QR CODE GRANDE (270px) EM DESTAQUE COM AUTO-POLLING */}
+            <div className="my-6 p-6 rounded-2xl bg-white dark:bg-stone-900 border border-[var(--card-border)] inline-flex flex-col items-center justify-center shadow-md relative mx-auto">
+              {isLoadingQr ? (
+                <div className="w-64 h-64 flex flex-col items-center justify-center gap-3">
+                  <RefreshCw size={36} className="animate-spin text-[#7e1639] dark:text-[#e27d9a]" />
+                  <span className="text-xs font-semibold text-stone-500">Gerando QR Code Oficial...</span>
+                </div>
+              ) : qrCodeDataUrl ? (
+                <div className="relative">
+                  <img
+                    src={qrCodeDataUrl}
+                    alt="QR Code WhatsApp"
+                    className="w-64 h-64 sm:w-72 sm:h-72 object-contain rounded-xl"
+                  />
+                  {/* Selo Central Discreto */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-11 h-11 rounded-full bg-white shadow-md border border-stone-200 flex items-center justify-center text-[#7e1639]">
+                      <Scissors size={20} />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-64 h-64 flex flex-col items-center justify-center gap-3">
+                  <AlertCircle size={36} className="text-amber-500" />
+                  <span className="text-xs font-semibold text-stone-500">Clique abaixo para gerar o código</span>
+                </div>
+              )}
+
+              {/* Status de Escaneamento Automático em Tempo Real */}
+              <div className="mt-4 flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-medium border border-emerald-500/20">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Aguardando leitura no celular... (Auto-conexão ativa)</span>
+              </div>
+            </div>
+
+            {/* 3 Passos Simples */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left my-4 pt-2 border-t border-[var(--card-border)] text-xs">
+              <div className="p-3 rounded-xl bg-[var(--surface-hover)]">
+                <span className="w-5 h-5 rounded-full bg-[#7e1639] text-white flex items-center justify-center text-[10px] font-bold mb-1.5">1</span>
+                <p className="font-semibold text-[var(--foreground)]">Abra o WhatsApp</p>
+                <p className="text-[11px] text-[var(--muted)] mt-0.5">No celular que o salão usa para atender.</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[var(--surface-hover)]">
+                <span className="w-5 h-5 rounded-full bg-[#7e1639] text-white flex items-center justify-center text-[10px] font-bold mb-1.5">2</span>
+                <p className="font-semibold text-[var(--foreground)]">Aparelhos Conectados</p>
+                <p className="text-[11px] text-[var(--muted)] mt-0.5">Toque em Ajustes/Menu e selecione a opção.</p>
+              </div>
+              <div className="p-3 rounded-xl bg-[var(--surface-hover)]">
+                <span className="w-5 h-5 rounded-full bg-[#7e1639] text-white flex items-center justify-center text-[10px] font-bold mb-1.5">3</span>
+                <p className="font-semibold text-[var(--foreground)]">Aponte a Câmera</p>
+                <p className="text-[11px] text-[var(--muted)] mt-0.5">Pronto! A tela conectará sozinha na hora.</p>
+              </div>
+            </div>
+
+            {/* Botão de Atualizar QR Code */}
+            <div className="flex items-center justify-center gap-3 pt-2">
               <button
                 type="button"
-                className="h-9 px-3 rounded-xl bg-stone-100 dark:bg-white/[0.06] text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-white/10 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                onClick={fetchQrCode}
+                disabled={isLoadingQr}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[var(--surface-hover)] hover:bg-[var(--card-border)] text-xs font-bold text-[var(--foreground)] transition cursor-pointer border border-[var(--card-border)]"
               >
-                <SlidersHorizontal size={14} />
-                <span>Respostas Rápidas</span>
+                <RefreshCw size={14} className={isLoadingQr ? "animate-spin" : ""} />
+                <span>Atualizar QR Code</span>
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // RENDERIZAÇÃO 2: ESTADO CONECTADO (CENTRAL COMPLETA DE AUTOMAÇÕES & CONTATOS)
+  // ─────────────────────────────────────────────────────────────────────────────
+  return (
+    <div className="flex flex-col min-h-full bg-[var(--background)] text-[var(--foreground)] font-sans">
+      <Header title="Central de WhatsApp do Salão" />
+
+      {/* ─── TOPO DE COMANDO & STATUS ATIVO ─────────────────────────────────── */}
+      <div className="bg-[var(--card-bg)] border-b border-[var(--card-border)] px-4 sm:px-6 md:px-8 py-4 shadow-xs">
+        <div className="max-w-[1440px] mx-auto flex flex-col gap-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {!isDesktopOpen && (
+                <button
+                  type="button"
+                  onClick={openDesktop}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[var(--card-bg)] border border-[var(--card-border)] hover:bg-[#7e1639] hover:text-white text-[#7e1639] dark:text-[#e27d9a] text-xs font-semibold shadow-xs transition-all cursor-pointer shrink-0"
+                  title="Abrir menu lateral"
+                >
+                  <PanelLeft size={16} />
+                  <span>Menu</span>
+                </button>
+              )}
+
+              <div>
+                <div className="flex items-center gap-2.5 flex-wrap">
+                  <h1 className="text-base sm:text-lg font-bold tracking-tight text-[var(--foreground)]">
+                    Central de WhatsApp & Automações
+                  </h1>
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    <span>Conectado · {connectedPhone || "WhatsApp Ativo"}</span>
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--muted)] mt-0.5">
+                  Lembretes automáticos, confirmações e contato rápido com todas as clientes do salão.
+                </p>
+              </div>
+            </div>
+
+            {/* Ações Globais */}
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <a
+                href="https://web.whatsapp.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="h-9 px-3.5 rounded-xl bg-[var(--surface-hover)] border border-[var(--card-border)] text-xs font-semibold flex items-center gap-1.5 text-[var(--foreground)] hover:border-[#25d366] hover:text-[#25d366] transition cursor-pointer"
+                title="Abrir o WhatsApp Web oficial para conversas gerais"
+              >
+                <ExternalLink size={14} className="text-[#25d366]" />
+                <span>Abrir WhatsApp Web Oficial</span>
+              </a>
+
               <button
                 type="button"
                 onClick={handleRunAutomation}
                 disabled={isProcessing}
-                className="h-9 px-4 rounded-xl bg-[#7E1639] hover:bg-[#68112E] text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 disabled:opacity-60 cursor-pointer"
+                className="h-9 px-4 rounded-xl bg-[#7e1639] hover:bg-[#64112e] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition active:scale-95 disabled:opacity-60 cursor-pointer"
               >
                 <Zap size={14} className={isProcessing ? "animate-spin" : ""} />
                 <span>
-                  {isProcessing ? "Processando..." : `Enviar Lembretes${pendingTomorrow > 0 ? ` (${pendingTomorrow} clientes)` : ""}`}
+                  {isProcessing ? "Disparando..." : `Disparar Lembretes (${pendingTomorrow || todayApts.length} clientes)`}
                 </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleDisconnect}
+                className="h-9 px-3 rounded-xl border border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                title="Desconectar este aparelho"
+              >
+                <LogOut size={14} />
+                <span>Desconectar</span>
               </button>
             </div>
           </div>
 
-          {/* Pílulas de Resumo Operacional */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FBF0F4] dark:bg-white/[0.04] border border-[#EDE6E1] dark:border-white/[0.08] text-xs">
-                <MessageCircle size={13} className="text-[#7E1639] dark:text-[#E27D9A]" />
-                <span className="text-stone-600 dark:text-[#A0949C] font-medium">Não lidas:</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-[#7E1639] dark:bg-[#E27D9A] text-white dark:text-[#151419] text-[10px] font-bold">
-                  {conversations.filter((c) => c.unread > 0).length}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#FEF6EE] dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 text-xs">
-                <Clock size={13} className="text-[#B45309] dark:text-[#FBBF24]" />
-                <span className="text-stone-600 dark:text-[#A0949C] font-medium">Agendamentos solicitados:</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-[#B45309] dark:bg-[#FBBF24] text-white dark:text-[#151419] text-[10px] font-bold">
-                  {conversations.filter((c) => c.status === "pending").length}
-                </span>
-              </div>
-              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-white/[0.04] border border-stone-200/70 dark:border-white/[0.08] text-xs">
-                <AlertCircle size={13} className="text-stone-500" />
-                <span className="text-stone-600 dark:text-[#A0949C] font-medium">Pendentes:</span>
-                <span className="px-1.5 py-0.5 rounded-full bg-stone-400 text-white text-[10px] font-bold">
-                  {conversations.filter((c) => c.status === "awaiting").length}
-                </span>
-              </div>
+          {/* Abas e Resumo Operacional */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-[var(--card-border)]">
+            <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-hover)]">
+              <button
+                type="button"
+                onClick={() => setActiveTab("automations")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeTab === "automations"
+                    ? "bg-[#7e1639] text-white shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <Bot size={14} />
+                <span>Automações & Lembretes</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("clients")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeTab === "clients"
+                    ? "bg-[#7e1639] text-white shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <Users size={14} />
+                <span>Fila de Clientes ({filteredClients.length})</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("history")}
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                  activeTab === "history"
+                    ? "bg-[#7e1639] text-white shadow-xs"
+                    : "text-[var(--muted)] hover:text-[var(--foreground)]"
+                }`}
+              >
+                <Clock size={14} />
+                <span>Histórico de Disparos ({sentLogs.length})</span>
+              </button>
             </div>
 
-            {/* Abas no lado direito dos pills */}
-            <div className="flex items-center gap-1 p-1 rounded-xl bg-stone-100 dark:bg-white/[0.06]">
-              {(["chat", "automation", "connection"] as const).map((tab) => {
-                const labels = { chat: "Conversas", automation: "Automação", connection: "Conexão" };
-                const icons = { chat: MessageCircle, automation: Bot, connection: Smartphone };
-                const Icon = icons[tab];
-                return (
-                  <button
-                    key={tab}
-                    type="button"
-                    onClick={() => setActiveTab(tab)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                      activeTab === tab
-                        ? "bg-[#7E1639] text-white shadow-xs"
-                        : "text-stone-600 dark:text-[#A0949C] hover:text-[#221A1D] dark:hover:text-[#F4EEF1]"
-                    }`}
-                  >
-                    <Icon size={13} />
-                    {labels[tab]}
-                  </button>
-                );
-              })}
+            <div className="flex items-center gap-3 text-xs text-[var(--muted)]">
+              <span>Hoje: <strong className="text-emerald-600 dark:text-emerald-400">{confirmedToday} confirmados</strong></span>
+              <span>•</span>
+              <span>Véspera: <strong className="text-amber-600 dark:text-amber-400">{pendingTomorrow} pendentes</strong></span>
+              <span>•</span>
+              <span>Protegido: <strong className="text-[#7e1639] dark:text-[#e27d9a]">{formatBRL(savedRevenue)}</strong></span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ─── CONTEÚDO PRINCIPAL ───────────────────────────────────────────── */}
-      <div className="flex-1 max-w-[1440px] w-full mx-auto p-3 sm:p-4">
+      {/* ─── CORPO PRINCIPAL COM AS ABAS ────────────────────────────────────── */}
+      <div className="flex-1 max-w-[1440px] w-full mx-auto p-4 sm:p-6 lg:p-8">
 
-        {/* ═══ ABA: CHAT ══════════════════════════════════════════════════════ */}
-        {activeTab === "chat" && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-3 h-[calc(100dvh-185px)] sm:h-[calc(100vh-220px)] min-h-[520px]">
-
-            {/* ── COLUNA ESQUERDA: Lista de Conversas ─────────────────────── */}
-            <aside className={`${mobileView === "list" ? "flex" : "hidden"} lg:flex lg:col-span-3 bg-white dark:bg-[#1C1A22] rounded-2xl border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.03)] flex-col overflow-hidden`}>
-
-              {/* Search */}
-              <div className="p-3 border-b border-stone-100 dark:border-white/[0.06]">
-                <div className="relative">
-                  <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
-                  <input
-                    type="text"
-                    placeholder="Buscar cliente, serviço..."
-                    value={chatSearch}
-                    onChange={(e) => setChatSearch(e.target.value)}
-                    className="w-full h-9 pl-8 pr-3 rounded-xl bg-stone-100 dark:bg-white/[0.06] text-xs text-[#221A1D] dark:text-[#F4EEF1] placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#7E1639] transition-all"
-                  />
-                </div>
-
-                {/* Filters */}
-                <div className="flex items-center gap-1 mt-2 overflow-x-auto pb-0.5">
-                  {(["all", "unread", "awaiting", "resolved"] as const).map((f) => {
-                    const labels = { all: "Todas", unread: "Não lidas", awaiting: "Aguardando", resolved: "Resolvidas" };
-                    return (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setChatFilter(f)}
-                        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold shrink-0 transition-colors cursor-pointer ${
-                          chatFilter === f
-                            ? "bg-[#7E1639] text-white"
-                            : "bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-[#A0949C] hover:bg-stone-200 dark:hover:bg-white/10"
-                        }`}
-                      >
-                        {labels[f]}
-                        {f === "unread" && conversations.filter((c) => c.unread > 0).length > 0 && (
-                          <span className="ml-1 inline-flex w-4 h-4 rounded-full bg-[#7E1639] dark:bg-[#E27D9A] text-white dark:text-[#151419] text-[9px] items-center justify-center font-bold">
-                            {conversations.filter((c) => c.unread > 0).length}
-                          </span>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
+        {/* ═════════════════════════════════════════════════════════════════════
+            ABA 1: AUTOMAÇÕES & LEMBRETES INTELIGENTES (EM GRADE HARMONIOSA)
+            ═════════════════════════════════════════════════════════════════════ */}
+        {activeTab === "automations" && (
+          <div className="max-w-[1400px] mx-auto space-y-4">
+            {/* Banner Compacto de Boas Práticas */}
+            <div className="px-4 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2.5">
+                <ShieldCheck size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                  Piloto Automático de Redução de Faltas
+                </span>
+                <span className="text-xs text-emerald-900/80 dark:text-emerald-200/80 hidden sm:inline">
+                  — Mensagens automáticas com nome da cliente, data e horário para manter a agenda cheia.
+                </span>
               </div>
+              <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>{rules.filter((r) => r.enabled).length} de 4 regras ativas</span>
+              </div>
+            </div>
 
-              {/* Conversation list */}
-              <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                {filteredConversations.length === 0 ? (
-                  <div className="py-10 text-center text-xs text-stone-400">
-                    Nenhuma conversa encontrada.
-                  </div>
-                ) : (
-                  filteredConversations.map((conv) => {
-                    const isActive = conv.id === activeConv?.id;
-                    const statusColors: Record<string, string> = {
-                      pending: "text-[#7E1639] dark:text-[#E27D9A] bg-[#FBF0F4] dark:bg-white/[0.04]",
-                      confirmed: "text-[#15803D] dark:text-[#34D399] bg-emerald-50 dark:bg-emerald-950/20",
-                      resolved: "text-stone-500 bg-stone-100 dark:bg-white/[0.06]",
-                      awaiting: "text-[#B45309] dark:text-[#FBBF24] bg-[#FEF6EE] dark:bg-amber-950/20",
-                    };
-                    return (
-                      <article
-                        key={conv.id}
-                        onClick={() => {
-                          setActiveConvId(conv.id);
-                          setMobileView("chat");
-                        }}
-                        className={`p-3 rounded-xl cursor-pointer transition-all flex flex-col gap-1.5 relative ${
-                          isActive
-                            ? "bg-[#FBF0F4] dark:bg-white/[0.06] border border-[#EDE6E1] dark:border-white/[0.08] shadow-2xs"
-                            : "hover:bg-stone-50 dark:hover:bg-white/[0.03] border border-transparent"
-                        }`}
-                      >
-                        {/* Active indicator */}
-                        {isActive && (
-                          <div className="absolute left-0 top-2 bottom-2 w-1 bg-[#7E1639] dark:bg-[#E27D9A] rounded-r-full" />
-                        )}
-                        <div className="flex items-start justify-between gap-2 pl-1">
-                          <div className="flex items-center gap-2">
-                            <div className="relative shrink-0">
-                              <div className="w-9 h-9 rounded-full bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center text-xs font-bold">
-                                {conv.initials}
-                              </div>
-                              {conv.isOnline && (
-                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#15803D] dark:bg-[#34D399] ring-2 ring-white dark:ring-[#1C1A22]" />
-                              )}
-                            </div>
-                            <div className="flex flex-col min-w-0">
-                              <div className="flex items-center gap-1">
-                                <span className="text-xs font-semibold text-[#221A1D] dark:text-[#F4EEF1] truncate">
-                                  {conv.clientName}
-                                </span>
-                                {conv.isVip && <Star size={10} className="text-amber-400 fill-amber-400 shrink-0" />}
-                              </div>
-                              {conv.subtitle && (
-                                <span className="text-[10px] text-stone-400 truncate">{conv.subtitle}</span>
-                              )}
-                            </div>
+            {/* GRADE DE LAYOUT 2x2 ALINHADA COM CARDS COMPACTOS */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-5">
+              {rules.map((rule) => {
+                const badgeClasses = {
+                  emerald: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
+                  rose: "bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30",
+                  amber: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
+                  purple: "bg-purple-500/10 text-purple-700 dark:text-purple-400 border-purple-500/30",
+                };
+
+                return (
+                  <div
+                    key={rule.id}
+                    className="bg-[var(--card-bg)] rounded-2xl p-4 sm:p-5 border border-[var(--card-border)] shadow-xs transition hover:border-[#7e1639]/40 flex flex-col justify-between h-full group"
+                  >
+                    <div>
+                      {/* Top Header do Card: Ícone + Título + Badge + Switch */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-xl bg-[var(--primary-light)] text-[#7e1639] dark:text-[#e27d9a] flex items-center justify-center shrink-0 shadow-2xs">
+                            <Bot size={18} />
                           </div>
-                          <div className="flex flex-col items-end gap-1 shrink-0">
-                            <span className="text-[10px] text-stone-400">{conv.time}</span>
-                            {conv.unread > 0 && (
-                              <span className="w-4 h-4 rounded-full bg-[#7E1639] dark:bg-[#E27D9A] text-white dark:text-[#151419] text-[9px] flex items-center justify-center font-bold">
-                                {conv.unread}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-sm font-bold text-[var(--foreground)] tracking-tight">
+                                {rule.title}
+                              </h3>
+                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badgeClasses[rule.badgeColor]}`}>
+                                {rule.badge}
                               </span>
-                            )}
-                          </div>
-                        </div>
-                        <p className="text-[11px] text-stone-500 dark:text-[#A0949C] line-clamp-1 pl-1">
-                          {conv.lastMessage}
-                        </p>
-                        <div className="flex items-center justify-between pl-1">
-                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${statusColors[conv.status] || statusColors.resolved}`}>
-                            {conv.statusLabel}
-                          </span>
-                          {conv.status === "confirmed" && (
-                            <CheckCheck size={12} className="text-[#15803D] dark:text-[#34D399]" />
-                          )}
-                        </div>
-                      </article>
-                    );
-                  })
-                )}
-              </div>
-            </aside>
-
-            {/* ── COLUNA CENTRO: Chat Ativo ────────────────────────────────── */}
-            <main className={`${mobileView === "chat" ? "flex" : "hidden"} lg:flex lg:col-span-6 bg-white dark:bg-[#1C1A22] rounded-2xl border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.03)] flex-col overflow-hidden`}>
-              {activeConv ? (
-                <>
-                  {/* Chat header */}
-                  <div className="h-14 px-4 flex items-center justify-between border-b border-stone-100 dark:border-white/[0.06] shrink-0">
-                    <div className="flex items-center gap-2 min-w-0">
-                      {/* Botão Voltar para Lista no Mobile */}
-                      <button
-                        type="button"
-                        onClick={() => setMobileView("list")}
-                        className="lg:hidden p-1.5 -ml-1 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors cursor-pointer"
-                        title="Voltar às conversas"
-                      >
-                        <ArrowLeft size={16} />
-                      </button>
-                      <div className="relative shrink-0">
-                        <div className="w-9 h-9 rounded-full bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center text-xs font-bold">
-                          {activeConv.initials}
-                        </div>
-                        {activeConv.isOnline && (
-                          <span className="absolute bottom-0 right-0 w-2 h-2 rounded-full bg-[#15803D] dark:bg-[#34D399] ring-1 ring-white dark:ring-[#1C1A22]" />
-                        )}
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <span className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1] truncate">
-                            {activeConv.clientName}
-                          </span>
-                          {activeConv.isVip && (
-                            <span className="px-1.5 py-0.5 rounded bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] text-[10px] font-bold">
-                              VIP
-                            </span>
-                          )}
-                        </div>
-                        <span className="text-[10px] text-stone-400">
-                          {activeConv.isOnline ? "Online agora" : activeConv.subtitle || "Offline"}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => setMobileView("profile")}
-                        className="lg:hidden h-7 px-2.5 rounded-lg bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                      >
-                        <User size={12} />
-                        <span>Ficha</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="h-7 px-2.5 rounded-lg bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-[#A0949C] hover:text-[#7E1639] text-[11px] font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-                      >
-                        <CheckCircle2 size={13} />
-                        <span className="hidden sm:inline">Resolver</span>
-                      </button>
-                      <button type="button" className="w-7 h-7 rounded-lg bg-stone-100 dark:bg-white/[0.06] text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 flex items-center justify-center transition-colors cursor-pointer">
-                        <Forward size={14} />
-                      </button>
-                      <button type="button" className="w-7 h-7 rounded-lg bg-stone-100 dark:bg-white/[0.06] text-stone-500 hover:text-stone-700 dark:hover:text-stone-200 flex items-center justify-center transition-colors cursor-pointer">
-                        <ExternalLink size={13} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Messages area */}
-                  <div className="flex-1 p-3.5 sm:p-4 overflow-y-auto flex flex-col gap-3 bg-[#FAF7F5] dark:bg-[#151419]">
-                    {/* Date divider */}
-                    <div className="flex justify-center my-1">
-                      <span className="px-3 py-0.5 rounded-full bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.06] text-stone-500 dark:text-[#A0949C] text-[10px] font-semibold">
-                        Hoje
-                      </span>
-                    </div>
-
-                    {/* System card */}
-                    {isConnected && (
-                      <div className="self-center w-full max-w-sm px-3 py-2 rounded-xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.06] text-center flex items-center justify-center gap-2">
-                        <Sparkles size={13} className="text-[#7E1639] dark:text-[#E27D9A] shrink-0" />
-                        <span className="text-[11px] text-stone-500 dark:text-[#A0949C]">
-                          Robô ativo — lembrete programado automaticamente
-                        </span>
-                      </div>
-                    )}
-
-                    {/* Messages */}
-                    {activeMessages.map((msg) => (
-                      <div
-                        key={msg.id}
-                        className={`flex flex-col gap-1 max-w-[85%] sm:max-w-[75%] ${msg.sender === "salon" ? "self-end items-end" : "self-start items-start"}`}
-                      >
-                        <div
-                          className={`px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-2xl text-xs sm:text-sm leading-relaxed ${
-                            msg.sender === "salon"
-                              ? "bg-[#FBF0F4] dark:bg-[#2A2027] text-[#221A1D] dark:text-[#F4EEF1] border border-[#F2DCE5] dark:border-white/[0.06] rounded-tr-xs"
-                              : "bg-white dark:bg-[#1C1A22] text-[#221A1D] dark:text-[#F4EEF1] border border-[#EDE6E1] dark:border-white/[0.06] rounded-tl-xs shadow-2xs"
-                          }`}
-                        >
-                          {msg.text}
-                        </div>
-                        <div className="flex items-center gap-1 px-1">
-                          <span className="text-[10px] text-stone-400">{msg.time}</span>
-                          {msg.sender === "salon" && (
-                            <CheckCheck size={11} className="text-[#15803D] dark:text-[#34D399]" />
-                          )}
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Intelligent suggestion card */}
-                    {activeConv.status === "pending" && (
-                      <div className="self-center w-full max-w-md bg-white dark:bg-[#1C1A22] rounded-2xl p-3 shadow-2xs border border-[#EDE6E1] dark:border-white/[0.08] flex flex-col gap-2.5 relative overflow-hidden">
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#7E1639] dark:bg-[#E27D9A] rounded-r-full" />
-                        <div className="flex items-start gap-2 pl-2">
-                          <div className="w-7 h-7 rounded-lg bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center shrink-0">
-                            <Sparkles size={14} />
-                          </div>
-                          <div className="flex flex-col flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-[#7E1639] dark:text-[#E27D9A]">Sugestão Inteligente</span>
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/30 text-[#15803D] dark:text-[#34D399] font-semibold">Horário Livre</span>
                             </div>
-                            <p className="text-xs text-stone-600 dark:text-[#A0949C] mt-1">
-                              Horário disponível amanhã para <strong>{activeConv.subtitle || "atendimento"}</strong>. Clique para confirmar.
+                            <p className="text-xs text-[var(--muted)] mt-0.5 line-clamp-1">
+                              {rule.subtitle}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center justify-end gap-2 pl-2">
-                          <button
-                            type="button"
-                            onClick={() => setMessageInput(`${activeConv.clientName}, temos um horário disponível amanhã. Posso confirmar para você?`)}
-                            className="px-3 py-1.5 rounded-lg bg-stone-100 dark:bg-white/[0.06] text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-white/10 text-xs font-semibold transition-colors cursor-pointer"
-                          >
-                            Copiar proposta
-                          </button>
-                          <button
-                            type="button"
-                            className="px-3 py-1.5 rounded-lg bg-[#7E1639] hover:bg-[#68112E] text-white text-xs font-semibold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
-                          >
-                            <Calendar size={12} />
-                            Inserir no Agendamento
-                          </button>
-                        </div>
-                      </div>
-                    )}
 
-                    <div ref={messagesEndRef} />
-                  </div>
-
-                  {/* Quick replies */}
-                  <div className="px-3 sm:px-4 py-2 border-t border-stone-100 dark:border-white/[0.06] flex items-center gap-1.5 overflow-x-auto">
-                    <span className="text-[10px] font-semibold text-stone-400 uppercase shrink-0 mr-1">Atalhos:</span>
-                    {QUICK_REPLIES.map((qr) => (
-                      <button
-                        key={qr}
-                        type="button"
-                        onClick={() => setMessageInput(qr)}
-                        className="px-2.5 py-1 rounded-full bg-[#FBF0F4] hover:bg-[#F5DFE7] dark:bg-white/[0.06] dark:hover:bg-white/10 text-[#7E1639] dark:text-[#E27D9A] text-[11px] font-medium shrink-0 transition-colors cursor-pointer"
-                      >
-                        {qr}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Message input */}
-                  <div className="p-2.5 sm:p-3 border-t border-stone-100 dark:border-white/[0.06] flex items-center gap-1.5 sm:gap-2 bg-white dark:bg-[#1C1A22] shrink-0">
-                    <div className="flex items-center gap-0.5">
-                      <button type="button" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-stone-100 dark:hover:bg-white/[0.06] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 flex items-center justify-center transition-colors cursor-pointer">
-                        <Image size={15} />
-                      </button>
-                      <button type="button" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-stone-100 dark:hover:bg-white/[0.06] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 flex items-center justify-center transition-colors cursor-pointer">
-                        <Paperclip size={15} />
-                      </button>
-                      <button type="button" className="hidden sm:flex w-8 h-8 rounded-full hover:bg-stone-100 dark:hover:bg-white/[0.06] text-stone-400 hover:text-stone-600 dark:hover:text-stone-300 items-center justify-center transition-colors cursor-pointer">
-                        <Smile size={15} />
-                      </button>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <textarea
-                        rows={1}
-                        value={messageInput}
-                        onChange={(e) => setMessageInput(e.target.value)}
-                        onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(); } }}
-                        placeholder={`Mensagem para ${activeConv.clientName}...`}
-                        className="w-full py-1.5 sm:py-2 px-3 rounded-xl bg-stone-100 dark:bg-white/[0.06] text-xs sm:text-sm text-[#221A1D] dark:text-[#F4EEF1] placeholder-stone-400 focus:outline-none focus:ring-1 focus:ring-[#7E1639] resize-none transition-all leading-normal"
-                      />
-                    </div>
-                    <button type="button" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full hover:bg-stone-100 dark:hover:bg-white/[0.06] text-stone-400 hover:text-[#7E1639] flex items-center justify-center transition-colors cursor-pointer">
-                      <Mic size={15} />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSend}
-                      className="h-8 sm:h-9 px-3 sm:px-4 rounded-xl bg-[#7E1639] hover:bg-[#68112E] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all active:scale-95 cursor-pointer shrink-0"
-                    >
-                      <span>Enviar</span>
-                      <Send size={12} />
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-center p-8">
-                  <div>
-                    <MessageCircle size={32} className="mx-auto text-stone-300 dark:text-stone-600 mb-3" />
-                    <p className="text-sm font-semibold text-stone-500 dark:text-[#A0949C]">Selecione uma conversa</p>
-                    <p className="text-xs text-stone-400 dark:text-stone-500 mt-1">As conversas da sua agenda aparecem aqui automaticamente.</p>
-                  </div>
-                </div>
-              )}
-            </main>
-
-            {/* ── COLUNA DIREITA: Painel da Cliente ───────────────────────── */}
-            <aside className={`${mobileView === "profile" ? "flex" : "hidden"} lg:flex lg:col-span-3 bg-white dark:bg-[#1C1A22] rounded-2xl border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.03)] flex-col p-4 overflow-y-auto gap-4`}>
-
-              {activeConv ? (
-                <>
-                  {/* Profile header */}
-                  <div className="flex flex-col gap-3 pb-3 border-b border-stone-100 dark:border-white/[0.06]">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
+                        {/* Switch Liga / Desliga */}
                         <button
                           type="button"
-                          onClick={() => setMobileView("chat")}
-                          className="lg:hidden p-1 -ml-1 text-stone-500 hover:text-stone-800 dark:hover:text-stone-200 transition-colors cursor-pointer"
-                          title="Voltar ao chat"
+                          onClick={() => {
+                            const updated = rules.map((r) => (r.id === rule.id ? { ...r, enabled: !r.enabled } : r));
+                            setRules(updated);
+                            saveSettings({ rules: updated });
+                            soundEffects.playClick();
+                            toast.info(`Regra "${rule.title}" ${!rule.enabled ? "ativada" : "pausada"}.`, "Atualizado");
+                          }}
+                          className={`relative w-11 h-6 rounded-full transition-colors shrink-0 cursor-pointer ${
+                            rule.enabled ? "bg-emerald-600" : "bg-stone-300 dark:bg-stone-700"
+                          }`}
+                          title={rule.enabled ? "Desativar regra" : "Ativar regra"}
                         >
-                          <ArrowLeft size={15} />
+                          <span
+                            className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-all ${
+                              rule.enabled ? "left-5" : "left-0.5"
+                            }`}
+                          />
                         </button>
-                        <span className="text-[10px] font-bold uppercase text-stone-400 tracking-wider">Ficha Expresso</span>
                       </div>
-                      <button type="button" className="w-6 h-6 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] text-stone-400 flex items-center justify-center transition-colors cursor-pointer">
-                        <MoreVertical size={13} />
-                      </button>
+
+                      {/* Pill de Agendamento/Timing */}
+                      <div className="mt-2.5 flex items-center gap-1.5 text-[11px] font-medium text-[var(--muted)]">
+                        <Clock size={12} className="text-[#7e1639] dark:text-[#e27d9a]" />
+                        <span>{rule.scheduleInfo}</span>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <div className="w-12 h-12 rounded-2xl bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center text-base font-bold shadow-2xs">
-                          {activeConv.initials}
-                        </div>
-                        {activeConv.isVip && (
-                          <span className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-400 text-white flex items-center justify-center text-[9px] font-bold">
-                            ★
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1] truncate">{activeConv.clientName}</span>
-                        <span className="text-[11px] text-stone-400 flex items-center gap-1">
-                          <Phone size={10} /> {activeConv.clientPhone || "Sem telefone"}
+
+                    {/* Balão WhatsApp Compacto */}
+                    <div className="mt-3.5 pt-3 border-t border-[var(--card-border)]">
+                      <div className="flex items-center justify-between mb-1.5 text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                        <span>Modelo no WhatsApp:</span>
+                        <span className={rule.enabled ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-[var(--muted)]"}>
+                          {rule.enabled ? "Ativo" : "Pausado"}
                         </span>
-                        {activeConv.isVip && (
-                          <span className="text-[10px] text-[#7E1639] dark:text-[#E27D9A] font-semibold mt-0.5">Cliente Frequente</span>
-                        )}
+                      </div>
+
+                      <div className="p-3 rounded-xl bg-[var(--surface-hover)] border border-[var(--card-border)] text-xs text-[var(--foreground)] font-mono leading-relaxed max-h-36 overflow-y-auto custom-scrollbar whitespace-pre-wrap">
+                        {rule.template}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => setMessageInput(`Olá ${activeConv.clientName}! Passando para confirmar se você deseja marcar um novo horário conosco no ${salonName}.`)}
-                      className="w-full h-9 rounded-xl bg-[#7E1639] hover:bg-[#68112E] text-white text-xs font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
-                    >
-                      <Calendar size={14} />
-                      Propor Horário
-                    </button>
                   </div>
-
-                  {/* Booking widget */}
-                  <section className="bg-stone-50 dark:bg-white/[0.02] rounded-2xl p-3 flex flex-col gap-3 border border-stone-100 dark:border-white/[0.06]">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#7E1639] dark:text-[#E27D9A] flex items-center gap-1.5">
-                        <Calendar size={14} /> Agendamento Atual
-                      </span>
-                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${
-                        activeConv.status === "confirmed"
-                          ? "bg-emerald-50 dark:bg-emerald-950/30 text-[#15803D] dark:text-[#34D399]"
-                          : "bg-amber-50 dark:bg-amber-950/30 text-[#B45309] dark:text-[#FBBF24]"
-                      }`}>
-                        {activeConv.statusLabel}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[10px] text-stone-400 font-medium">Procedimento</label>
-                      <div className="px-2.5 py-2 rounded-xl bg-white dark:bg-white/[0.06] text-stone-800 dark:text-stone-200 text-xs flex items-center justify-between border border-stone-100 dark:border-white/[0.06]">
-                        <div className="flex flex-col">
-                          <span className="font-semibold">{activeConv.subtitle || "Atendimento"}</span>
-                          {activeConv.professionalName && (
-                            <span className="text-[10px] text-stone-400">Com: {activeConv.professionalName}</span>
-                          )}
-                        </div>
-                        {activeConv.price ? (
-                          <span className="text-xs font-bold text-[#7E1639] dark:text-[#E27D9A]">{formatBRL(activeConv.price)}</span>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] text-stone-400 font-medium">Data</label>
-                        <div className="px-2 py-2 rounded-xl bg-white dark:bg-white/[0.06] text-xs font-semibold text-stone-800 dark:text-stone-200 text-center border border-stone-100 dark:border-white/[0.06]">
-                          {activeConv.time === "Amanhã" ? "Amanhã" : activeConv.date || "Hoje"}
-                        </div>
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        <label className="text-[10px] text-stone-400 font-medium">Horário</label>
-                        <div className="px-2 py-2 rounded-xl bg-white dark:bg-white/[0.06] text-xs font-bold text-[#7E1639] dark:text-[#E27D9A] text-center border border-stone-100 dark:border-white/[0.06]">
-                          {activeConv.timeValue || activeConv.time || "--:--"}
-                        </div>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setMessageInput(`Olá ${activeConv.clientName}! Seu agendamento de ${activeConv.subtitle} está confirmado para ${activeConv.time === "Amanhã" ? "amanhã" : "hoje"} às ${activeConv.timeValue || activeConv.time}. Te esperamos!`)}
-                      className="w-full h-9 rounded-xl bg-[#7E1639] hover:bg-[#68112E] text-white text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer"
-                    >
-                      <Send size={13} />
-                      Enviar Confirmação no Chat
-                    </button>
-                  </section>
-
-                  {/* Quick actions for client */}
-                  <section className="mt-auto p-3 rounded-2xl bg-[#FBF0F4] dark:bg-white/[0.02] border border-[#EDE6E1] dark:border-white/[0.06] flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5">
-                        <HeartHandshake size={14} className="text-[#7E1639] dark:text-[#E27D9A]" />
-                        <span className="text-xs font-bold text-[#7E1639] dark:text-[#E27D9A]">Ações com a Cliente</span>
-                      </div>
-                    </div>
-                    <p className="text-[11px] text-stone-500 dark:text-[#A0949C]">
-                      Envie mensagens rápidas de pós-venda ou cobrança de chave Pix diretamente pelo WhatsApp.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setMessageInput(`Oi ${activeConv.clientName}! Foi um prazer atender você hoje no ${salonName}. O que achou do resultado?`)}
-                      className="w-full h-8 rounded-xl bg-white dark:bg-white/[0.06] hover:bg-stone-50 dark:hover:bg-white/10 text-[#7E1639] dark:text-[#E27D9A] text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors border border-[#EDE6E1] dark:border-white/[0.08] cursor-pointer"
-                    >
-                      <Gift size={13} />
-                      Mensagem de Agradecimento
-                    </button>
-                  </section>
-                </>
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-center p-6">
-                  <div>
-                    <User size={28} className="mx-auto text-stone-300 dark:text-stone-600 mb-2" />
-                    <p className="text-xs text-stone-400">Selecione uma conversa para ver a ficha da cliente.</p>
-                  </div>
-                </div>
-              )}
-            </aside>
+                );
+              })}
+            </div>
           </div>
         )}
 
-        {/* ═══ ABA: AUTOMAÇÃO ═════════════════════════════════════════════════ */}
-        {activeTab === "automation" && (
-          <div className="max-w-3xl mx-auto space-y-4 py-2">
+        {/* ═════════════════════════════════════════════════════════════════════
+            ABA 2: FILA DE CLIENTES DO SALÃO & DISPAROS RÁPIDOS
+            ═════════════════════════════════════════════════════════════════════ */}
+        {activeTab === "clients" && (
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+            {/* Coluna da Esquerda: Lista de Clientes (5 cols) */}
+            <div className="lg:col-span-5 flex flex-col gap-3">
+              {/* Filtros e Busca */}
+              <div className="bg-[var(--card-bg)] p-3.5 rounded-2xl border border-[var(--card-border)] shadow-xs space-y-2.5">
+                <div className="relative">
+                  <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
+                  <input
+                    type="text"
+                    value={clientSearch}
+                    onChange={(e) => setClientSearch(e.target.value)}
+                    placeholder="Pesquisar cliente por nome ou WhatsApp..."
+                    className="w-full pl-9 pr-3 py-2 text-xs rounded-xl bg-[var(--background)] border border-[var(--card-border)] text-[var(--foreground)] outline-none focus:border-[#7e1639]"
+                  />
+                </div>
+
+                <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
+                  <button
+                    type="button"
+                    onClick={() => setClientFilter("today_tomorrow")}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition shrink-0 cursor-pointer ${
+                      clientFilter === "today_tomorrow"
+                        ? "bg-[#7e1639] text-white"
+                        : "bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    Hoje & Amanhã
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClientFilter("pending")}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition shrink-0 cursor-pointer ${
+                      clientFilter === "pending"
+                        ? "bg-amber-600 text-white"
+                        : "bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    Pendentes
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setClientFilter("all")}
+                    className={`px-3 py-1.5 rounded-xl font-bold transition shrink-0 cursor-pointer ${
+                      clientFilter === "all"
+                        ? "bg-[#7e1639] text-white"
+                        : "bg-[var(--surface-hover)] text-[var(--muted)] hover:text-[var(--foreground)]"
+                    }`}
+                  >
+                    Todas ({clients.length})
+                  </button>
+                </div>
+              </div>
+
+              {/* Lista Scrollável de Clientes */}
+              <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] shadow-xs divide-y divide-[var(--card-border)] overflow-y-auto max-h-[560px]">
+                {filteredClients.map((c) => {
+                  const isSelected = activeClient?.id === c.id;
+                  const hasUpcoming = Boolean(c.upcomingAppointment);
+
+                  return (
+                    <div
+                      key={c.id}
+                      onClick={() => {
+                        setSelectedClientId(c.id);
+                        soundEffects.playClick();
+                      }}
+                      className={`p-3.5 flex items-center justify-between gap-3 transition cursor-pointer ${
+                        isSelected
+                          ? "bg-[var(--primary-light)] border-l-4 border-[#7e1639]"
+                          : "hover:bg-[var(--surface-hover)]"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-10 h-10 rounded-xl bg-[#7e1639] text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          {c.name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs text-[var(--foreground)] truncate">{c.name}</p>
+                          <p className="text-[11px] text-[var(--muted)] truncate">{c.phone}</p>
+                          {c.upcomingAppointment ? (
+                            <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                              <Calendar size={10} />
+                              {c.upcomingAppointment.date === todayStr ? "Hoje" : "Amanhã"} às {c.upcomingAppointment.time} · {c.upcomingAppointment.serviceName}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-[var(--muted)]">Sem agendamento ativo</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <ChevronRight size={15} className="text-[var(--muted)] shrink-0" />
+                    </div>
+                  );
+                })}
+
+                {filteredClients.length === 0 && (
+                  <div className="p-8 text-center text-xs text-[var(--muted)]">
+                    Nenhuma cliente encontrada neste filtro.
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Coluna da Direita: Ficha da Cliente & Disparos Rápidos (7 cols) */}
+            <div className="lg:col-span-7">
+              {activeClient ? (
+                <div className="bg-[var(--card-bg)] rounded-2xl p-5 border border-[var(--card-border)] shadow-xs space-y-5">
+                  {/* Cabeçalho da Cliente */}
+                  <div className="flex items-start justify-between gap-4 pb-4 border-b border-[var(--card-border)]">
+                    <div>
+                      <h2 className="text-base font-bold text-[var(--foreground)] tracking-tight">
+                        {activeClient.name}
+                      </h2>
+                      <p className="text-xs text-[var(--muted)] mt-0.5">
+                        WhatsApp: <strong className="text-[var(--foreground)]">{activeClient.phone}</strong> • {activeClient.visits || 0} visitas registradas
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => openDirectWhatsApp(activeClient.phone)}
+                      className="px-3.5 py-1.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 text-xs font-bold flex items-center gap-1.5 transition cursor-pointer"
+                    >
+                      <ExternalLink size={13} />
+                      <span>Abrir no WhatsApp</span>
+                    </button>
+                  </div>
+
+                  {/* Agendamento Atual da Cliente (se houver) */}
+                  {activeClient.upcomingAppointment && (
+                    <div className="p-4 rounded-xl bg-[var(--surface-hover)] border border-[var(--card-border)] flex items-center justify-between gap-3">
+                      <div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[var(--muted)] block">
+                          Agendamento Vinculado
+                        </span>
+                        <p className="text-xs font-bold text-[var(--foreground)] mt-0.5">
+                          {activeClient.upcomingAppointment.serviceName} — {activeClient.upcomingAppointment.date.split("-").reverse().join("/")} às {activeClient.upcomingAppointment.time}
+                        </p>
+                        <p className="text-[11px] text-[var(--muted)]">
+                          Profissional: {activeClient.upcomingAppointment.professionalName || "Salão"} • Valor: {formatBRL(activeClient.upcomingAppointment.price || 0)}
+                        </p>
+                      </div>
+
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${
+                        activeClient.upcomingAppointment.status === "confirmed"
+                          ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                          : "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                      }`}>
+                        {activeClient.upcomingAppointment.status === "confirmed" ? "Confirmado" : "Pendente"}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Botões de Ação Rápida com Modelos Prontos */}
+                  <div>
+                    <label className="text-xs font-bold text-[var(--foreground)] block mb-2">
+                      Enviar Modelo Rápido de 1 Clique:
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const msg = `Olá, ${activeClient.name.split(" ")[0]}! ✨ Passando para confirmar seu horário ${
+                            activeClient.upcomingAppointment ? `no dia ${activeClient.upcomingAppointment.date.split("-").reverse().join("/")} às ${activeClient.upcomingAppointment.time}` : "em nosso salão"
+                          } para ${activeClient.upcomingAppointment?.serviceName || "seu procedimento"}. Podemos confirmar sua presença?`;
+                          handleSendToClient(msg);
+                        }}
+                        disabled={isSendingMessage}
+                        className="p-3 rounded-xl bg-[var(--surface-hover)] hover:bg-[var(--primary-light)] text-[var(--foreground)] hover:text-[#7e1639] border border-[var(--card-border)] text-xs font-semibold text-left transition flex items-center justify-between cursor-pointer"
+                      >
+                        <div>
+                          <p className="font-bold">Confirmação de Horário</p>
+                          <p className="text-[11px] text-[var(--muted)]">Pede confirmação ativa (Sim/Não)</p>
+                        </div>
+                        <Send size={14} className="text-[#7e1639] dark:text-[#e27d9a] shrink-0" />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const msg = `Oi, ${activeClient.name.split(" ")[0]}! 💖 Sentimos muito sua falta aqui no ${salonName}! Que tal agendar um momento relaxante para cuidar de você esta semana?`;
+                          handleSendToClient(msg);
+                        }}
+                        disabled={isSendingMessage}
+                        className="p-3 rounded-xl bg-[var(--surface-hover)] hover:bg-[var(--primary-light)] text-[var(--foreground)] hover:text-[#7e1639] border border-[var(--card-border)] text-xs font-semibold text-left transition flex items-center justify-between cursor-pointer"
+                      >
+                        <div>
+                          <p className="font-bold">Lembrete de Retorno (+30 dias)</p>
+                          <p className="text-[11px] text-[var(--muted)]">Reativar cliente com carinho</p>
+                        </div>
+                        <HeartHandshake size={14} className="text-[#7e1639] dark:text-[#e27d9a] shrink-0" />
+                      </button>
+
+                      {pixKey && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const msg = `Olá, ${activeClient.name.split(" ")[0]}! Segue a nossa chave Pix do ${salonName} para pagamento:\n\n*Chave Pix:* ${pixKey}\n\nAssim que fizer o envio, nos mande o comprovante por aqui! ✨`;
+                            handleSendToClient(msg);
+                          }}
+                          disabled={isSendingMessage}
+                          className="p-3 rounded-xl bg-[var(--surface-hover)] hover:bg-[var(--primary-light)] text-[var(--foreground)] hover:text-[#7e1639] border border-[var(--card-border)] text-xs font-semibold text-left transition flex items-center justify-between cursor-pointer"
+                        >
+                          <div>
+                            <p className="font-bold">Enviar Chave Pix</p>
+                            <p className="text-[11px] text-[var(--muted)]">{pixKey}</p>
+                          </div>
+                          <Copy size={14} className="text-[#7e1639] dark:text-[#e27d9a] shrink-0" />
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const msg = `Oi, ${activeClient.name.split(" ")[0]}! 💖 Foi maravilhoso atender você no ${salonName}! Se puder avaliar nosso salão com 5 estrelas no Google, ficaremos muito felizes!`;
+                          handleSendToClient(msg);
+                        }}
+                        disabled={isSendingMessage}
+                        className="p-3 rounded-xl bg-[var(--surface-hover)] hover:bg-[var(--primary-light)] text-[var(--foreground)] hover:text-[#7e1639] border border-[var(--card-border)] text-xs font-semibold text-left transition flex items-center justify-between cursor-pointer"
+                      >
+                        <div>
+                          <p className="font-bold">Pedir Avaliação 5 Estrelas</p>
+                          <p className="text-[11px] text-[var(--muted)]">Agradecimento pós-serviço</p>
+                        </div>
+                        <Gift size={14} className="text-[#7e1639] dark:text-[#e27d9a] shrink-0" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Campo para Digitar Mensagem Personalizada Avulsa */}
+                  <div className="pt-2 border-t border-[var(--card-border)]">
+                    <label className="text-xs font-bold text-[var(--foreground)] block mb-1.5">
+                      Ou digite uma mensagem personalizada:
+                    </label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={customMessage}
+                        onChange={(e) => setCustomMessage(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSendToClient();
+                          }
+                        }}
+                        placeholder={`Digite aqui a mensagem para ${activeClient.name}...`}
+                        className="flex-1 px-3.5 py-2.5 text-xs rounded-xl bg-[var(--background)] border border-[var(--card-border)] text-[var(--foreground)] outline-none focus:border-[#7e1639]"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => handleSendToClient()}
+                        disabled={!customMessage.trim() || isSendingMessage}
+                        className="px-4 py-2.5 rounded-xl bg-[#7e1639] hover:bg-[#64112e] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition disabled:opacity-50 cursor-pointer"
+                      >
+                        <Send size={14} className={isSendingMessage ? "animate-spin" : ""} />
+                        <span>Enviar</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-[var(--card-bg)] rounded-2xl p-12 text-center border border-[var(--card-border)] text-[var(--muted)] text-xs">
+                  Selecione uma cliente na coluna ao lado para visualizar os dados e disparar mensagens.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ═════════════════════════════════════════════════════════════════════
+            ABA 3: HISTÓRICO DE DISPAROS DO ROBÔ
+            ═════════════════════════════════════════════════════════════════════ */}
+        {activeTab === "history" && (
+          <div className="max-w-4xl mx-auto space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-base font-bold text-[#221A1D] dark:text-[#F4EEF1]">Piloto Automático de Mensagens</h2>
-                <p className="text-xs text-stone-500 dark:text-[#A0949C] mt-0.5">Disparos programados para confirmação, lembretes e fidelização.</p>
+                <h2 className="text-base font-bold text-[var(--foreground)]">Histórico de Mensagens Enviadas</h2>
+                <p className="text-xs text-[var(--muted)]">Registro das notificações e lembretes disparados recentemente.</p>
               </div>
-              {isConnected ? (
+
+              {sentLogs.length > 0 && (
                 <button
                   type="button"
-                  onClick={handleRunAutomation}
-                  disabled={isProcessing}
-                  className="h-9 px-4 rounded-xl bg-[#7E1639] hover:bg-[#68112E] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all disabled:opacity-60 cursor-pointer"
+                  onClick={() => {
+                    setSentLogs([]);
+                    if (user) localStorage.removeItem(`bellamais_wa_logs_${user.uid}`);
+                    toast.info("Histórico limpo.", "Limpeza");
+                  }}
+                  className="text-xs text-red-500 hover:underline cursor-pointer"
                 >
-                  <Zap size={13} className={isProcessing ? "animate-spin" : ""} />
-                  {isProcessing ? "Processando..." : "Executar Agora"}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("connection")}
-                  className="h-9 px-4 rounded-xl bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-stone-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                >
-                  <Smartphone size={13} />
-                  Conectar WhatsApp
+                  Limpar histórico
                 </button>
               )}
             </div>
 
-            {rules.map((rule) => (
-              <div key={rule.id} className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.03)]">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <div className="w-9 h-9 rounded-xl bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center shrink-0">
-                      <Bot size={17} />
+            <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] shadow-xs divide-y divide-[var(--card-border)] overflow-hidden">
+              {sentLogs.map((log) => (
+                <div key={log.id} className="p-4 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-xs text-[var(--foreground)]">{log.clientName}</span>
+                      <span className="text-[11px] text-[var(--muted)]">({log.clientPhone})</span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        <CheckCheck size={12} /> Enviado
+                      </span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">{rule.title}</span>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeColorMap[rule.badgeColor]}`}>
-                          {rule.badge}
-                        </span>
-                      </div>
-                      <p className="text-xs text-stone-500 dark:text-[#A0949C] mt-0.5">{rule.subtitle}</p>
-                      <p className="text-[10px] text-stone-400 mt-1 flex items-center gap-1">
-                        <Clock size={10} /> {rule.scheduleInfo}
-                      </p>
-                    </div>
+                    <p className="text-xs text-[var(--muted)] font-mono leading-relaxed">{log.message}</p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = rules.map((r) => r.id === rule.id ? { ...r, enabled: !r.enabled } : r);
-                      setRules(updated);
-                      saveSettings({ rules: updated });
-                    }}
-                    className={`relative w-11 h-6 rounded-full transition-colors shrink-0 cursor-pointer ${rule.enabled ? "bg-[#15803D]" : "bg-stone-300 dark:bg-white/20"}`}
-                  >
-                    <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all ${rule.enabled ? "left-5" : "left-0.5"}`} />
-                  </button>
+                  <span className="text-[11px] text-[var(--muted)] shrink-0">{log.timestamp}</span>
                 </div>
-                {rule.enabled && (
-                  <div className="mt-3 p-3 rounded-xl bg-stone-50 dark:bg-white/[0.02] border border-stone-100 dark:border-white/[0.06]">
-                    <p className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider mb-1.5">Mensagem modelo</p>
-                    <p className="text-xs text-stone-600 dark:text-[#A0949C] whitespace-pre-wrap leading-relaxed">{rule.template}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
 
-        {/* ═══ ABA: CONEXÃO ═══════════════════════════════════════════════════ */}
-        {activeTab === "connection" && (
-          <div className="max-w-lg mx-auto py-4">
-            <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-6 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_4px_rgba(0,0,0,0.03)] space-y-5">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#FBF0F4] dark:bg-white/[0.06] text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center">
-                  <Smartphone size={20} />
-                </div>
-                <div>
-                  <h2 className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">Conexão WhatsApp</h2>
-                  <p className="text-xs text-stone-500 dark:text-[#A0949C]">Conecte seu número via QR Code</p>
-                </div>
-              </div>
-
-              {isConnected ? (
-                <div className="space-y-4">
-                  <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-800/30 flex items-center gap-3">
-                    <CheckCircle2 size={20} className="text-[#15803D] dark:text-[#34D399] shrink-0" />
-                    <div>
-                      <p className="text-sm font-semibold text-[#15803D] dark:text-[#34D399]">WhatsApp Conectado</p>
-                      {connectedPhone && <p className="text-xs text-stone-500 mt-0.5">{connectedPhone}</p>}
-                    </div>
-                  </div>
-                  <button type="button" onClick={handleDisconnect} className="w-full h-10 rounded-xl border border-red-200 dark:border-red-800/40 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/20 text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer">
-                    <LogOut size={16} />
-                    Desconectar WhatsApp
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-xs font-semibold text-stone-500">Número do salão (com DDD)</label>
-                    <input
-                      type="tel"
-                      value={salonPhone}
-                      onChange={(e) => setSalonPhone(e.target.value)}
-                      placeholder="Ex: 11987654321"
-                      className="h-10 px-3 rounded-xl bg-stone-100 dark:bg-white/[0.06] border border-stone-200 dark:border-white/[0.08] text-sm text-[#221A1D] dark:text-[#F4EEF1] focus:outline-none focus:ring-1 focus:ring-[#7E1639]"
-                    />
-                  </div>
-
-                  <div className="flex flex-col items-center gap-3 p-5 rounded-xl border border-dashed border-stone-200 dark:border-white/[0.10]">
-                    {isLoadingQr ? (
-                      <div className="w-32 h-32 flex items-center justify-center">
-                        <RefreshCw size={24} className="animate-spin text-stone-400" />
-                      </div>
-                    ) : qrCodeDataUrl ? (
-                      <img src={qrCodeDataUrl} alt="QR Code WhatsApp" className="w-44 h-44 rounded-xl" />
-                    ) : (
-                      <div className="w-32 h-32 flex items-center justify-center">
-                        <QrCode size={48} className="text-stone-300 dark:text-stone-600" />
-                      </div>
-                    )}
-                    <p className="text-xs text-stone-500 dark:text-[#A0949C] text-center">
-                      Abra o WhatsApp no celular → Dispositivos Conectados → Conectar Dispositivo
-                    </p>
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button type="button" onClick={fetchQrCode} className="flex-1 h-10 rounded-xl bg-stone-100 dark:bg-white/[0.06] text-stone-700 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-white/10 text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer">
-                      <RefreshCw size={15} className={isLoadingQr ? "animate-spin" : ""} />
-                      Novo QR
-                    </button>
-                    <button type="button" onClick={handleVerify} disabled={isVerifyingConnection} className="flex-1 h-10 rounded-xl bg-[#7E1639] hover:bg-[#68112E] text-white text-sm font-bold flex items-center justify-center gap-2 shadow-xs transition-all disabled:opacity-60 cursor-pointer">
-                      <CheckCircle2 size={15} className={isVerifyingConnection ? "animate-spin" : ""} />
-                      {isVerifyingConnection ? "Verificando..." : "Já escaniei"}
-                    </button>
-                  </div>
+              {sentLogs.length === 0 && (
+                <div className="p-12 text-center text-xs text-[var(--muted)]">
+                  Nenhum disparo registrado ainda. Conforme os lembretes forem enviados, o registro aparecerá aqui.
                 </div>
               )}
             </div>
@@ -1226,11 +1134,3 @@ export default function WhatsAppPage() {
     </div>
   );
 }
-
-// ─── Helper ────────────────────────────────────────────────────────────────────
-const badgeColorMap: Record<string, string> = {
-  rose: "bg-[#FBF0F4] text-[#7E1639] border-[#EDE6E1] dark:bg-white/[0.06] dark:text-[#E27D9A] dark:border-white/[0.08]",
-  emerald: "bg-emerald-50 text-[#15803D] border-emerald-200/60 dark:bg-emerald-950/30 dark:text-[#34D399] dark:border-emerald-800/40",
-  amber: "bg-[#FEF6EE] text-[#B45309] border-amber-200/60 dark:bg-amber-950/30 dark:text-[#FBBF24] dark:border-amber-800/40",
-  purple: "bg-[#F5F3FF] text-[#7C3AED] border-purple-200/60 dark:bg-purple-950/30 dark:text-[#C084FC] dark:border-purple-800/40",
-};

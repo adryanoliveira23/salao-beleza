@@ -8,7 +8,8 @@ import React, {
   ReactNode,
 } from "react";
 
-const ADMIN_ACCESS_KEY = "Adiel&Adryan2026@!";
+const ADMIN_ACCESS_KEY =
+  process.env.NEXT_PUBLIC_ADMIN_ACCESS_KEY || "Adiel&Adryan2026@!";
 const ADMIN_SESSION_KEY = "admin_session";
 
 interface AdminAuthContextType {
@@ -44,7 +45,7 @@ export function AdminAuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = (accessKey: string): boolean => {
-    if (accessKey === ADMIN_ACCESS_KEY) {
+    if (accessKey.trim() === ADMIN_ACCESS_KEY) {
       setState((prev) => ({ ...prev, isAuthenticated: true }));
       if (typeof window !== "undefined") {
         localStorage.setItem(ADMIN_SESSION_KEY, "authenticated");

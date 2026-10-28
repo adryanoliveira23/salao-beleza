@@ -411,11 +411,6 @@ export default function Dashboard() {
                   </span>
                 </>
               )}
-              <span>•</span>
-              <span className="inline-flex items-center gap-1.5 font-medium text-[#15803D] dark:text-[#34D399]">
-                <span className="w-2 h-2 rounded-full bg-[#15803D] dark:bg-[#34D399]" />
-                Salão Aberto
-              </span>
             </div>
           </div>
 
@@ -1023,13 +1018,69 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
+
+            {/* CARD: LEMBRETES E AVISOS (Movido para cima para preencher o espaço da coluna direita) */}
+            <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 sm:p-5 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-white/[0.06]">
+                <div className="flex items-center gap-2">
+                  <div className="w-7 h-7 rounded-lg bg-[#FEF6EE] dark:bg-white/[0.06] text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center">
+                    <Bell size={14} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">
+                      Lembretes e Avisos
+                    </h3>
+                  </div>
+                </div>
+                <Link
+                  href="/whatsapp"
+                  className="text-xs font-semibold text-[#7E1639] dark:text-[#E27D9A] hover:underline"
+                >
+                  Ver todos
+                </Link>
+              </div>
+
+              <div className="pt-1">
+                <Link
+                  href="/whatsapp"
+                  className="p-3.5 rounded-xl bg-[#FEF6EE]/60 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 flex items-center justify-between gap-3 group hover:border-amber-300 transition"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-white/10 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
+                      <Calendar size={15} />
+                    </div>
+                    <div>
+                      <h4 className="text-xs font-semibold text-[#221A1D] dark:text-[#F4EEF1] group-hover:text-amber-800 dark:group-hover:text-amber-300 transition">
+                        {metrics.pendingAppointments.length > 0
+                          ? `${metrics.pendingAppointments.length} ${
+                              metrics.pendingAppointments.length === 1
+                                ? "cliente aguardando confirmação"
+                                : "clientes aguardando confirmação"
+                            }`
+                          : "Tudo em dia! Sem pendências"}
+                      </h4>
+                      <p className="text-[11px] text-stone-500 dark:text-[#A0949C] mt-0.5">
+                        {metrics.pendingAppointments.length > 0
+                          ? "Entre em contato pelo WhatsApp para confirmar os horários."
+                          : "Todos os agendamentos registrados estão confirmados."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <ChevronRight
+                    size={16}
+                    className="text-stone-400 group-hover:text-amber-700 transition shrink-0"
+                  />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
 
         {/* =========================================================================
-            4. LINHA INFERIOR (3 CARDS REAIS): SERVIÇOS, NOVOS CLIENTES E LEMBRETES
+            4. LINHA INFERIOR (2 CARDS REAIS): SERVIÇOS MAIS REALIZADOS E NOVOS CLIENTES
             ========================================================================= */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
           {/* CARD 1: SERVIÇOS MAIS REALIZADOS */}
           <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 sm:p-5 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-white/[0.06]">
@@ -1136,62 +1187,6 @@ export default function Dashboard() {
                 )}
               </div>
             )}
-          </div>
-
-          {/* CARD 3: LEMBRETES E AVISOS */}
-          <div className="bg-white dark:bg-[#1C1A22] rounded-2xl p-4 sm:p-5 border border-[#EDE6E1] dark:border-white/[0.08] shadow-[0_1px_3px_rgba(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.25)] space-y-4">
-            <div className="flex items-center justify-between pb-3 border-b border-stone-100 dark:border-white/[0.06]">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-[#FEF6EE] dark:bg-white/[0.06] text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center">
-                  <Bell size={14} />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">
-                    Lembretes e Avisos
-                  </h3>
-                </div>
-              </div>
-              <Link
-                href="/whatsapp"
-                className="text-xs font-semibold text-[#7E1639] dark:text-[#E27D9A] hover:underline"
-              >
-                Ver todos
-              </Link>
-            </div>
-
-            <div className="pt-1">
-              <Link
-                href="/whatsapp"
-                className="p-3.5 rounded-xl bg-[#FEF6EE]/60 dark:bg-amber-950/20 border border-amber-200/50 dark:border-amber-800/30 flex items-center justify-between gap-3 group hover:border-amber-300 transition"
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-white/10 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
-                    <Calendar size={15} />
-                  </div>
-                  <div>
-                    <h4 className="text-xs font-semibold text-[#221A1D] dark:text-[#F4EEF1] group-hover:text-amber-800 dark:group-hover:text-amber-300 transition">
-                      {metrics.pendingAppointments.length > 0
-                        ? `${metrics.pendingAppointments.length} ${
-                            metrics.pendingAppointments.length === 1
-                              ? "cliente aguardando confirmação"
-                              : "clientes aguardando confirmação"
-                          }`
-                        : "Tudo em dia! Sem pendências"}
-                    </h4>
-                    <p className="text-[11px] text-stone-500 dark:text-[#A0949C] mt-0.5">
-                      {metrics.pendingAppointments.length > 0
-                        ? "Entre em contato pelo WhatsApp para confirmar os horários."
-                        : "Todos os agendamentos registrados estão confirmados."}
-                    </p>
-                  </div>
-                </div>
-
-                <ChevronRight
-                  size={16}
-                  className="text-stone-400 group-hover:text-amber-700 transition shrink-0"
-                />
-              </Link>
-            </div>
           </div>
         </div>
       </div>

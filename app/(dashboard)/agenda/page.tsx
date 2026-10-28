@@ -20,6 +20,11 @@ import {
   RefreshCw,
   DollarSign,
   Edit2,
+  ArrowLeft,
+  Sparkles,
+  CalendarCheck,
+  TrendingUp,
+  CheckCircle2,
 } from "lucide-react";
 import { Header } from "@/components/Header";
 import { CurrencyInput } from "@/components/CurrencyInput";
@@ -76,6 +81,7 @@ export default function Agenda() {
   const [editingApt, setEditingApt] = useState<Appointment | null>(null);
   const [showBlockModal, setShowBlockModal] = useState(false);
   const [showWaitlistModal, setShowWaitlistModal] = useState(false);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const {
     appointments,
@@ -204,13 +210,490 @@ export default function Agenda() {
     window.open(`https://wa.me/${phone}?text=${msg}`, "_blank");
   };
 
+  const todayStr = useMemo(() => formatDateStr(new Date()), []);
+
+  const todayAppointments = useMemo(
+    () =>
+      appointments.filter(
+        (a) => a.date === todayStr && a.status !== "cancelled",
+      ),
+    [appointments, todayStr],
+  );
+
+  const todayRevenue = useMemo(
+    () =>
+      todayAppointments.reduce(
+        (sum, a) => sum + (Number(a.price) || 0),
+        0,
+      ),
+    [todayAppointments],
+  );
+
+  const pendingTodayCount = useMemo(
+    () => todayAppointments.filter((a) => a.status === "pending").length,
+    [todayAppointments],
+  );
+
+  const activeWaitlistCount = useMemo(
+    () => waitlist.filter((w) => w.status === "waiting").length,
+    [waitlist],
+  );
+
+  const sortedAppointmentsForDate = useMemo(() => {
+    return [...appointmentsForDate].sort((a, b) =>
+      (a.time || "00:00").localeCompare(b.time || "00:00"),
+    );
+  }, [appointmentsForDate]);
+
   return (
-    <>
+    <div className="flex flex-col min-h-full bg-[var(--background)]">
       <Header title="Agenda Inteligente" />
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 flex flex-col gap-4 max-w-[1440px] w-full mx-auto">
+        {/* ─── MOBILE VIEW (md:hidden): Layout Nativo, Limpo e Sem Poluição ─── */}
+        <div className="md:hidden flex flex-col gap-3">
+          {/* Top Bar: Navegação do Mês + Ações Rápidas */}
+          <div className="bg-[var(--card-bg)] rounded-2xl p-3 border border-[var(--card-border)] shadow-xs flex flex-col gap-2.5">
+            <div className="flex items-center justify-between">
+              {/* Mês e Ano + Navegação */}
+              <div className="flex items-center gap-1.5">
+                <span className="font-bold text-sm text-[var(--foreground)] capitalize">
+                  {selectedDate.toLocaleDateString("pt-BR", {
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
+                <div className="flex items-center gap-0.5 ml-1">
+                  <button
+                    onClick={() => changeDate(-1)}
+                    className="p-1 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)]"
+                    aria-label="Dia anterior"
+                  >
+                    <ChevronLeft size={16} />
+                  </button>
+                  <button
+                    onClick={() => setSelectedDate(new Date())}
+                    className="px-2 py-0.5 rounded-lg bg-[var(--primary-light)] text-[#7e1639] dark:text-[#e27d9a] text-[11px] font-bold"
+                  >
+                    Hoje
+                  </button>
+                  <button
+                    onClick={() => changeDate(1)}
+                    className="p-1 rounded-lg hover:bg-[var(--surface-hover)] text-[var(--muted)]"
+                    aria-label="Próximo dia"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Ações Rápidas: Fila e Filtros */}
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setShowWaitlistModal(true)}
+                  className="p-2 rounded-xl bg-[#fdf8e7] text-[#c59b27] border border-[#c59b27]/30 hover:brightness-95 transition relative"
+                  title="Lista de Espera"
+                >
+                  <ListTodo size={15} />
+                  {activeWaitlistCount > 0 && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-[#c59b27] text-white text-[9px] font-bold flex items-center justify-center">
+                      {activeWaitlistCount}
+                    </span>
+                  )}
+                </button>
+
+                <button
+                  onClick={() => setShowMobileFilters((prev) => !prev)}
+                  className={`p-2 rounded-xl border transition ${
+                    filterProfId !== "all" || filterCategory !== "all"
+                      ? "bg-[#7e1639] text-white border-[#7e1639]"
+                      : "bg-[var(--surface-hover)] text-[var(--muted)] border-[var(--card-border)]"
+                  }`}
+                  title="Filtros"
+                >
+                  <Filter size={15} />
+                </button>
+              </div>
+            </div>
+
+            {/* Carrossel de 7 Dias da Semana */}
+            <div className="grid grid-cols-7 gap-1.5 pt-1 border-t border-[var(--card-border)]/60">
+              {weekDays.map((wd) => {
+                const isSelected = wd.dateStr === selectedDateStr;
+                const isToday = wd.dateStr === todayStr;
+                const dayAptsCount = appointments.filter(
+                  (a) => a.date === wd.dateStr && a.status !== "cancelled",
+                ).length;
+                const dayLetter = wd.dateObj
+                  .toLocaleDateString("pt-BR", { weekday: "narrow" })
+                  .toUpperCase();
+                const dayNum = wd.dateObj.getDate();
+
+                return (
+                  <button
+                    key={wd.dateStr}
+                    onClick={() => setSelectedDate(wd.dateObj)}
+                    className={`flex flex-col items-center justify-center py-2 px-1 rounded-xl transition relative ${
+                      isSelected
+                        ? "bg-[#7e1639] text-white shadow-xs font-bold"
+                        : isToday
+                          ? "bg-[var(--surface-hover)] text-[#7e1639] dark:text-[#e27d9a] font-bold border border-[#7e1639]/30"
+                          : "bg-[var(--surface-hover)]/60 text-[var(--foreground)] border border-transparent hover:border-[var(--card-border)]"
+                    }`}
+                  >
+                    <span
+                      className={`text-[10px] uppercase font-semibold ${
+                        isSelected ? "text-white/80" : "text-[var(--muted)]"
+                      }`}
+                    >
+                      {dayLetter}
+                    </span>
+                    <span className="text-sm font-bold leading-tight">
+                      {dayNum}
+                    </span>
+                    <div className="h-1.5 flex items-center justify-center mt-0.5">
+                      {dayAptsCount > 0 && (
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full ${
+                            isSelected
+                              ? "bg-white"
+                              : "bg-[#7e1639] dark:bg-[#e27d9a]"
+                          }`}
+                        />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Filtros Retráteis no Mobile */}
+            {showMobileFilters && (
+              <div className="pt-2 border-t border-[var(--card-border)] flex flex-col gap-2">
+                <div className="flex items-center justify-between text-xs font-bold text-[var(--muted)]">
+                  <span>Filtrar por:</span>
+                  {(filterProfId !== "all" || filterCategory !== "all") && (
+                    <button
+                      onClick={() => {
+                        setFilterProfId("all");
+                        setFilterCategory("all");
+                      }}
+                      className="text-[#7e1639] dark:text-[#e27d9a] text-[11px] underline"
+                    >
+                      Limpar filtros
+                    </button>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <select
+                    value={filterProfId}
+                    onChange={(e) => setFilterProfId(e.target.value)}
+                    className="p-2 rounded-xl bg-[var(--surface-hover)] border border-[var(--card-border)] text-[var(--foreground)] font-medium outline-none truncate"
+                  >
+                    <option value="all">Todas profissionais</option>
+                    {professionals.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="p-2 rounded-xl bg-[var(--surface-hover)] border border-[var(--card-border)] text-[var(--foreground)] font-medium outline-none truncate"
+                  >
+                    <option value="all">Todos serviços</option>
+                    {categories.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Micro Barra de Métricas (1 única linha compacta) */}
+          <div className="bg-[var(--card-bg)] rounded-xl p-2.5 border border-[var(--card-border)] shadow-2xs flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-[#7e1639] dark:bg-[#e27d9a]" />
+              <span className="font-bold text-[var(--foreground)]">
+                {todayAppointments.length}
+              </span>
+              <span className="text-[var(--muted)] text-[11px]">hoje</span>
+            </div>
+            <div className="h-3 w-px bg-[var(--card-border)]" />
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                R$ {todayRevenue.toFixed(0)}
+              </span>
+              <span className="text-[var(--muted)] text-[11px]">previsto</span>
+            </div>
+            <div className="h-3 w-px bg-[var(--card-border)]" />
+            <div className="flex items-center gap-1.5">
+              <span className="font-bold text-amber-600 dark:text-amber-400">
+                {pendingTodayCount}
+              </span>
+              <span className="text-[var(--muted)] text-[11px]">aguardando</span>
+            </div>
+            <div className="h-3 w-px bg-[var(--card-border)]" />
+            <button
+              onClick={() => setShowBlockModal(true)}
+              className="text-[11px] font-semibold text-[var(--muted)] hover:text-[var(--foreground)] flex items-center gap-1"
+              title="Bloquear horário"
+            >
+              <Lock size={12} />
+              <span>Bloquear</span>
+            </button>
+          </div>
+
+          {/* Alerta de Bloqueios no Dia Selecionado */}
+          {blocksForDate.length > 0 && (
+            <div className="p-2.5 rounded-xl bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/40 text-xs text-red-700 dark:text-red-300 space-y-1.5">
+              {blocksForDate.map((blk) => (
+                <div
+                  key={blk.id}
+                  className="flex items-center justify-between gap-2"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Lock size={13} className="shrink-0" />
+                    <span>
+                      <strong>{blk.professionalName}:</strong> {blk.reason} ({blk.startTime}-{blk.endTime})
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => deleteScheduleBlock(blk.id)}
+                    className="p-1 hover:bg-red-200 rounded text-red-800"
+                    title="Remover"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Linha do Tempo de Atendimentos do Dia */}
+          <div className="space-y-2.5 pb-24">
+            {sortedAppointmentsForDate.length === 0 ? (
+              <div className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] py-10 px-4 text-center flex flex-col items-center justify-center">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--primary-light)] text-[#7e1639] dark:text-[#e27d9a] flex items-center justify-center mb-2.5">
+                  <CalendarIcon size={24} />
+                </div>
+                <h4 className="font-bold text-sm text-[var(--foreground)]">
+                  Nenhum agendamento neste dia
+                </h4>
+                <p className="text-xs text-[var(--muted)] max-w-xs mt-1 mb-4 leading-relaxed">
+                  Dia totalmente livre. Toque no botão "+" abaixo para agendar um atendimento.
+                </p>
+                <button
+                  onClick={() => {
+                    setEditingApt(null);
+                    setShowAptModal(true);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-[#7e1639] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs active:scale-95 transition"
+                >
+                  <Plus size={16} />
+                  Agendar Horário
+                </button>
+              </div>
+            ) : (
+              sortedAppointmentsForDate.map((apt) => {
+                const st = STATUS_CONFIG[apt.status] || STATUS_CONFIG.pending;
+                const prof = professionals.find((p) => p.id === apt.professionalId);
+                const profColor = prof?.color || "#7e1639";
+
+                return (
+                  <div
+                    key={apt.id}
+                    className="bg-[var(--card-bg)] rounded-2xl border border-[var(--card-border)] p-3.5 shadow-xs relative overflow-hidden"
+                  >
+                    <div
+                      className="absolute left-0 top-0 bottom-0 w-1.5"
+                      style={{ backgroundColor: profColor }}
+                    />
+                    <div className="pl-2 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-[var(--foreground)] bg-[var(--surface-hover)] px-2 py-0.5 rounded-lg border border-[var(--card-border)]">
+                            {apt.time}
+                          </span>
+                          <span className="text-[11px] text-[var(--muted)] font-medium">
+                            ({apt.duration || 45} min)
+                          </span>
+                        </div>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${st.badgeClass}`}>
+                          {st.label}
+                        </span>
+                      </div>
+
+                      <div>
+                        <h4 className="font-bold text-sm text-[var(--foreground)]">
+                          {apt.clientName}
+                        </h4>
+                        <div className="flex items-center gap-2 mt-0.5 text-xs text-[var(--muted)]">
+                          <span className="font-medium text-[var(--foreground)]/80">
+                            {apt.serviceName}
+                          </span>
+                          <span>•</span>
+                          <span className="inline-flex items-center gap-1 text-[11px]">
+                            <span
+                              className="w-2 h-2 rounded-full inline-block"
+                              style={{ backgroundColor: profColor }}
+                            />
+                            {apt.professionalName}
+                          </span>
+                        </div>
+                        {apt.observations && (
+                          <p className="text-[11px] text-[var(--muted)] italic mt-1 bg-[var(--surface-hover)] p-1.5 rounded-lg">
+                            &ldquo;{apt.observations}&rdquo;
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t border-[var(--card-border)] flex items-center justify-between gap-2">
+                        <div>
+                          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                            R$ {(apt.price || 0).toFixed(2)}
+                          </span>
+                          {apt.depositPaid && (
+                            <span className="ml-1 text-[10px] text-blue-600 font-medium">
+                              (Sinal R$ {(apt.depositAmount || 0).toFixed(0)})
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            type="button"
+                            onClick={() => openWhatsAppConfirmation(apt)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#25D366]/15 hover:bg-[#25D366]/25 text-[#0ca678] font-bold text-[11px] transition"
+                            title="Confirmar via WhatsApp"
+                          >
+                            <MessageCircle size={13} />
+                            <span>Confirmar</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingApt(apt);
+                              setShowAptModal(true);
+                            }}
+                            className="p-1.5 rounded-lg bg-[var(--surface-hover)] hover:bg-[var(--primary-light)] text-[var(--foreground)] transition"
+                            title="Editar"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteAppointment(apt.id)}
+                            className="p-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition"
+                            title="Excluir"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* Floating Action Button (FAB) "+" no canto inferior mobile */}
+          <button
+            type="button"
+            onClick={() => {
+              setEditingApt(null);
+              setShowAptModal(true);
+            }}
+            className="md:hidden fixed bottom-20 right-4 z-40 w-14 h-14 rounded-full bg-gradient-to-r from-[#7e1639] to-[#9e204a] text-white shadow-xl flex items-center justify-center active:scale-90 hover:scale-105 transition-all duration-150 cursor-pointer border-2 border-white/20"
+            aria-label="Novo Agendamento"
+            title="Novo Agendamento"
+          >
+            <Plus size={26} strokeWidth={2.5} />
+          </button>
+        </div>
+
+        {/* ─── DESKTOP VIEW (hidden md:flex): Painel Completo de Controle ─── */}
+        <div className="hidden md:flex flex-col gap-4 flex-1">
+          {/* Purpose Clarity Card */}
+          <div className="bg-[var(--card-bg)] rounded-2xl p-4 md:p-5 shadow-xs border border-[var(--card-border)] flex items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-[var(--primary-light)] text-[#7e1639] dark:text-[#e27d9a] flex items-center justify-center shrink-0">
+                <CalendarCheck size={20} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 className="text-sm md:text-base font-bold text-[var(--foreground)] tracking-tight">
+                    Agenda Inteligente & Confirmação de Presenças
+                  </h2>
+                  <span className="px-2 py-0.5 rounded-full bg-[var(--surface-hover)] border border-[var(--card-border)] text-[10px] font-semibold text-[var(--muted)]">
+                    Central Operacional
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--muted)] mt-0.5 leading-relaxed">
+                  Acompanhe os horários da equipe, envie confirmações diretas no WhatsApp com 1 toque e preencha vagas pela fila de espera.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Real-time KPI Cards */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="bg-[var(--card-bg)] rounded-xl p-3.5 border border-[var(--card-border)] shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-medium text-[var(--muted)]">Atendimentos Hoje</p>
+                <p className="text-xl font-bold text-[var(--foreground)] mt-0.5">
+                  {todayAppointments.length}
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-[#7e1639]/10 text-[#7e1639] dark:text-[#e27d9a] flex items-center justify-center shrink-0">
+                <CalendarCheck size={20} />
+              </div>
+            </div>
+
+            <div className="bg-[var(--card-bg)] rounded-xl p-3.5 border border-[var(--card-border)] shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-medium text-[var(--muted)]">Previsto Hoje</p>
+                <p className="text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                  R$ {todayRevenue.toFixed(2)}
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <TrendingUp size={20} />
+              </div>
+            </div>
+
+            <div className="bg-[var(--card-bg)] rounded-xl p-3.5 border border-[var(--card-border)] shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-medium text-[var(--muted)]">Aguardando Confirmação</p>
+                <p className="text-xl font-bold text-amber-600 dark:text-amber-400 mt-0.5">
+                  {pendingTodayCount}
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <Clock size={20} />
+              </div>
+            </div>
+
+            <div className="bg-[var(--card-bg)] rounded-xl p-3.5 border border-[var(--card-border)] shadow-xs flex items-center justify-between">
+              <div>
+                <p className="text-[11px] font-medium text-[var(--muted)]">Lista de Espera</p>
+                <p className="text-xl font-bold text-[#c59b27] mt-0.5">
+                  {activeWaitlistCount}
+                </p>
+              </div>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-[#c59b27] flex items-center justify-center shrink-0">
+                <ListTodo size={20} />
+              </div>
+            </div>
+          </div>
+
         {/* Top Action & Filter Bar */}
-        <div className="bg-white rounded-3xl p-4 md:p-5 shadow-xs border border-[#f2e6ea] flex flex-col gap-4">
+        <div className="bg-[var(--card-bg)] rounded-2xl p-4 md:p-5 shadow-xs border border-[var(--card-border)] flex flex-col gap-4">
           <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
             {/* Date Navigation & View Switcher */}
             <div className="flex flex-wrap items-center gap-2">
@@ -734,6 +1217,7 @@ export default function Agenda() {
             </div>
           )}
         </div>
+        </div>
       </div>
 
       {/* Create / Edit / Reschedule Appointment Modal */}
@@ -809,7 +1293,7 @@ export default function Agenda() {
           }}
         />
       )}
-    </>
+    </div>
   );
 }
 
