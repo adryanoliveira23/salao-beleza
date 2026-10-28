@@ -42,3 +42,6 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# Baileys auth tokens & sessions
+.baileys_auth_info
