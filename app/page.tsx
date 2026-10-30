@@ -17,6 +17,7 @@ import {
   DollarSign,
   ArrowRight,
   Sparkles,
+  Crown,
   Sun,
   Moon,
   Menu,
@@ -26,11 +27,13 @@ import { DemoSection } from "@/components/LandingPage/DemoSection";
 import { FAQSection } from "@/components/LandingPage/FAQSection";
 import { SegmentsSection } from "@/components/LandingPage/SegmentsSection";
 import { soundEffects } from "@/lib/soundEffects";
+import { PLANS } from "@/contexts/PlatformConfigContext";
 
 export default function LandingPage() {
   const [isHeaderVisible, setIsHeaderVisible] = useState(true);
   const [isDark, setIsDark] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "yearly">("monthly");
   const lastScrollY = useRef(0);
 
   // Sincronização do tema (Claro / Escuro)
@@ -287,7 +290,7 @@ export default function LandingPage() {
                 </a>
               </div>
               <div className={styles.heroTrustBadges}>
-                <span>✓ Teste grátis de 7 dias</span>
+                <span>✓ Ativação Imediata</span>
                 <span>•</span>
                 <span>Sem cartão de crédito</span>
                 <span>•</span>
@@ -479,42 +482,128 @@ export default function LandingPage() {
             </h2>
             <p>Sem taxas escondidas, sem contratos abusivos. Cancele quando quiser.</p>
           </div>
-          <div className="flex justify-center px-4">
-            <div
-              className={`${styles.pricingCard} ${styles.featured} max-w-sm w-full`}
-            >
-              <span className={styles.popularBadge}>
-                Mais Escolhido por Donas de Salão
-              </span>
-              <h3>Plano Profissional</h3>
-              <div className={styles.price}>
-                <span>R$</span>
-                35,90
-                <span>/mês</span>
-              </div>
-              <span className={styles.period}>
-                Tudo o que seu salão precisa em um só lugar
-              </span>
-              <ul className={styles.pricingFeatures}>
-                <li>Agenda Online Completa</li>
-                <li>Cadastro Ilimitado de Clientes</li>
-                <li>Gestão Financeira & Comissões</li>
-                <li>Lembretes via WhatsApp</li>
-                <li>Página Própria de Agendamento</li>
-                <li>Suporte Rápido e Humanizado</li>
-              </ul>
-              <a
-                href="/register"
-                className={`${styles.btn} ${styles.btnPrimary}`}
-                style={{
-                  width: "100%",
-                  textAlign: "center",
-                  marginTop: "2rem",
-                }}
+
+          {/* Botãozinho de Alternância: Mensal / Anual */}
+          <div className="flex items-center justify-center my-8 sm:my-10">
+            <div className="bg-rose-100/70 dark:bg-stone-800 p-1.5 rounded-full flex items-center shadow-inner border border-rose-200/50 dark:border-stone-700">
+              <button
+                type="button"
+                onClick={() => setBillingCycle("monthly")}
+                className={`px-5 py-2 rounded-full font-bold text-xs sm:text-sm transition-all ${
+                  billingCycle === "monthly"
+                    ? "bg-white dark:bg-stone-900 text-[#b83b6b] dark:text-rose-400 shadow-sm"
+                    : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white"
+                }`}
               >
-                Criar Minha Conta
-              </a>
+                Mensal
+              </button>
+              <button
+                type="button"
+                onClick={() => setBillingCycle("yearly")}
+                className={`px-5 py-2 rounded-full font-bold text-xs sm:text-sm transition-all flex items-center gap-1.5 sm:gap-2 ${
+                  billingCycle === "yearly"
+                    ? "bg-white dark:bg-stone-900 text-[#b83b6b] dark:text-rose-400 shadow-sm"
+                    : "text-stone-600 dark:text-stone-300 hover:text-stone-900 dark:hover:text-white"
+                }`}
+              >
+                <span>Anual</span>
+                <span className="bg-[#b83b6b] text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full tracking-wide">
+                  Economize até 26%
+                </span>
+              </button>
             </div>
+          </div>
+
+          {/* 3 Planos Grid */}
+          <div className={styles.pricingGrid}>
+            {[
+              {
+                key: "essencial" as const,
+                plan: PLANS.essencial,
+                popular: false,
+                badge: "Autônomas & Solo",
+              },
+              {
+                key: "profissional" as const,
+                plan: PLANS.profissional,
+                popular: true,
+                badge: "Mais Escolhido por Salões",
+              },
+              {
+                key: "premium" as const,
+                plan: PLANS.premium,
+                popular: false,
+                badge: "Estruturados & Spas",
+              },
+            ].map(({ key, plan, popular, badge }) => {
+              const isYearly = billingCycle === "yearly";
+              const currentPrice = isYearly ? plan.yearlyPrice : plan.price;
+              const annualTotal = (plan.yearlyPrice * 12).toFixed(2).replace(".", ",");
+              const discountPercent = Math.round(((plan.price - plan.yearlyPrice) / plan.price) * 100);
+
+              return (
+                <div
+                  key={key}
+                  className={`${styles.pricingCard} ${popular ? styles.featured : ""}`}
+                >
+                  {popular ? (
+                    <span className={styles.popularBadge}>{badge}</span>
+                  ) : (
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-[#f4edf0] text-[#785966] border border-[#ebdce2] dark:bg-stone-800 dark:text-stone-300">
+                        {badge}
+                      </span>
+                      {key === "premium" ? (
+                        <Crown size={15} className="text-amber-500" />
+                      ) : (
+                        <Sparkles size={15} className="text-[#b83b6b] dark:text-rose-400" />
+                      )}
+                    </div>
+                  )}
+
+                  <h3 className="!mb-0.5">Plano {plan.name}</h3>
+                  <p className="text-[11px] text-[#73656c] dark:text-[#a0949c] mb-2 leading-relaxed min-h-[30px]">
+                    {plan.description}
+                  </p>
+
+                  <div className="mb-2">
+                    {isYearly && (
+                      <div className="flex items-center justify-center gap-1.5 mb-0.5">
+                        <span className="text-[11px] text-stone-400 line-through">
+                          R$ {plan.price.toFixed(2).replace(".", ",")}
+                        </span>
+                        <span className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-emerald-200/50">
+                          {discountPercent}% OFF
+                        </span>
+                      </div>
+                    )}
+                    <div className={styles.price}>
+                      <span>R$</span>
+                      {currentPrice.toFixed(2).replace(".", ",")}
+                      <span>/mês</span>
+                    </div>
+                    <span className={styles.period}>
+                      {isYearly
+                        ? `Faturado anualmente: R$ ${annualTotal}/ano`
+                        : "Faturado mensalmente • Cancele quando quiser"}
+                    </span>
+                  </div>
+
+                  <ul className={styles.pricingFeatures}>
+                    {plan.features.map((feat, i) => (
+                      <li key={i}>{feat}</li>
+                    ))}
+                  </ul>
+
+                  <a
+                    href={plan.checkoutUrl}
+                    className={`${styles.btn} ${popular ? styles.btnPrimary : styles.btnSecondary}`}
+                  >
+                    Assinar Plano {plan.name}
+                  </a>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>

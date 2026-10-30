@@ -140,7 +140,7 @@ export function DemoSection() {
             <span>Demonstração Interativa do Sistema</span>
           </div>
 
-          <h2 className="text-2xl sm:text-3xl md:text-5xl font-extrabold text-[#221A1D] dark:text-[#F4EEF1] tracking-tight leading-tight">
+          <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-[#221A1D] dark:text-[#F4EEF1] tracking-tight leading-tight">
             Sinta a agilidade e a elegância do BellaMais
           </h2>
 
@@ -212,7 +212,7 @@ export function DemoSection() {
                 </span>
               </button>
 
-              <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-800/40 flex items-center gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 px-2.5 py-1 rounded-full border border-emerald-300 dark:border-emerald-800/40 flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                 Ao Vivo
               </span>
@@ -266,7 +266,7 @@ export function DemoSection() {
                   <Scissors size={16} />
                 </div>
                 <div className="min-w-0">
-                  <span className="font-extrabold text-[15px] tracking-tight block leading-tight text-[#221A1D] dark:text-[#F4EEF1]">
+                  <span className="font-bold text-[15px] tracking-tight block leading-tight text-[#221A1D] dark:text-[#F4EEF1]">
                     BellaMais
                   </span>
                   <span className="text-[10px] text-stone-500 dark:text-[#A0949C] font-semibold block truncate uppercase tracking-wider">
@@ -280,7 +280,7 @@ export function DemoSection() {
                 {(["Atendimento & Dia a Dia", "Clientes & Serviços", "Financeiro & Gestão"] as const).map(
                   (sectionName) => (
                     <div key={sectionName} className="space-y-0.5">
-                      <span className="px-3 text-[10px] font-bold uppercase tracking-wider text-stone-400 dark:text-stone-500 block">
+                      <span className="px-3 text-[10px] font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500 block">
                         {sectionName}
                       </span>
                       {DEMO_PAGES.filter((p) => p.section === sectionName).map((page) => {
@@ -338,7 +338,7 @@ export function DemoSection() {
                 }`}
               >
                 <div className="flex items-center gap-2.5">
-                  <h3 className="font-bold text-sm text-[#221A1D] dark:text-[#F4EEF1]">
+                  <h3 className="font-semibold text-sm text-[#221A1D] dark:text-[#F4EEF1]">
                     {activePage.label}
                   </h3>
                   <span className="text-xs text-stone-400">• Salão Aberto</span>
@@ -378,7 +378,7 @@ export function DemoSection() {
                       {/* Card 1: Faturamento do Dia */}
                       <div className="p-4 rounded-3xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-xs flex flex-col justify-between min-h-[115px]">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                             Faturamento do Dia
                           </span>
                           <span className="w-7 h-7 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
@@ -386,7 +386,7 @@ export function DemoSection() {
                           </span>
                         </div>
                         <div>
-                          <div className="text-2xl font-extrabold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums tracking-tight">
+                          <div className="text-2xl font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums tracking-tight">
                             R$ 2.450,00
                           </div>
                           <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 block">
@@ -398,7 +398,7 @@ export function DemoSection() {
                       {/* Card 2: Atendimentos Hoje */}
                       <div className="p-4 rounded-3xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-xs flex flex-col justify-between min-h-[115px]">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7E1639] dark:text-[#E27D9A]">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#7E1639] dark:text-[#E27D9A]">
                             Atendimentos Hoje
                           </span>
                           <span className="w-7 h-7 rounded-xl bg-[#7E1639]/10 text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center">
@@ -406,7 +406,7 @@ export function DemoSection() {
                           </span>
                         </div>
                         <div>
-                          <div className="text-2xl font-extrabold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums tracking-tight">
+                          <div className="text-2xl font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums tracking-tight">
                             18 Clientes
                           </div>
                           <span className="text-[11px] text-stone-500 dark:text-[#A0949C] font-semibold mt-0.5 block">
@@ -418,7 +418,7 @@ export function DemoSection() {
                       {/* Card 3: Ticket Médio */}
                       <div className="p-4 rounded-3xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-xs flex flex-col justify-between min-h-[115px]">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
                             Ticket Médio
                           </span>
                           <span className="w-7 h-7 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
@@ -426,7 +426,7 @@ export function DemoSection() {
                           </span>
                         </div>
                         <div>
-                          <div className="text-2xl font-extrabold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums tracking-tight">
+                          <div className="text-2xl font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums tracking-tight">
                             R$ 136,10
                           </div>
                           <span className="text-[11px] text-stone-500 dark:text-[#A0949C] font-semibold mt-0.5 block">
@@ -438,7 +438,7 @@ export function DemoSection() {
                       {/* Card 4: Ocupação da Grade */}
                       <div className="p-4 rounded-3xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] shadow-xs flex flex-col justify-between min-h-[115px]">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-[#7E1639] dark:text-[#E27D9A]">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#7E1639] dark:text-[#E27D9A]">
                             Ocupação da Grade
                           </span>
                           <span className="w-7 h-7 rounded-xl bg-[#7E1639]/10 text-[#7E1639] dark:text-[#E27D9A] flex items-center justify-center">
@@ -447,7 +447,7 @@ export function DemoSection() {
                         </div>
                         <div className="flex items-center justify-between">
                           <div>
-                            <div className="text-2xl font-extrabold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums tracking-tight">
+                            <div className="text-2xl font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums tracking-tight">
                               85%
                             </div>
                             <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 block">
@@ -545,7 +545,7 @@ export function DemoSection() {
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-xs font-extrabold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums">
+                            <span className="text-xs font-bold text-[#221A1D] dark:text-[#F4EEF1] tabular-nums">
                               {item.price}
                             </span>
                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
@@ -712,7 +712,7 @@ export function DemoSection() {
                         </span>
                         <span className="text-[11px] text-stone-500">Pacotes mensais automáticos</span>
                       </div>
-                      <span className="text-sm font-extrabold text-emerald-600 dark:text-emerald-400 tabular-nums">
+                      <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
                         MRR: R$ 6.999,80/mês
                       </span>
                     </div>
@@ -735,7 +735,7 @@ export function DemoSection() {
                             </div>
                           </div>
                           <h4 className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">Clube da Escova VIP</h4>
-                          <div className="text-xl font-extrabold text-[#7E1639] dark:text-[#E27D9A] my-1 tabular-nums">
+                          <div className="text-xl font-bold text-[#7E1639] dark:text-[#E27D9A] my-1 tabular-nums">
                             R$ 149,90 <span className="text-xs text-stone-400 font-normal">/Mensal</span>
                           </div>
                           <div className="space-y-1.5 mt-3 text-xs text-stone-600 dark:text-stone-300">
@@ -780,7 +780,7 @@ export function DemoSection() {
                             </div>
                           </div>
                           <h4 className="text-sm font-bold text-[#221A1D] dark:text-[#F4EEF1]">Unhas & Pés Perfeitos</h4>
-                          <div className="text-xl font-extrabold text-[#7E1639] dark:text-[#E27D9A] my-1 tabular-nums">
+                          <div className="text-xl font-bold text-[#7E1639] dark:text-[#E27D9A] my-1 tabular-nums">
                             R$ 189,90 <span className="text-xs text-stone-400 font-normal">/Mensal</span>
                           </div>
                           <div className="space-y-1.5 mt-3 text-xs text-stone-600 dark:text-stone-300">
@@ -837,7 +837,7 @@ export function DemoSection() {
                             <span className="text-xs font-bold text-[#221A1D] dark:text-[#F4EEF1] block">{item.name}</span>
                             <span className="text-[11px] text-stone-500">{item.category} • Duração: {item.dur} • Comissão: {item.com}</span>
                           </div>
-                          <span className="text-sm font-extrabold text-[#7E1639] dark:text-[#E27D9A] tabular-nums">
+                          <span className="text-sm font-bold text-[#7E1639] dark:text-[#E27D9A] tabular-nums">
                             {item.price}
                           </span>
                         </div>
@@ -854,15 +854,15 @@ export function DemoSection() {
                     <div className="grid grid-cols-3 gap-3">
                       <div className="p-3.5 rounded-2xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] text-center">
                         <span className="text-[10px] text-stone-400 font-bold uppercase block">Faturamento Mês</span>
-                        <span className="text-base sm:text-xl font-extrabold text-emerald-600 dark:text-emerald-400 block mt-0.5 tabular-nums">R$ 14.850,00</span>
+                        <span className="text-base sm:text-xl font-bold text-emerald-600 dark:text-emerald-400 block mt-0.5 tabular-nums">R$ 14.850,00</span>
                       </div>
                       <div className="p-3.5 rounded-2xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] text-center">
                         <span className="text-[10px] text-stone-400 font-bold uppercase block">Custos & Despesas</span>
-                        <span className="text-base sm:text-xl font-extrabold text-rose-600 dark:text-rose-400 block mt-0.5 tabular-nums">R$ 4.200,00</span>
+                        <span className="text-base sm:text-xl font-bold text-rose-600 dark:text-rose-400 block mt-0.5 tabular-nums">R$ 4.200,00</span>
                       </div>
                       <div className="p-3.5 rounded-2xl bg-white dark:bg-[#1C1A22] border border-[#EDE6E1] dark:border-white/[0.08] text-center">
                         <span className="text-[10px] text-stone-400 font-bold uppercase block">Lucro Líquido</span>
-                        <span className="text-base sm:text-xl font-extrabold text-[#7E1639] dark:text-[#E27D9A] block mt-0.5 tabular-nums">R$ 6.310,00</span>
+                        <span className="text-base sm:text-xl font-bold text-[#7E1639] dark:text-[#E27D9A] block mt-0.5 tabular-nums">R$ 6.310,00</span>
                       </div>
                     </div>
 

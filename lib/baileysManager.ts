@@ -53,7 +53,6 @@ function addBaileysLog(level: "info" | "success" | "warn" | "error" | "debug", m
 }
 
 function getAuthFolder(): string {
-  // Em ambientes de nuvem (Vercel/Lambda), /tmp é a única pasta gravável
   const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
   const baseDir = isVercel ? "/tmp" : process.cwd();
   const authDir = path.join(baseDir, ".baileys_auth_info");
@@ -61,10 +60,25 @@ function getAuthFolder(): string {
     try {
       fs.mkdirSync(authDir, { recursive: true });
     } catch (e) {
-      // Ignora erro se pasta já existir
+      // Ignora
     }
   }
   return authDir;
+}
+
+/**
+ * Verifica se já existem credenciais salvas no disco
+ */
+export function hasSavedCreds(): boolean {
+  try {
+    const credsPath = path.join(getAuthFolder(), "creds.json");
+    if (!fs.existsSync(credsPath)) return false;
+    const raw = fs.readFileSync(credsPath, "utf8");
+    const parsed = JSON.parse(raw);
+    return Boolean(parsed?.me?.id);
+  } catch (e) {
+    return false;
+  }
 }
 
 /**
@@ -166,10 +180,10 @@ export async function initBaileys(forceRestart = false): Promise<BaileysState> {
           minute: "2-digit",
         });
 
-        addBaileysLog("success", `🎉 WHATSAPP CONECTADO COM SUCESSO VIA BAILEYS! Número: ${cleanPhone}`);
+        addBaileysLog("success", `🎉 WhatsApp Conectado com sucesso via Baileys Multi-Device! Telefone: ${cleanPhone}`);
       }
 
-      // CONEXÃO FECHADA (DESCONECTADO OU QUEDA DE REDE)
+      // CONEXÃO FECHADA OU RECONECTANDO
       if (connection === "close") {
         state.isConnected = false;
         state.connectionState = "close";
@@ -179,14 +193,17 @@ export async function initBaileys(forceRestart = false): Promise<BaileysState> {
 
         addBaileysLog(
           shouldReconnect ? "warn" : "error",
-          `Conexão Baileys fechada. Código: ${statusCode}. Reconectar automático: ${shouldReconnect}`
+          `Conexão Baileys fechada. Motivo HTTP Status: ${statusCode}. Reconectar automático: ${shouldReconnect}`
         );
 
         if (statusCode === DisconnectReason.loggedOut) {
-          addBaileysLog("info", "Sessão deslogada pelo aparelho. Limpando credenciais antigas...");
+          addBaileysLog("info", "Aparelho desconectou a sessão. Limpando credenciais locais...");
           cleanAuthFolder();
+          state.connectedPhone = "";
+          state.connectedAt = null;
+          state.socket = null;
         } else if (shouldReconnect) {
-          // Tenta reconectar suavemente
+          addBaileysLog("info", "Tentando restabelecer conexão Baileys em 3 segundos...");
           setTimeout(() => {
             initBaileys(true);
           }, 3000);
@@ -201,7 +218,6 @@ export async function initBaileys(forceRestart = false): Promise<BaileysState> {
       if (type !== "notify") return;
 
       for (const m of messages) {
-        // Ignora mensagens enviadas pelo próprio salão
         if (m.key.fromMe || !m.message) continue;
 
         const remoteJid = m.key.remoteJid || "";
@@ -220,15 +236,12 @@ export async function initBaileys(forceRestart = false): Promise<BaileysState> {
         const normalized = rawText.trim().toUpperCase();
         addBaileysLog("info", `📩 Mensagem recebida de ${cleanPhone}: "${rawText}"`);
 
-        // Intenções de Confirmação
         const isConfirm = /^(SIM|1|CONFIRMAR|CONFIRMO|OK|CONFIRMADO|VOU SIM|SIM!|CONFIRMO!|ESTAREI LA|ESTAREI LÁ)$/i.test(normalized);
-        // Intenções de Cancelamento
         const isCancel = /^(NÃO|NAO|2|CANCELAR|DESMARCAR|NÃO VOU|NAO VOU|NAO CONSIGO|NÃO CONSIGO)$/i.test(normalized);
 
         if (isConfirm) {
           addBaileysLog("success", `🤖 Cliente ${cleanPhone} confirmou presença via WhatsApp!`);
 
-          // Resposta automática acolhedora
           try {
             await sock.sendMessage(remoteJid, {
               text: "✨ *Maravilha! Seu agendamento foi CONFIRMADO com sucesso!*\n\nSua vaga está garantida e estamos preparando tudo com muito carinho para te receber. Se precisar de algo antes, é só avisar por aqui. Até logo! 💕",
@@ -236,70 +249,15 @@ export async function initBaileys(forceRestart = false): Promise<BaileysState> {
           } catch (replyErr: any) {
             addBaileysLog("warn", `Falha ao responder cliente no WhatsApp: ${replyErr?.message}`);
           }
-
-          // Atualização de banco de dados (se Firebase Admin disponível)
-          try {
-            const { adminDb } = await import("@/app/lib/firebase-admin");
-            if (adminDb) {
-              const todayStr = new Date().toISOString().split("T")[0];
-              const phoneSuffix = cleanPhone.slice(-8); // Últimos 8 dígitos para cobrir variações de DDD/9º dígito
-              const snapshot = await adminDb.collection("appointments").get();
-              let updatedCount = 0;
-
-              for (const docSnap of snapshot.docs) {
-                const data = docSnap.data();
-                const aptPhone = (data.clientPhone || "").replace(/\D/g, "");
-                if (aptPhone.endsWith(phoneSuffix) && data.date >= todayStr && data.status === "pending") {
-                  await docSnap.ref.update({
-                    status: "confirmed",
-                    confirmedViaWhatsApp: true,
-                    confirmedViaWhatsAppAt: new Date().toISOString(),
-                  });
-                  updatedCount++;
-                  addBaileysLog("success", `Agendamento de ${data.clientName} (${data.serviceName}) atualizado para CONFIRMADO!`);
-                }
-              }
-
-              if (updatedCount === 0) {
-                addBaileysLog("info", `Nenhum agendamento pendente encontrado para o telefone terminado em ${phoneSuffix}`);
-              }
-            }
-          } catch (dbErr: any) {
-            addBaileysLog("warn", `Nota de sincronização de banco de dados: ${dbErr?.message}`);
-          }
         } else if (isCancel) {
           addBaileysLog("warn", `🤖 Cliente ${cleanPhone} solicitou cancelamento via WhatsApp!`);
 
           try {
             await sock.sendMessage(remoteJid, {
-              text: "Entendido! Seu agendamento foi *cancelado* no nosso sistema. 🌸\n\nSentiremos sua falta! Caso deseje remarcar para um novo horário ou data conveniente, basta nos chamar por aqui. Tenha um excelente dia!",
+              text: "Entendido! Seu agendamento foi marcado como *cancelado* no nosso sistema. 🌸\n\nSentiremos sua falta! Caso deseje remarcar um novo momento conosco, basta nos avisar por aqui. Tenha um excelente dia!",
             });
           } catch (replyErr: any) {
-            addBaileysLog("warn", `Falha ao enviar aviso de cancelamento: ${replyErr?.message}`);
-          }
-
-          try {
-            const { adminDb } = await import("@/app/lib/firebase-admin");
-            if (adminDb) {
-              const todayStr = new Date().toISOString().split("T")[0];
-              const phoneSuffix = cleanPhone.slice(-8);
-              const snapshot = await adminDb.collection("appointments").get();
-
-              for (const docSnap of snapshot.docs) {
-                const data = docSnap.data();
-                const aptPhone = (data.clientPhone || "").replace(/\D/g, "");
-                if (aptPhone.endsWith(phoneSuffix) && data.date >= todayStr && (data.status === "pending" || data.status === "confirmed")) {
-                  await docSnap.ref.update({
-                    status: "cancelled",
-                    cancelledViaWhatsApp: true,
-                    cancelledViaWhatsAppAt: new Date().toISOString(),
-                  });
-                  addBaileysLog("info", `Agendamento de ${data.clientName} marcado como CANCELADO.`);
-                }
-              }
-            }
-          } catch (dbErr: any) {
-            addBaileysLog("warn", `Nota de banco no cancelamento: ${dbErr?.message}`);
+            addBaileysLog("warn", `Falha ao responder cancelamento no WhatsApp: ${replyErr?.message}`);
           }
         }
       }
@@ -341,6 +299,33 @@ export async function getBaileysPairingCode(phone: string): Promise<string | nul
 }
 
 /**
+ * Garante que a sessão está pronta para envio (auto-inicia se já autenticado)
+ */
+async function ensureConnectedSocket(): Promise<WASocket | null> {
+  if (state.socket && state.isConnected) {
+    return state.socket;
+  }
+
+  // Se já temos credenciais gravadas, inicia o socket e aguarda conectar
+  if (hasSavedCreds()) {
+    if (!state.socket && !state.isInitializing) {
+      await initBaileys();
+    }
+
+    // Aguarda até 8 segundos para a conexão abrir se estiver conectando
+    const start = Date.now();
+    while (Date.now() - start < 8000) {
+      if (state.isConnected && state.socket) {
+        return state.socket;
+      }
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+
+  return state.isConnected && state.socket ? state.socket : null;
+}
+
+/**
  * Envia mensagem pelo WhatsApp usando a sessão ativa do Baileys
  */
 export async function sendBaileysMessage(
@@ -348,7 +333,8 @@ export async function sendBaileysMessage(
   text: string
 ): Promise<{ sent: boolean; messageId?: string; error?: string }> {
   try {
-    if (!state.socket || !state.isConnected) {
+    const socket = await ensureConnectedSocket();
+    if (!socket) {
       return {
         sent: false,
         error: "Sessão do Baileys não está conectada. Escaneie o QR Code antes de disparar.",
@@ -360,7 +346,7 @@ export async function sendBaileysMessage(
     const jid = `${formatted}@s.whatsapp.net`;
 
     addBaileysLog("info", `Enviando mensagem Baileys para: ${jid}`);
-    const result = await state.socket.sendMessage(jid, { text });
+    const result = await socket.sendMessage(jid, { text });
     const msgId = result?.key?.id || "";
 
     addBaileysLog("success", `Mensagem Baileys enviada com sucesso! ID: ${msgId}`);

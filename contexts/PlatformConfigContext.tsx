@@ -79,61 +79,71 @@ export type PlanType = "essencial" | "profissional" | "premium" | "enterprise";
 export interface PlanInfo {
   name: string;
   price: number;
+  yearlyPrice: number;
   description: string;
   maxProfessionals: number;
   trialDays: number;
+  checkoutUrl: string;
   features: string[];
 }
 
 export const PLANS: Record<PlanType, PlanInfo> = {
   essencial: {
     name: "Essencial",
-    price: 49.9,
-    description: "Para profissionais autônomas (manicures, designers, maquiadoras)",
+    price: 35.9,
+    yearlyPrice: 25.9,
+    description: "Bancada organizada, agenda online e zero faltas.",
     maxProfessionals: 1,
     trialDays: 7,
+    checkoutUrl: "https://pay.cakto.com.br/k32i8bk_1260645",
     features: [
-      "1 Profissional",
-      "Agenda Inteligente (Diária/Semanal/Mensal)",
-      "Página Pública de Agendamento Online",
-      "Cadastro e Ficha de Clientes",
-      "Controle Financeiro Básico",
+      "1 Profissional / Acesso exclusivo",
+      "Link próprio de agendamento para a bio do Instagram",
+      "Lembretes e confirmações automáticas no WhatsApp",
+      "Ficha da cliente com histórico e preferências",
+      "Fechamento de caixa diário (Pix, Cartão e Dinheiro)",
     ],
   },
   profissional: {
     name: "Profissional",
-    price: 89.9,
-    description: "Para salões com equipe pequena, comissões e estoque",
+    price: 45.0,
+    yearlyPrice: 35.9,
+    description: "Gestão de equipe de parceiras, comissões e estoque.",
     maxProfessionals: 5,
     trialDays: 7,
+    checkoutUrl: "https://pay.cakto.com.br/wzc6cky_1260665",
     features: [
-      "Até 5 Profissionais",
-      "Cálculo Automático de Comissões & Contratos PDF",
-      "Controle de Estoque e Baixa Automática",
-      "Lembretes e Confirmação via WhatsApp",
-      "Relatórios Financeiros e de Produtividade",
+      "Até 5 Profissionais na mesma conta",
+      "Tudo incluso do Plano Essencial",
+      "Cálculo automático de comissões por parceira",
+      "Controle de estoque com baixa automática de produtos",
+      "Grade compartilhada sem conflito de horários",
     ],
   },
   premium: {
     name: "Premium",
-    price: 149.9,
-    description: "Para salões completos com IA no WhatsApp, Marketing e BI",
+    price: 59.99,
+    yearlyPrice: 45.9,
+    description: "Para salões estruturados com recorrência e gestão VIP.",
     maxProfessionals: 25,
-    trialDays: 14,
+    trialDays: 7,
+    checkoutUrl: "https://pay.cakto.com.br/7o9krkg_1260684",
     features: [
-      "Profissionais Ilimitadas (até 25)",
-      "Integração Completa WhatsApp + Assistente IA 24h",
-      "Campanhas de Marketing, Cupons e Fidelidade",
-      "Clubes de Assinatura Recorrente",
-      "Inteligência de Negócio (BI) + Exportação PDF/CSV",
+      "Até 25 Profissionais / Colaboradoras",
+      "Tudo incluso do Plano Profissional",
+      "Clubes de assinatura recorrente (ex: Clube da Escova)",
+      "Campanhas de retorno para clientes sumidas",
+      "Relatórios de faturamento e DRE por bancada",
     ],
   },
   enterprise: {
     name: "Premium",
-    price: 149.9,
-    description: "Plano completo legada/enterprise",
+    price: 59.99,
+    yearlyPrice: 45.9,
+    description: "Plano completo",
     maxProfessionals: 50,
-    trialDays: 14,
+    trialDays: 7,
+    checkoutUrl: "https://pay.cakto.com.br/7o9krkg_1260684",
     features: ["Acesso Completo"],
   },
 };
@@ -168,6 +178,11 @@ export interface PlatformConfig {
     profissional: number;
     premium: number;
   };
+  planYearlyPrices: {
+    essencial: number;
+    profissional: number;
+    premium: number;
+  };
   planLimits: {
     essencial: number;
     profissional: number;
@@ -185,9 +200,14 @@ const defaultConfig: PlatformConfig = {
   defaultPlan: "profissional",
   defaultTrialDays: 7,
   planPrices: {
-    essencial: 49.9,
-    profissional: 89.9,
-    premium: 149.9,
+    essencial: 35.9,
+    profissional: 45.0,
+    premium: 59.99,
+  },
+  planYearlyPrices: {
+    essencial: 25.9,
+    profissional: 35.9,
+    premium: 45.9,
   },
   planLimits: {
     essencial: 1,
