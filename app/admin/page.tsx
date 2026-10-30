@@ -4,6 +4,7 @@ export const dynamic = "force-dynamic";
 
 import React, { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { WhatsAppMasterTab } from "@/components/admin/WhatsAppMasterTab";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import {
   usePlatformConfig,
