@@ -529,7 +529,7 @@ function ServiceModal({
       (isComboDefault ? "Combos e Pacotes" : "Corte e escova"),
   );
   const [duration, setDuration] = useState<number | string>(
-    service?.duration !== undefined ? service.duration : 45,
+    service?.duration !== undefined ? service.duration : "",
   );
   const [bufferTime, setBufferTime] = useState<number | string>(
     service?.bufferTime !== undefined ? service.bufferTime : "",
@@ -579,7 +579,7 @@ function ServiceModal({
       name,
       description,
       category,
-      duration: Number(duration) || 45,
+      duration: Number(duration) || 0,
       bufferTime: Number(bufferTime) || 0,
       price: Number(price) || 0,
       costPrice: Number(costPrice) || 0,
@@ -738,7 +738,7 @@ function ServiceModal({
                     onChange={(e) =>
                       setDuration(e.target.value === "" ? "" : Number(e.target.value))
                     }
-                    placeholder="45 min"
+                    placeholder="0 min"
                     className="w-full h-10 px-3 bg-[var(--background)] sm:bg-[var(--card-bg)] border border-[var(--card-border)] text-[var(--foreground)] rounded-xl text-sm focus:border-[#7e1639] outline-none"
                   />
                 </div>
