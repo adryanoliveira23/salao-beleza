@@ -795,24 +795,33 @@ export default function AgendarPage() {
         }
       }
 
-      // 3. Montagem da Mensagem Automática Encantadora pelo WhatsApp
+      // 3. Montagem da Mensagem Automática pelo Robô Master BellaMais
+      const cleanSalonPhone = (salonPhone || "").replace(/\D/g, "");
+      const formattedSalonPhone = cleanSalonPhone.length <= 11 ? `55${cleanSalonPhone}` : cleanSalonPhone;
+
       let autoWhatsAppMessage =
-        `Oi, ${clientFirstName}! 💕 Seu agendamento no *${salonName}* foi realizado com sucesso!\n\n` +
+        `Olá, ${clientFirstName}! 💖 Seu agendamento foi realizado com sucesso!\n\n` +
         `💅 *Serviço:* ${selectedService.name}\n` +
-        `📅 *Data:* ${dateFormatted} (${getDayOfWeekName(form.date)})\n` +
-        `🕒 *Horário:* ${form.time}\n` +
-        `💰 *Valor:* R$ ${selectedService.price.toFixed(2)}\n` +
-        `👩‍🦰 *Profissional:* ${professionalName}\n` +
-        (salonAddress ? `📍 *Endereço:* ${salonAddress}\n` : "") +
-        `\n`;
+        `📅 *Data:* ${dateFormatted} (${getDayOfWeekName(form.date)}) às ${form.time}\n` +
+        (professionalName && !professionalName.toLowerCase().includes("qualquer") && !professionalName.toLowerCase().includes("equipe")
+          ? `👩‍🦰 *Profissional:* ${professionalName}\n`
+          : "") +
+        `📍 *Salão:* ${salonName}\n` +
+        (salonAddress ? `🏢 *Endereço:* ${salonAddress}\n` : "");
 
       if (depositAmount > 0 && bookingRules.pixKey) {
         autoWhatsAppMessage +=
-          `🔑 *Sinal de Reserva:* R$ ${depositAmount.toFixed(2)}\n` +
-          `Chave PIX: ${bookingRules.pixKey}\n\n`;
+          `\n🔑 *Sinal de Reserva:* R$ ${depositAmount.toFixed(2)}\n` +
+          `Chave PIX: ${bookingRules.pixKey}\n`;
       }
 
-      autoWhatsAppMessage += `Estamos te esperando com muito carinho! ✨`;
+      autoWhatsAppMessage +=
+        `\n──────────────────────\n` +
+        `🤖 *Mensagem automática de confirmação.*\n` +
+        `💬 *Dúvidas ou atendimento com o salão:*\n` +
+        (salonPhone ? `Fale direto pelo WhatsApp: *${salonPhone}*\n👉 wa.me/${formattedSalonPhone}\n` : `Fale direto com a equipe do salão: *${salonName}*\n`) +
+        `──────────────────────\n` +
+        `Agradecemos pela preferência!`;
 
       // 4. Disparo Automático pelo WhatsApp para a Cliente
       try {
