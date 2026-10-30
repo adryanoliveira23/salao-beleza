@@ -120,7 +120,7 @@
 
 .logo {
   font-size: 1.45rem;
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--text-main);
@@ -541,7 +541,7 @@
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--primary);
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   line-height: 1.2;
   font-variant-numeric: tabular-nums;
 }
@@ -549,7 +549,7 @@
 .statLabel {
   font-size: 0.85rem;
   color: var(--text-muted);
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 500;
 }
 
@@ -571,7 +571,7 @@
 .stat p {
   font-size: 0.95rem;
   color: var(--text-muted);
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   font-weight: 500;
 }
 
@@ -809,7 +809,7 @@
 .featureCard h3 {
   font-size: 1.5rem;
   margin-bottom: 1rem;
-  font-family: var(--font-outfit);
+  font-family: var(--font-inter);
   font-weight: 700;
 }
 
@@ -914,129 +914,216 @@
 
 /* Pricing */
 .pricing {
-  padding: 8rem 3rem;
-  background: #fff5f7;
+  padding: 3.5rem 1.5rem;
+  background: #faf7f5;
 }
 
 .pricingContainer {
-  max-width: 1200px;
+  max-width: 1040px;
   margin: 0 auto;
 }
 
 .pricingGrid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin-top: 4rem;
+  gap: 1.5rem;
+  margin-top: 2rem;
+  align-items: center;
 }
 
+/* Side Cards (Essencial & Premium) - Clean porcelain white with soft warm gray border */
 .pricingCard {
-  background: white;
-  padding: 3rem 2rem;
-  border-radius: 24px;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 1px solid transparent;
+  background: #ffffff;
+  padding: 1.5rem 1.35rem 1.35rem;
+  border-radius: 20px;
+  box-shadow: 0 4px 18px rgba(34, 26, 29, 0.035);
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+  border: 1px solid #ebe4de;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .pricingCard:hover {
-  transform: translateY(-15px);
-  border-color: rgba(255, 107, 157, 0.6);
-  box-shadow: 0 25px 70px rgba(255, 107, 157, 0.3);
+  transform: translateY(-3px);
+  border-color: #d8c2cb;
+  box-shadow: 0 10px 28px rgba(34, 26, 29, 0.07);
 }
 
+/* Featured Center Card (Profissional) - Distinct rose aura, elevated scale, pearlescent glow */
 .pricingCard.featured {
-  background: white;
-  border: 2px solid var(--primary);
-  box-shadow: var(--shadow-md);
-  transform: scale(1.05);
-  position: relative;
+  background: linear-gradient(180deg, #fff5f8 0%, #ffffff 100%) !important;
+  border: 2px solid #b83b6b !important;
+  box-shadow: 0 16px 36px -6px rgba(184, 59, 107, 0.16), 0 4px 14px -2px rgba(184, 59, 107, 0.06) !important;
+  transform: scale(1.03);
+  z-index: 10;
+  padding: 1.85rem 1.45rem 1.45rem !important;
+  border-radius: 22px !important;
 }
 
 .pricingCard.featured:hover {
-  transform: scale(1.08) translateY(-5px);
-  box-shadow: 0 35px 80px rgba(255, 107, 157, 0.4);
+  transform: scale(1.04) translateY(-3px) !important;
+  box-shadow: 0 20px 42px -6px rgba(184, 59, 107, 0.22), 0 6px 18px -2px rgba(184, 59, 107, 0.1) !important;
 }
 
+/* Rose Floating Pill Badge */
 .popularBadge {
   position: absolute;
-  top: -15px;
+  top: -12px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--primary);
-  color: white;
-  padding: 0.5rem 1.5rem;
+  background: #b83b6b;
+  color: #ffffff;
+  padding: 0.3rem 0.95rem;
   border-radius: 100px;
-  font-size: 0.85rem;
+  font-size: 0.675rem;
   font-weight: 700;
   text-transform: uppercase;
+  letter-spacing: 0.05em;
   white-space: nowrap;
-  z-index: 10;
+  box-shadow: 0 3px 10px rgba(184, 59, 107, 0.28);
+  z-index: 20;
 }
 
 .pricingCard h3 {
-  font-family: var(--font-montserrat), sans-serif !important;
-  font-weight: 500 !important;
-  font-size: 1.75rem;
-  margin-bottom: 1.5rem;
-  color: var(--text-main);
-  letter-spacing: -0.02em;
+  font-family: var(--font-inter), sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 1.15rem;
+  margin-bottom: 0.2rem;
+  color: #221a1d;
+  letter-spacing: -0.015em;
+}
+
+.pricingCard.featured h3 {
+  font-size: 1.25rem;
+  font-weight: 800 !important;
 }
 
 .price {
-  font-size: 4rem;
+  font-size: 1.95rem;
   font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 0.5rem;
-  font-family: var(--font-montserrat), sans-serif;
-  letter-spacing: -0.05em;
+  color: #221a1d;
+  margin-bottom: 0.1rem;
+  font-family: var(--font-inter), sans-serif;
+  letter-spacing: -0.025em;
   display: flex;
   align-items: baseline;
   justify-content: center;
-  gap: 0.25rem;
+  gap: 0.2rem;
+}
+
+.pricingCard.featured .price {
+  font-size: 2.15rem;
+  color: #b83b6b;
 }
 
 .price span {
-  font-size: 1rem;
-  color: var(--text-muted);
+  font-size: 0.8rem;
+  color: #73656c;
   font-weight: 500;
-  font-family: var(--font-outfit), sans-serif;
+  font-family: var(--font-inter), sans-serif;
   letter-spacing: normal;
+}
+
+.pricingCard.featured .price span {
+  font-size: 0.85rem;
+  color: #8a707c;
+  font-weight: 600;
 }
 
 .period {
   display: block;
-  font-size: 0.875rem;
-  color: var(--text-muted);
+  font-size: 0.72rem;
+  color: #8e8087;
   text-align: center;
-  margin-top: 0.25rem;
-  margin-bottom: 1.5rem;
+  margin-top: 0.1rem;
+  margin-bottom: 0.45rem;
   font-weight: 500;
   transition: color 0.3s ease;
 }
 
 .pricingFeatures {
   list-style: none;
-  margin: 2rem 0;
+  margin: 0.4rem 0 0 0;
   padding: 0;
 }
 
 .pricingFeatures li {
-  padding: 0.75rem 0;
+  padding: 0.32rem 0;
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  color: var(--text-main);
-  border-bottom: 1px solid #f5f5f5;
-  font-size: 0.95rem;
+  align-items: flex-start;
+  gap: 0.45rem;
+  color: #3f393d;
+  border-bottom: 1px solid #f6f1ee;
+  font-size: 0.8rem;
+  line-height: 1.35;
   transition: color 0.3s ease;
+}
+
+.pricingCard.featured .pricingFeatures li {
+  padding: 0.35rem 0;
+  color: #221a1d;
+  border-bottom: 1px solid #faeef3;
+  font-size: 0.825rem;
+  font-weight: 500;
 }
 
 .pricingFeatures li::before {
   content: "✓";
-  color: var(--primary);
-  font-weight: bold;
+  color: #b83b6b;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.pricingCard.featured .pricingFeatures li::before {
+  color: #b83b6b;
+  font-weight: 800;
+  font-size: 0.9rem;
+}
+
+/* Secondary CTA Button (Essencial & Premium) - Elegant, soft blush-gray */
+.btnSecondary {
+  background: #fbf7f9 !important;
+  color: #88234b !important;
+  border: 1px solid #ebdbe2 !important;
+  font-weight: 700 !important;
+  font-size: 0.825rem !important;
+  padding: 0.65rem 1rem !important;
+  border-radius: 12px !important;
+  width: 100% !important;
+  text-align: center !important;
+  margin-top: 0.95rem !important;
+  transition: all 0.2s ease !important;
+  box-shadow: 0 1px 2px rgba(34, 26, 29, 0.03) !important;
+}
+
+.btnSecondary:hover {
+  background: #f2e3ea !important;
+  color: #6d1538 !important;
+  border-color: #debccb !important;
+  transform: translateY(-1px);
+}
+
+/* Primary CTA Button (Profissional) - Refined brand rose gradient */
+.pricingCard.featured .btnPrimary {
+  background: linear-gradient(135deg, #b83b6b 0%, #9a2552 100%) !important;
+  color: #ffffff !important;
+  border: none !important;
+  font-weight: 700 !important;
+  font-size: 0.85rem !important;
+  padding: 0.72rem 1.25rem !important;
+  border-radius: 12px !important;
+  width: 100% !important;
+  text-align: center !important;
+  margin-top: 1rem !important;
+  box-shadow: 0 4px 14px rgba(184, 59, 107, 0.28) !important;
+  transition: all 0.2s ease !important;
+}
+
+.pricingCard.featured .btnPrimary:hover {
+  background: linear-gradient(135deg, #a52f5c 0%, #861e45 100%) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(184, 59, 107, 0.38) !important;
 }
 
 /* CTA Final */
@@ -1855,20 +1942,20 @@
 :global(html.dark) .pricingCard,
 :global([data-theme="dark"]) .pricingCard {
   background: #1c101c !important;
-  border-color: rgba(244, 63, 94, 0.35) !important;
-  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.1) !important;
+  border-color: #3b202f !important;
+  box-shadow: 0 14px 34px -4px rgba(0, 0, 0, 0.75), inset 0 1px 0 0 rgba(255, 255, 255, 0.05) !important;
 }
 
 :global(html.dark) .pricingCard.featured,
 :global([data-theme="dark"]) .pricingCard.featured {
-  background: #1c101c !important;
-  border: 2px solid #f43f5e !important;
-  box-shadow: 0 14px 38px -4px rgba(244, 63, 94, 0.25), 0 10px 24px -4px rgba(0, 0, 0, 0.7) !important;
+  background: linear-gradient(180deg, #24161f 0%, #1c101c 100%) !important;
+  border: 2px solid #e27d9a !important;
+  box-shadow: 0 14px 38px -4px rgba(226, 125, 154, 0.25) !important;
 }
 
 :global(html.dark) .popularBadge,
 :global([data-theme="dark"]) .popularBadge {
-  background: #f43f5e !important;
+  background: #b83b6b !important;
   color: #ffffff !important;
 }
 
@@ -1880,6 +1967,10 @@
 :global(html.dark) .price,
 :global([data-theme="dark"]) .price {
   color: #fdf5f9 !important;
+}
+
+:global(html.dark) .pricingCard.featured .price {
+  color: #f2a6c4 !important;
 }
 
 :global(html.dark) .price span,
@@ -1896,6 +1987,20 @@
 :global([data-theme="dark"]) .pricingFeatures li {
   color: #ded1d8 !important;
   border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+:global(html.dark) .btnSecondary,
+:global([data-theme="dark"]) .btnSecondary {
+  background: #281722 !important;
+  color: #f2a6c4 !important;
+  border-color: #4a283b !important;
+}
+
+:global(html.dark) .btnSecondary:hover,
+:global([data-theme="dark"]) .btnSecondary:hover {
+  background: #381f2f !important;
+  color: #ffffff !important;
+  border-color: #b83b6b !important;
 }
 
 /* CTA Final Dark Mode */
